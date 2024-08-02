@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS nb_fixed #######################################
+##  CLASS NB_unknown #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -10,8 +10,8 @@
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
-NB_fixed <- R6::R6Class(
-  classname = "NB_fixed",
+NB_unknown <- R6::R6Class(
+  classname = "NB_unknown",
   inherit = NB,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -19,10 +19,31 @@ NB_fixed <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
 
+    #' @description
+    #' Update a [`NB_unknown`] object
+    #' @param B regression matrix
+    #' @param dm1 diagonal vector of species inverse variance matrix
+    #' @param omegaQ groups inverse variance matrix
+    #' @param alpha vector of groups probabilities
+    #' @param tau posterior probabilities for group affectation
+    #' @param M variational mean for posterior distribution of W
+    #' @param S variational diagonal of variances for posterior distribution of W
+    #' @param ll_list log-likelihood during optimization
+    #' @return Update the current [`zi_normal`] object
+    update = function(B = NA, dm1 = NA, omegaQ = NA, alpha = NA, tau = NA,
+                      M = NA, S = NA, ll_list=NA) {
+      super$update(B, dm1, omegaQ, ll_list)
+      if (!anyNA(alpha)) private$alpha <- alpha
+      if (!anyNA(tau))   private$tau   <- tau
+      if (!anyNA(M))     private$M     <- M
+      if (!anyNA(S))     private$M     <- S
+    },
+
+
     #' @description calls EM optimization and updates relevant fields
     #' @return optimizes the model and updates its parameters
     optimize = function() {
-      optim_out <- do.call(private$NB_fixed_EM, list(Y = self$Y, X = self$X,
+      optim_out <- do.call(private$NB_unknown_EM, list(Y = self$Y, X = self$X,
                                                      C = self$C,
                                                      niter = self$niter,
                                                      threshold = self$threshold))
@@ -32,9 +53,12 @@ NB_fixed <- R6::R6Class(
     #' @description returns the model parameters B, dm1 and kappa
     #' @return A list containing the model parameters B, dm1, kappa
     get_model_parameters = function() {
-      return(list("B" = private$B, "dm1" = private$dm1,
-                  "omegaQ" = private$omegaQ, "n" = private$n, "p" = private$p,
-                  "d" = private$d, "Q" = private$Q))
+      parameters       <- super$get_model_parameters()
+      parameters$alpha <- private$alpha
+      parameters$tau   <- private$tau
+      parameters$M     <- private$M
+      parameters$S     <- private$S
+      return(parameters)
     }
   ),
 
@@ -42,7 +66,12 @@ NB_fixed <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    NB_fixed_loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
+    alpha   = NULL, # vector of groups probabilities
+    tau     = NULL, # posterior probabilities for group affectation
+    M       = NULL, # variational mean for posterior distribution of W
+    S       = NULL, # variational diagonal of variances for posterior distribution of W
+
+    NB_unknown_loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
       ## problem dimensions
       n   <- nrow(Y); p <- ncol(Y); d <- ncol(X); Q <- ncol(C)
 
@@ -60,7 +89,7 @@ NB_fixed <- R6::R6Class(
     },
 
 
-    NB_fixed_EM = function(Y, X, C, niter, threshold) {
+    NB_unknown_EM = function(Y, X, C, niter, threshold) {
       ## problem dimensions
       n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
 
@@ -75,7 +104,7 @@ NB_fixed <- R6::R6Class(
       mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
       omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
 
-      ll_list <- private$NB_fixed_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
+      ll_list <- private$NB_unknown_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
 
       for (h in 2:niter) {
         ## E step
@@ -88,7 +117,7 @@ NB_fixed <- R6::R6Class(
         dm1   <- as.vector(1/Ddiag)
         omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
 
-        loglik <- private$NB_fixed_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
+        loglik <- private$NB_unknown_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
         ll_list <- c(ll_list, loglik)
 
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
