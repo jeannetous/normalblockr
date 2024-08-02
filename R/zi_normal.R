@@ -1,8 +1,13 @@
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS zi_normal #######################################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 #' R6 class for zero-inflated normal model
 #' @param Y the matrix of responses (called Y in the model).
-#' Will usually be extracted from the corresponding field in PLNfamily-class
 #' @param X design matrix (called X in the model).
-#' Will usually be extracted from the corresponding field in PLNfamily-class
+#' @param niter number of iterations in model optimization
+#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 zi_normal <- R6::R6Class(
   classname = "zi_normal",
@@ -11,16 +16,22 @@ zi_normal <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field Y the matrix of responses common to every model
+    #' @field Y the matrix of responses
     Y  = NULL,
-    #' @field X the matrix of covariates common to every model
+    #' @field X the matrix of covariates
     X = NULL,
+    #' @field niter number of iterations in model optimization
+    niter = NULL,
+    #' @field threshold loglikelihood threshold under which optimization stops
+    threshold = NULL,
 
     #' @description Create a new [`zi_normal`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`zi_normal`] object
-    initialize = function(Y, X) {
+    initialize = function(Y, X, niter = 50, threshold = 1e-4) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y and X must be matrices.")
       }
@@ -29,6 +40,8 @@ zi_normal <- R6::R6Class(
       }
       self$Y <- Y
       self$X <- X
+      self$niter <- niter
+      self$threshold <- threshold
       private$n <- nrow(Y)
       private$p <- ncol(Y)
       private$d <- ncol(X)
@@ -53,7 +66,9 @@ zi_normal <- R6::R6Class(
     #' @description calls EM optimization and updates relevant fields
     #' @return optimizes the model and updates its parameters
     optimize = function() {
-      optim_out <- do.call(private$zi_normal_EM, list(Y = self$Y, X = self$X))
+      optim_out <- do.call(private$zi_normal_EM, list(Y = self$Y, X = self$X,
+                                                      niter = self$niter,
+                                                      threshold = self$threshold))
       do.call(self$update, optim_out)
     },
 
@@ -82,7 +97,7 @@ zi_normal <- R6::R6Class(
     dm1     = NA,   # diagonal vector of inverse variance matrix
     kappa   = NA,   # vector of zero-inflation probabilities
     rho     = NA,   # posterior probabilities of zero-inflation
-    ll_list = NA,  # list of log-likelihood values during optimization
+    ll_list = NA,   # list of log-likelihood values during optimization
 
     zi_normal_loglik  = function(Y, X, B, dm1, rho, kappa) {
       ## problem dimensions
@@ -130,7 +145,7 @@ zi_normal <- R6::R6Class(
       newB
     },
 
-    zi_normal_EM = function(Y, X, niter = 100, threshold = 1e-6) {
+    zi_normal_EM = function(Y, X, niter, threshold) {
       ## problem dimensions
       n <- nrow(Y); p <- ncol(Y); d <- ncol(X)
 

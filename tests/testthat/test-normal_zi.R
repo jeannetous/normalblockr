@@ -25,7 +25,7 @@ X    = t(X)
 ###############################################################################
 
 test_that("zi_normal: check dimensions, optimization and field access", {
-  model <- zi_normal$new(Y, X)
+  model <- zi_normal$new(Y, X, niter=60)
   model$optimize()
   params <- model$get_model_parameters()
   expect_equal(params$n, nrow(Y))

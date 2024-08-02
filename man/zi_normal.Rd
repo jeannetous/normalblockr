@@ -11,9 +11,13 @@ R6 class for zero-inflated normal model
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{Y}}{the matrix of responses common to every model}
+\item{\code{Y}}{the matrix of responses}
 
-\item{\code{X}}{the matrix of covariates common to every model}
+\item{\code{X}}{the matrix of covariates}
+
+\item{\code{niter}}{number of iterations in model optimization}
+
+\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
 }
 \if{html}{\out{</div>}}
 }
@@ -34,7 +38,7 @@ R6 class for zero-inflated normal model
 \subsection{Method \code{new()}}{
 Create a new [`zi_normal`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{zi_normal$new(Y, X)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{zi_normal$new(Y, X, niter = 50, threshold = 1e-04)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -43,6 +47,10 @@ Create a new [`zi_normal`] object.
 \item{\code{Y}}{the matrix of responses (called Y in the model).}
 
 \item{\code{X}}{design matrix (called X in the model).}
+
+\item{\code{niter}}{number of iterations in model optimization}
+
+\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
 }
 \if{html}{\out{</div>}}
 }
