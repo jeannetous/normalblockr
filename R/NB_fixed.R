@@ -106,7 +106,7 @@ NB_fixed <- R6::R6Class(
 
     NB_fixed_loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
       ## problem dimensions
-      n   <- nrow(Y); p <- ncol(Y); d <- ncol(X)
+      n   <- nrow(Y); p <- ncol(Y); d <- ncol(X); Q <- ncol(C)
 
       ## useful matrices
       Dm1 <- diag(dm1)
