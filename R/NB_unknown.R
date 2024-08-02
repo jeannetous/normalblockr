@@ -39,17 +39,6 @@ NB_unknown <- R6::R6Class(
       if (!anyNA(S))     private$M     <- S
     },
 
-
-    #' @description calls EM optimization and updates relevant fields
-    #' @return optimizes the model and updates its parameters
-    optimize = function() {
-      optim_out <- do.call(private$NB_unknown_EM, list(Y = self$Y, X = self$X,
-                                                     C = self$C,
-                                                     niter = self$niter,
-                                                     threshold = self$threshold))
-      do.call(self$update, optim_out)
-    },
-
     #' @description returns the model parameters B, dm1 and kappa
     #' @return A list containing the model parameters B, dm1, kappa
     get_model_parameters = function() {
@@ -89,7 +78,7 @@ NB_unknown <- R6::R6Class(
     },
 
 
-    NB_unknown_EM = function(Y, X, C, niter, threshold) {
+    EM_optimize = function(Y, X, C, niter, threshold) {
       ## problem dimensions
       n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
 

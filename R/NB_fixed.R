@@ -15,30 +15,6 @@ NB_fixed <- R6::R6Class(
   inherit = NB,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-
-    #' @description calls EM optimization and updates relevant fields
-    #' @return optimizes the model and updates its parameters
-    optimize = function() {
-      optim_out <- do.call(private$NB_fixed_EM, list(Y = self$Y, X = self$X,
-                                                     C = self$C,
-                                                     niter = self$niter,
-                                                     threshold = self$threshold))
-      do.call(self$update, optim_out)
-    },
-
-    #' @description returns the model parameters B, dm1 and kappa
-    #' @return A list containing the model parameters B, dm1, kappa
-    get_model_parameters = function() {
-      return(list("B" = private$B, "dm1" = private$dm1,
-                  "omegaQ" = private$omegaQ, "n" = private$n, "p" = private$p,
-                  "d" = private$d, "Q" = private$Q))
-    }
-  ),
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
@@ -60,7 +36,7 @@ NB_fixed <- R6::R6Class(
     },
 
 
-    NB_fixed_EM = function(Y, X, C, niter, threshold) {
+    EM_optimize = function(Y, X, C, niter, threshold) {
       ## problem dimensions
       n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
 
