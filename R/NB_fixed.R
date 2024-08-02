@@ -13,12 +13,32 @@
 NB_fixed <- R6::R6Class(
   classname = "NB_fixed",
   inherit = NB,
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PUBLIC MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  public = list(
+
+    #' @description
+    #' Update a [`NB_unknown`] object
+    #' @param B regression matrix
+    #' @param dm1 diagonal vector of species inverse variance matrix
+    #' @param omegaQ groups inverse variance matrix
+    #' @param gamma  variance of  posterior distribution of W
+    #' @param mu  mean for posterior distribution of W
+    #' @param ll_list log-likelihood during optimization
+    #' @return Update the current [`zi_normal`] object
+    update = function(B = NA, dm1 = NA, omegaQ = NA, gamma = NA, mu = NA,
+                      ll_list=NA) {
+      super$update(B, dm1, omegaQ, ll_list)
+      if (!anyNA(gamma)) private$gamma <- gamma
+      if (!anyNA(mu))   private$mu   <- mu
+    }),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    NB_fixed_loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
+    loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
       ## problem dimensions
       n   <- nrow(Y); p <- ncol(Y); d <- ncol(X); Q <- ncol(C)
 

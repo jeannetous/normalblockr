@@ -70,12 +70,11 @@ NB <- R6::R6Class(
     #' @return optimizes the model and updates its parameters
     optimize = function() {
       optim_out <- do.call(private$EM_optimize, list(Y = self$Y, X = self$X,
+                                                     C = self$C,
                                                      niter = self$niter,
                                                      threshold = self$threshold))
       do.call(self$update, optim_out)
     },
-
-
     #' @description returns the model parameters B, dm1 and kappa
     #' @return A list containing the model parameters B, dm1, kappa
     get_model_parameters = function() {
@@ -83,7 +82,6 @@ NB <- R6::R6Class(
                   "omegaQ" = private$omegaQ, "n" = private$n, "p" = private$p,
                   "d" = private$d, "Q" = private$Q))
     },
-
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
       plot(1:length(private$ll_list), private$ll_list)
@@ -116,7 +114,6 @@ NB <- R6::R6Class(
       }
       current_parameters
     },
-
     EM_step = function(){},
     EM_initialize = function(){},
     loglik  = function() {}
