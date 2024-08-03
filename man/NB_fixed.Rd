@@ -8,67 +8,40 @@ R6 class for normal-block model with fixed groups
 
 R6 class for normal-block model with fixed groups
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{Y}}{the matrix of responses}
-
-\item{\code{X}}{the matrix of covariates}
-
-\item{\code{C}}{the matrix of species groups}
-
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
-}
-\if{html}{\out{</div>}}
+\section{Super class}{
+\code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-NB_fixed-new}{\code{NB_fixed$new()}}
 \item \href{#method-NB_fixed-update}{\code{NB_fixed$update()}}
-\item \href{#method-NB_fixed-optimize}{\code{NB_fixed$optimize()}}
 \item \href{#method-NB_fixed-get_model_parameters}{\code{NB_fixed$get_model_parameters()}}
-\item \href{#method-NB_fixed-plot_loglik}{\code{NB_fixed$plot_loglik()}}
 \item \href{#method-NB_fixed-clone}{\code{NB_fixed$clone()}}
 }
 }
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_fixed-new"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_fixed-new}{}}}
-\subsection{Method \code{new()}}{
-Create a new [`zi_normal`] object.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed$new(Y, X, C, niter = 50, threshold = 1e-04)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{Y}}{the matrix of responses (called Y in the model).}
-
-\item{\code{X}}{design matrix (called X in the model).}
-
-\item{\code{C}}{group matrix C_jq = 1 if species j belongs to group q}
-
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new [`nb_fixed`] object
-}
-}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="initialize"><a href='../../normalblockr/html/NB.html#method-NB-initialize'><code>normalblockr::NB$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="optimize"><a href='../../normalblockr/html/NB.html#method-NB-optimize'><code>normalblockr::NB$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_loglik"><a href='../../normalblockr/html/NB.html#method-NB-plot_loglik'><code>normalblockr::NB$plot_loglik()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB_fixed-update"></a>}}
 \if{latex}{\out{\hypertarget{method-NB_fixed-update}{}}}
 \subsection{Method \code{update()}}{
-Update a [`nb_fixed`] object
+Update a [`NB_unknown`] object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed$update(B = NA, dm1 = NA, omegaQ = NA, ll_list = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed$update(
+  B = NA,
+  dm1 = NA,
+  omegaQ = NA,
+  gamma = NA,
+  mu = NA,
+  ll_list = NA
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -80,6 +53,10 @@ Update a [`nb_fixed`] object
 
 \item{\code{omegaQ}}{groups inverse variance matrix}
 
+\item{\code{gamma}}{variance of  posterior distribution of W}
+
+\item{\code{mu}}{mean for posterior distribution of W}
+
 \item{\code{ll_list}}{log-likelihood during optimization}
 }
 \if{html}{\out{</div>}}
@@ -89,40 +66,17 @@ Update the current [`zi_normal`] object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_fixed-optimize"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_fixed-optimize}{}}}
-\subsection{Method \code{optimize()}}{
-calls EM optimization and updates relevant fields
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed$optimize()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-optimizes the model and updates its parameters
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB_fixed-get_model_parameters"></a>}}
 \if{latex}{\out{\hypertarget{method-NB_fixed-get_model_parameters}{}}}
 \subsection{Method \code{get_model_parameters()}}{
-returns the model parameters B, dm1 and kappa
+returns the model parameters B, dm1, omegaQ, n, p, d, Q, gamma, mu
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_fixed$get_model_parameters()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A list containing the model parameters B, dm1, kappa
+A list containing the model parameters  B, dm1, omegaQ, n, p, d, Q, gamma, mu
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_fixed-plot_loglik"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_fixed-plot_loglik}{}}}
-\subsection{Method \code{plot_loglik()}}{
-plots log-likelihood values during model optimization
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed$plot_loglik()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB_fixed-clone"></a>}}
