@@ -20,8 +20,6 @@ NB <- R6::R6Class(
     Y  = NULL,
     #' @field X the matrix of covariates
     X = NULL,
-    #' @field C the matrix of species groups
-    C = NULL,
     #' @field niter number of iterations in model optimization
     niter = NULL,
     #' @field threshold loglikelihood threshold under which optimization stops
@@ -30,12 +28,11 @@ NB <- R6::R6Class(
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, C, niter = 50, threshold = 1e-4) {
-      if (!is.matrix(Y) || !is.matrix(X) || !is.matrix(C)) {
+    initialize = function(Y, X, niter = 50, threshold = 1e-4) {
+      if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
       if (nrow(Y) != nrow(X)) {
@@ -43,13 +40,12 @@ NB <- R6::R6Class(
       }
       self$Y <- Y
       self$X <- X
-      self$C <- C
       self$niter <- niter
       self$threshold <- threshold
       private$n <- nrow(Y)
       private$p <- ncol(Y)
       private$d <- ncol(X)
-      private$Q <- ncol(C)
+      private$XtXm1  <- solve(crossprod(X, X))
     },
 
     #' @description
@@ -81,6 +77,11 @@ NB <- R6::R6Class(
       list("B" = private$B, "dm1" = private$dm1, "omegaQ" = private$omegaQ,
            "n" = private$n, "p" = private$p, "d" = private$d, "Q" = private$Q)
     },
+    #' @description returns the model variables Y, X
+    #' @return A list containing the model parameters Y, X
+    get_model_variables = function() {
+      list(Y = self$Y, X = self$X)
+    },
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
       plot(1:length(private$ll_list), private$ll_list)
@@ -95,6 +96,7 @@ NB <- R6::R6Class(
     p       = NULL, # number of responses
     Q       = NULL, # number of groups
     d       = NULL, # number of covariates
+    XtXm1   = NULL, # inverse of XtX, useful for EM calculations
     B       = NA,   # regression matrix
     dm1     = NA,   # diagonal vector of inverse variance matrix
     omegaQ  = NA,   # groups variance matrix
@@ -103,7 +105,7 @@ NB <- R6::R6Class(
     ll_list = NA,   # list of log-likelihood values during optimization
 
     EM_optimize = function(Y, X, C, niter, threshold) {
-      variables  <- list(Y = Y, X = X, C = C)
+      variables  <- self$get_model_variables()
       parameters <- do.call(private$EM_initialize, variables)
       current    <- c(variables, parameters)
       ll_list    <- do.call(private$loglik, current)

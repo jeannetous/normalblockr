@@ -19,6 +19,19 @@ NB_unknown <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
 
+
+    #' @description Create a new [`NB`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
+    #' @param Q required number of groups
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @return A new [`NB_unknown`] object
+    initialize = function(Y, X, Q, niter = 50, threshold = 1e-4) {
+      super$initialize(Y, X, niter, threshold)
+      private$Q <- Q
+    },
+
     #' @description
     #' Update a [`NB_unknown`] object
     #' @param B regression matrix
@@ -60,59 +73,71 @@ NB_unknown <- R6::R6Class(
     M       = NULL, # variational mean for posterior distribution of W
     S       = NULL, # variational diagonal of variances for posterior distribution of W
 
-    NB_unknown_loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
+    loglik  = function(Y, X, B, dm1, omegaQ, alpha, tau, M, S) {
       ## problem dimensions
-      n   <- nrow(Y); p <- ncol(Y); d <- ncol(X); Q <- ncol(C)
+      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
 
-      ## useful matrices
-      Dm1 <- diag(dm1)
-      R   <- Y - X %*% B
-      J <- - .5 * n * (p + Q) * log(2 * pi) + .5 * n * sum(log(dm1))
-      J <- J - .5 * sum(R %*% Dm1 %*% t(R)) + sum(R %*% Dm1 %*% C %*% t(mu))
-      J <- J - .5 * n * sum(diag(t(C) %*% Dm1 %*% C %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% t(C) %*% Dm1 %*% C %*% t(mu)))
-      J <- J + .5 * n * log(det(omegaQ))
-      J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
-      J <- J - .5 * n * sum(diag(mu %*% omegaQ %*% t(mu)))
-      J
+      Dm1            <- diag(dm1)
+      R              <- t(Y - X %*% B)
+      w              <- as.vector(rep(1, n))
+      log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
+
+      # expectation of log(p(Y | W, C))
+      elbo <- - 0.5 * n * p * log(2*pi) + 0.5 * n * sum(log(dm1))
+      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S^2)))
+
+      # expectation of log(p(W))
+      elbo <- elbo - 0.5 * n * Q * log(2*pi) + 0.5 * n * log_det_omegaQ
+      elbo <- elbo - 0.5 * sum(crossprod(w, (M %*% omegaQ) * M))
+      elbo <- elbo - 0.5 * n * S %*% diag(omegaQ)
+
+      # expectation of log(p(C))
+      elbo <- elbo + sum(crossprod(log(alpha), t(tau)))
+
+      # Entropy term for W
+      elbo <- elbo + 0.5 * n * Q * log(2*pi* exp(1)) + n * sum(log(S))
+
+      # Entropy term for C
+      elbo <- elbo - sum(xlogx(tau))
+
+      elbo
     },
 
+    EM_initialize = function(Y, X) {
+      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
+      B                 <- private$XtXm1%*% t(X) %*% Y
+      R                 <- t(Y - X %*% B)
+      clustering_kmeans <- kmeans(R, Q, nstart=30)
+      cl                <- clustering_kmeans$cluster
+      tau               <- as_indicator(cl)
+      alpha             <- colMeans(tau)
+      S                 <- rep(0.1, Q)
+      M                 <- matrix(rep(0, n * Q), nrow=n)
+      dm1               <-as.vector(rep(1, p))
+      omegaQ            <- diag(rep(1, Q))
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
+    },
 
-    EM_optimize = function(Y, X, C, niter, threshold) {
-      ## problem dimensions
-      n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
+    EM_step = function(Y, X, B, dm1, omegaQ, alpha, tau, M, S) {
+      n <- private$n ; p <- private$p
+      R <- t(Y - X %*% B)
+      G <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
+      w <- as.vector(rep(1, n))
 
-      ## Initialization
-      B      <- solve(crossprod(X, X)) %*% t(X) %*% Y
-      R      <- t(Y - X %*% B)
-      Ddiag  <- check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
-      D      <- diag(Ddiag)
-      dm1    <- 1 / Ddiag
-      Dm1    <- diag(dm1)
-      gamma  <- solve(t(C) %*% Dm1 %*% C)
-      mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
-      omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
+      # E step
+      M <- crossprod(as.vector(dm1) * R, tau) %*% G
+      S <- diag(G)^{.5}
+      pre_tau <- -.5 * (t(M^2) %*% w + n * (S^2)) %*% t(dm1) + crossprod( w * M, t(as.vector(dm1) * R))
+      pre_tau <- pre_tau + outer(log(alpha), rep(1,p)) -1
+      tau <- check_zero_boundary(check_one_boundary(t(apply(t(pre_tau), 1, softmax))))
 
-      ll_list <- private$NB_unknown_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
+      # M step
+      omegaQ <- n * solve((t(M) %*% M) + n * diag(S^2))
+      B <- private$XtXm1 %*% t(X) %*% (Y- M %*% t(tau))
+      dm1 <- n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(w %*% t(S^2))) %*% w)
+      alpha <- colMeans(tau)
 
-      for (h in 2:niter) {
-        ## E step
-        gamma <- solve(omegaQ + t(C) %*% Dm1 %*% C)
-        mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
-
-        ## M step
-        B     <- solve(crossprod(X, X)) %*% crossprod(X, (Y - mu %*% t(C)))
-        Ddiag <- (1/n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, n)) + diag(C %*% gamma %*% t(C))
-        dm1   <- as.vector(1/Ddiag)
-        omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
-
-        loglik <- private$NB_unknown_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
-        ll_list <- c(ll_list, loglik)
-
-        if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
-          break
-      }
-      list(B = B, dm1 = dm1, omegaQ = omegaQ,  ll_list = ll_list)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }
   )
 )
