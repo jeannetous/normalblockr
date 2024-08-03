@@ -78,9 +78,8 @@ NB <- R6::R6Class(
     #' @description returns the model parameters B, dm1 and kappa
     #' @return A list containing the model parameters B, dm1, kappa
     get_model_parameters = function() {
-      return(list("B" = private$B, "dm1" = private$dm1,
-                  "omegaQ" = private$omegaQ, "n" = private$n, "p" = private$p,
-                  "d" = private$d, "Q" = private$Q))
+      list("B" = private$B, "dm1" = private$dm1, "omegaQ" = private$omegaQ,
+           "n" = private$n, "p" = private$p, "d" = private$d, "Q" = private$Q)
     },
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
@@ -98,22 +97,26 @@ NB <- R6::R6Class(
     d       = NULL, # number of covariates
     B       = NA,   # regression matrix
     dm1     = NA,   # diagonal vector of inverse variance matrix
+    omegaQ  = NA,   # groups variance matrix
     kappa   = NA,   # vector of zero-inflation probabilities
     rho     = NA,   # posterior probabilities of zero-inflation
     ll_list = NA,   # list of log-likelihood values during optimization
 
     EM_optimize = function(Y, X, C, niter, threshold) {
-      n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
-      current_parameters <- private$EM_initialize(Y, X, C)
-      ll_list            <- do.call(private$loglik, current_parameters)
+      variables  <- list(Y = Y, X = X, C = C)
+      parameters <- do.call(private$EM_initialize, variables)
+      current    <- c(variables, parameters)
+      ll_list    <- do.call(private$loglik, current)
       for (h in 2:niter) {
-        current_parameters <- do.call(private$EM_step, current_parameters)
-        ll_list            <- do.call(private$loglik, current_parameters)
+        parameters <- do.call(private$EM_step, current)
+        current    <- c(variables, parameters)
+        ll_list    <- c(ll_list, do.call(private$loglik, current))
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
           break
       }
-      current_parameters
+      c(parameters, list(ll_list = ll_list))
     },
+
     EM_step = function(){},
     EM_initialize = function(){},
     loglik  = function() {}

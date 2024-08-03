@@ -32,15 +32,26 @@ NB_fixed <- R6::R6Class(
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(gamma)) private$gamma <- gamma
       if (!anyNA(mu))   private$mu   <- mu
+    },
+
+    #' @description returns the model parameters B, dm1, omegaQ, n, p, d, Q, gamma, mu
+    #' @return A list containing the model parameters  B, dm1, omegaQ, n, p, d, Q, gamma, mu
+    get_model_parameters = function() {
+      parameters = super$get_model_parameters()
+      c(parameters, list("gamma" = private$gamma, "mu" = private$mu))
     }),
+
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    gamma   = NULL, # variance of  posterior distribution of W
+    mu      = NULL,  #  mean for posterior distribution of W
+
     loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
       ## problem dimensions
-      n   <- nrow(Y); p <- ncol(Y); d <- ncol(X); Q <- ncol(C)
+      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
 
       ## useful matrices
       Dm1 <- diag(dm1)
@@ -55,12 +66,7 @@ NB_fixed <- R6::R6Class(
       J
     },
 
-
-    EM_optimize = function(Y, X, C, niter, threshold) {
-      ## problem dimensions
-      n <- nrow(Y); p <- ncol(Y); d <- ncol(X) ; Q <- ncol(C)
-
-      ## Initialization
+    EM_initialize = function(Y, X, C){
       B      <- solve(crossprod(X, X)) %*% t(X) %*% Y
       R      <- t(Y - X %*% B)
       Ddiag  <- check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
@@ -69,28 +75,23 @@ NB_fixed <- R6::R6Class(
       Dm1    <- diag(dm1)
       gamma  <- solve(t(C) %*% Dm1 %*% C)
       mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
-      omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
+      omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
+    },
 
-      ll_list <- private$NB_fixed_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
+    EM_step = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
+      Dm1    <- diag(dm1)
+      R      <- t(Y - X %*% B)
+      ## E step
+      gamma  <- solve(omegaQ + t(C) %*% Dm1 %*% C)
+      mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
+      ## M step
+      B      <- solve(crossprod(X, X)) %*% crossprod(X, (Y - mu %*% t(C)))
+      Ddiag  <- (1/private$n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, private$n)) + diag(C %*% gamma %*% t(C))
+      dm1    <- as.vector(1/Ddiag)
+      omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
 
-      for (h in 2:niter) {
-        ## E step
-        gamma <- solve(omegaQ + t(C) %*% Dm1 %*% C)
-        mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
-
-        ## M step
-        B     <- solve(crossprod(X, X)) %*% crossprod(X, (Y - mu %*% t(C)))
-        Ddiag <- (1/n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, n)) + diag(C %*% gamma %*% t(C))
-        dm1   <- as.vector(1/Ddiag)
-        omegaQ <- solve(gamma + (1/n) * t(mu) %*% mu)
-
-        loglik <- private$NB_fixed_loglik(Y, X, C, B, dm1, omegaQ, gamma, mu)
-        ll_list <- c(ll_list, loglik)
-
-        if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
-          break
-      }
-      list(B = B, dm1 = dm1, omegaQ = omegaQ,  ll_list = ll_list)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
   )
 )
