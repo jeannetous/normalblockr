@@ -109,7 +109,7 @@ NB_fixed <- R6::R6Class(
       gamma  <- solve(omegaQ + t(C) %*% Dm1 %*% C)
       mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
       ## M step
-      B      <- private$XtXm1 %*% X %*% (Y - mu %*% t(C))
+      B      <- private$XtXm1 %*% t(X) %*% (Y - mu %*% t(C))
       Ddiag  <- (1/private$n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, private$n)) + diag(C %*% gamma %*% t(C))
       dm1    <- as.vector(1/Ddiag)
       omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
