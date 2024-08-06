@@ -12,6 +12,7 @@ LazyData: true
 Imports: 
     MASS,
     nloptr (>= 2.0.3),
+    pdfCluster,
     R6
 RoxygenNote: 7.3.2
 Suggests: 

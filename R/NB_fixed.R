@@ -85,7 +85,7 @@ NB_fixed <- R6::R6Class(
       J <- J - .5 * sum(diag(mu %*% t(C) %*% Dm1 %*% C %*% t(mu)))
       J <- J + .5 * n * log_det_omegaQ
       J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
-      J <- J - .5 * n * sum(diag(mu %*% omegaQ %*% t(mu)))
+      J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
       J
     },
 
@@ -110,7 +110,14 @@ NB_fixed <- R6::R6Class(
       mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
       ## M step
       B      <- private$XtXm1 %*% t(X) %*% (Y - mu %*% t(C))
-      Ddiag  <- (1/private$n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, private$n)) + diag(C %*% gamma %*% t(C))
+      # Ddiag  <- (1/private$n) * (t(Y - X%*% B) - C %*% t(mu))^2 %*% as.vector(rep(1, private$n)) + diag(C %*% gamma %*% t(C))
+      # VERIFICATIONS A FAIRE
+      Ddiag  <- (1/private$n) * (t(Y - X %*% B) %*% as.vector(rep(1, private$n)))^2
+      # Ddiag  <- Ddiag - (2 / private$n) * (t(Y - X %*% B) %*% as.vector(rep(1, private$n))) * (C %*% t(mu) %*% as.vector(rep(1, private$n)))
+      Ddiag  <- Ddiag + (1 / private$n) *  diag(C %*% t(mu) %*% mu %*% t(C)) + diag(C %*% gamma %*% t(C))
+
+
+      # Ddiag <-
       dm1    <- as.vector(1/Ddiag)
       omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
 
