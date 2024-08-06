@@ -105,11 +105,10 @@ zi_normal <- R6::R6Class(
 
       ## useful matrices
       Dm1 <- diag(dm1)
-      indicator <- matrix(sapply(Y, function(x) ifelse(x == 0, 1, 0)),
-                                nrow = nrow(Y), ncol = ncol(Y))
+      indicator <- Y == 0
 
       J <- sum(indicator * rho)
-      J <- J - .5 * sum((1 - rho) * ((Y - X %*%B )^2 %*% Dm1))
+      J <- J - .5 * sum((1 - rho) * ((Y - X %*%B)^2 %*% Dm1))
       J <- J - .5 * sum((1 - rho) %*% (-log(diag(Dm1)) + log(2 * pi)))
       J <- J + sum((indicator * rho) %*% log(kappa))
       J <- J + sum((1 - indicator * rho) %*% log(1 - kappa))
@@ -129,12 +128,11 @@ zi_normal <- R6::R6Class(
         x0 = B0_vec,
         eval_f = function(B_vec) {
           B <- matrix(B_vec, nrow = ncol(X), ncol = ncol(Y))
-          - private$zi_normal_loglik(Y, X, B, dm1, rho, kappa)
-        } ,
-        eval_grad_f = function(B_vec) {
-          B <- matrix(B_vec, nrow = ncol(X), ncol = ncol(Y))
-          - private$zi_normal_gradB(Y, X,  B, dm1, rho)
-        } ,
+          Dm1 <- diag(dm1)
+          YmXB <- Y - X %*%B
+          list("objective" = .5 * sum((1 - rho) * (YmXB^2 %*% Dm1)),
+               "gradient"  = -crossprod(X, (1 - rho) * YmXB) %*% Dm1)
+        },
         opts = list(
           algorithm = "NLOPT_LD_LBFGS",
           xtol_rel = 1e-6,
@@ -150,8 +148,8 @@ zi_normal <- R6::R6Class(
       n <- nrow(Y); p <- ncol(Y); d <- ncol(X)
 
       ## useful matrices
-      indicator <- matrix(sapply(Y, function(x) ifelse(x == 0, 1, 0)),
-                          nrow = nrow(Y), ncol = ncol(Y))
+      indicator <- 1*(Y == 0)
+
       ## Initialization
       rho   <- check_one_boundary(check_zero_boundary(indicator))
       kappa <- check_one_boundary(check_zero_boundary(colMeans(indicator)))
