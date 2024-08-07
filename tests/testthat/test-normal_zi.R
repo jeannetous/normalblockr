@@ -3,10 +3,10 @@
 n     = 200
 p     = 50
 d     = 2
-minB  = -1
-maxB  = 1
-minX  = rep(-50, d)
-maxX  = rep(50, d)
+minB  = 2
+maxB  = 4
+minX  = rep(0,  d)
+maxX  = rep(10, d)
 minD  = 0.2
 maxD  = 3
 minKappa = 0.1
