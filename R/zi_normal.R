@@ -156,8 +156,8 @@ zi_normal <- R6::R6Class(
         rho     <- check_one_boundary(check_zero_boundary(self$zeros * t((1 / (1 + kfactor * gamma)))))
 
         ## M step
-        R     <- t(self$Y - self$X %*% B)
-        dm1   <- 1 / check_zero_boundary(rowSums(t(1 - rho) * R^2)  / rowSums(1 - t(rho)))
+        R     <- self$Y - self$X %*% B
+        dm1   <- 1 / check_zero_boundary(colSums((1 - rho) * R^2)  / colSums(1 - rho))
         kappa <- colMeans(rho)
         B     <- private$zi_normal_optim_B(B, dm1, rho, kappa)
 
