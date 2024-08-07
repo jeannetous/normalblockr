@@ -26,7 +26,9 @@ X    = t(X)
 
 test_that("zi_normal: check dimensions, optimization and field access", {
   model <- zi_normal$new(Y, X, niter=60)
+  t <- Sys.time()
   model$optimize()
+  print(Sys.time() - t)
   params <- model$get_model_parameters()
   expect_equal(params$n, nrow(Y))
   expect_equal(params$p, ncol(Y))

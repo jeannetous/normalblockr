@@ -84,7 +84,8 @@ NB_unknown <- R6::R6Class(
 
       # expectation of log(p(Y | W, C))
       elbo <- - 0.5 * n * p * log(2*pi) + 0.5 * n * sum(log(dm1))
-      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S^2)))
+      # elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S^2)))
+      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S)))
 
       # expectation of log(p(W))
       elbo <- elbo - 0.5 * n * Q * log(2*pi) + 0.5 * n * log_det_omegaQ
@@ -113,7 +114,7 @@ NB_unknown <- R6::R6Class(
       alpha             <- colMeans(tau)
       S                 <- rep(0.1, Q)
       M                 <- matrix(rep(0, n * Q), nrow=n)
-      dm1               <-as.vector(rep(1, p))
+      dm1               <- as.vector(rep(1, p))
       omegaQ            <- diag(rep(1, Q))
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     },
@@ -126,15 +127,15 @@ NB_unknown <- R6::R6Class(
 
       # E step
       M <- crossprod(as.vector(dm1) * R, tau) %*% G
-      S <- diag(G)^{.5}
-      pre_tau <- -.5 * (t(M^2) %*% w + n * (S^2)) %*% t(dm1) + crossprod( w * M, t(as.vector(dm1) * R))
-      pre_tau <- pre_tau + outer(log(alpha), rep(1,p)) -1
+      S <- as.vector(1/(as.vector(dm1) %*% tau + t(diag(omegaQ))))
+      pre_tau <- -.5 * (t(M^2) %*% w + n * (S)) %*% t(dm1) + crossprod( w * M, t(as.vector(dm1) * R))
+      pre_tau <- pre_tau + outer(log(alpha), rep(1,p)) - 1
       tau <- check_zero_boundary(check_one_boundary(t(apply(t(pre_tau), 1, softmax))))
 
       # M step
-      omegaQ <- n * solve((t(M) %*% M) + n * diag(S^2))
+      omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
       B <- private$XtXm1 %*% t(X) %*% (Y- M %*% t(tau))
-      dm1 <- n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(w %*% t(S^2))) %*% w)
+      dm1 <- n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(w %*% t(S))) %*% w)
       alpha <- colMeans(tau)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
