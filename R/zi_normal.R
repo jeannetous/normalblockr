@@ -108,7 +108,7 @@ zi_normal <- R6::R6Class(
       indicator <- Y == 0
 
       J <- sum(indicator * rho)
-      J <- J - .5 * sum((1 - rho) * ((Y - X %*%B)^2 %*% Dm1))
+      J <- J - .5 * sum((1 - rho) * ((Y - X %*% B)^2 %*% Dm1))
       J <- J - .5 * sum((1 - rho) %*% (-log(diag(Dm1)) + log(2 * pi)))
       J <- J + sum((indicator * rho) %*% log(kappa))
       J <- J + sum((1 - indicator * rho) %*% log(1 - kappa))
@@ -129,7 +129,7 @@ zi_normal <- R6::R6Class(
         eval_f = function(B_vec) {
           B <- matrix(B_vec, nrow = ncol(X), ncol = ncol(Y))
           Dm1 <- diag(dm1)
-          YmXB <- Y - X %*%B
+          YmXB <- Y - X %*% B
           list("objective" = .5 * sum((1 - rho) * (YmXB^2 %*% Dm1)),
                "gradient"  = -crossprod(X, (1 - rho) * YmXB) %*% Dm1)
         },
