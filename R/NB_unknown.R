@@ -77,19 +77,17 @@ NB_unknown <- R6::R6Class(
       ## problem dimensions
       n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
 
-      Dm1            <- diag(dm1)
       R              <- t(Y - X %*% B)
-      w              <- as.vector(rep(1, n))
+      ones           <- as.vector(rep(1, n))
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       # expectation of log(p(Y | W, C))
       elbo <- - 0.5 * n * p * log(2*pi) + 0.5 * n * sum(log(dm1))
-      # elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S^2)))
-      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% w + n * (tau %*% S)))
+      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% ones + n * (tau %*% S)))
 
       # expectation of log(p(W))
       elbo <- elbo - 0.5 * n * Q * log(2*pi) + 0.5 * n * log_det_omegaQ
-      elbo <- elbo - 0.5 * sum(crossprod(w, (M %*% omegaQ) * M))
+      elbo <- elbo - 0.5 * sum(crossprod(ones, (M %*% omegaQ) * M))
       elbo <- elbo - 0.5 * n * S %*% diag(omegaQ)
 
       # expectation of log(p(C))
@@ -120,22 +118,22 @@ NB_unknown <- R6::R6Class(
     },
 
     EM_step = function(Y, X, B, dm1, omegaQ, alpha, tau, M, S) {
-      n <- private$n ; p <- private$p
-      R <- t(Y - X %*% B)
-      G <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
-      w <- as.vector(rep(1, n))
+      n    <- private$n ; p <- private$p
+      R    <- t(Y - X %*% B)
+      G    <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
+      ones <- as.vector(rep(1, n))
 
       # E step
-      M <- crossprod(as.vector(dm1) * R, tau) %*% G
-      S <- as.vector(1/(as.vector(dm1) %*% tau + t(diag(omegaQ))))
-      pre_tau <- -.5 * (t(M^2) %*% w + n * (S)) %*% t(dm1) + crossprod( w * M, t(as.vector(dm1) * R))
-      pre_tau <- pre_tau + outer(log(alpha), rep(1,p)) - 1
-      tau <- check_zero_boundary(check_one_boundary(t(apply(t(pre_tau), 1, softmax))))
+      M         <- crossprod(as.vector(dm1) * R, tau) %*% G
+      S         <- as.vector(1/(as.vector(dm1) %*% tau + t(diag(omegaQ))))
+      pre_tau   <- -.5 * dm1 %*% t(ones) %*% M^2 -.5 * dm1 %*% t(n*S)
+      pre_tau   <- pre_tau + dm1 * (R %*% M)  + outer(rep(1,p), log(alpha)) - 1
+      tau       <- t(check_zero_boundary(check_one_boundary(apply(pre_tau, 1, softmax))))
 
       # M step
       omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
       B <- private$XtXm1 %*% t(X) %*% (Y- M %*% t(tau))
-      dm1 <- n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(w %*% t(S))) %*% w)
+      dm1 <- as.vector(n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
       alpha <- colMeans(tau)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)

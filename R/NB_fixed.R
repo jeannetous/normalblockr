@@ -75,14 +75,13 @@ NB_fixed <- R6::R6Class(
       ## problem dimensions
       n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
 
-      Dm1 <- diag(dm1)
       R   <- Y - X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       J <- - .5 * n * (p + Q) * log(2 * pi) + .5 * n * sum(log(dm1))
-      J <- J - .5 * sum(R %*% Dm1 %*% t(R)) + sum(R %*% Dm1 %*% C %*% t(mu))
-      J <- J - .5 * n * sum(diag(t(C) %*% Dm1 %*% C %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% t(C) %*% Dm1 %*% C %*% t(mu)))
+      J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * C) %*% t(mu))
+      J <- J - .5 * n * sum(diag(t(C) %*% (dm1 * C) %*% gamma))
+      J <- J - .5 * sum(diag(mu %*% t(C) %*%  (dm1 * C)%*% t(mu)))
       J <- J + .5 * n * log_det_omegaQ
       J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
@@ -92,34 +91,24 @@ NB_fixed <- R6::R6Class(
     EM_initialize = function(Y, X, C) {
       B      <- private$XtXm1%*% t(X) %*% Y
       R      <- t(Y - X %*% B)
-      Ddiag  <- check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
-      D      <- diag(Ddiag)
-      dm1    <- 1 / Ddiag
-      Dm1    <- diag(dm1)
-      gamma  <- solve(t(C) %*% Dm1 %*% C)
-      mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
+      dm1    <- 1/check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
+      gamma  <- solve(t(C) %*% (dm1 * C))
+      mu     <- t(gamma %*% t(C) %*% (dm1 * R))
       omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     },
 
     EM_step = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
-      Dm1    <- diag(dm1)
       R      <- t(Y - X %*% B)
       ## E step
-      gamma  <- solve(omegaQ + t(C) %*% Dm1 %*% C)
-      mu     <- t(gamma %*% t(C) %*% Dm1 %*% R)
+      gamma  <- solve(omegaQ + t(C) %*% (dm1 * C))
+      mu     <- t(gamma %*% t(C) %*% (dm1 * R))
       ## M step
       B      <- private$XtXm1 %*% t(X) %*% (Y - mu %*% t(C))
-      Ddiag  <- (1/private$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(C)))
-      Ddiag  <- Ddiag + (1/private$n) * diag(C %*% t(mu) %*% mu %*% t(C))
-      Ddiag  <- Ddiag + diag(C %*% gamma %*% t(C))
-      ####
-      print(max(Ddiag))
-      print(min(Ddiag))
-      print("--------------")
-      ####
-
-      dm1    <- as.vector(1/Ddiag)
+      ddiag  <- (1/private$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(C)))
+      ddiag  <- ddiag + (1/private$n) * diag(C %*% t(mu) %*% mu %*% t(C))
+      ddiag  <- ddiag + diag(C %*% gamma %*% t(C))
+      dm1    <- as.vector(1/ddiag)
       omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
