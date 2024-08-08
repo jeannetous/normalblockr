@@ -15,6 +15,8 @@ R6 class for zero-inflated normal model
 
 \item{\code{X}}{the matrix of covariates}
 
+\item{\code{zeros}}{indicator matrix of zeros in Y}
+
 \item{\code{niter}}{number of iterations in model optimization}
 
 \item{\code{threshold}}{loglikelihood threshold under which optimization stops}

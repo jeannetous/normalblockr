@@ -30,6 +30,8 @@ R6 generic class for normal-block models
 \item \href{#method-NB-get_model_parameters}{\code{NB$get_model_parameters()}}
 \item \href{#method-NB-get_model_variables}{\code{NB$get_model_variables()}}
 \item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
+\item \href{#method-NB-nparam}{\code{NB$nparam()}}
+\item \href{#method-NB-BIC}{\code{NB$BIC()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
@@ -131,6 +133,26 @@ A list containing the model parameters Y, X
 plots log-likelihood values during model optimization
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-nparam"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-nparam}{}}}
+\subsection{Method \code{nparam()}}{
+computes nparam, number of parameters
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$nparam()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-BIC"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-BIC}{}}}
+\subsection{Method \code{BIC()}}{
+computes BIC of the model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$BIC()}\if{html}{\out{</div>}}
 }
 
 }

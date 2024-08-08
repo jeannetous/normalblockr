@@ -45,7 +45,8 @@ NB <- R6::R6Class(
       private$n <- nrow(Y)
       private$p <- ncol(Y)
       private$d <- ncol(X)
-      private$XtXm1  <- solve(crossprod(X, X))
+      private$XtXm1   <- solve(crossprod(X, X))
+      private$ll_list <- 0
     },
 
     #' @description
@@ -85,6 +86,16 @@ NB <- R6::R6Class(
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
       plot(1:length(private$ll_list), private$ll_list)
+    },
+
+    #' @description computes nparam, number of parameters
+    nparam = function() {
+      private$p * private$d + private$p + .5 * private$Q * (private$Q + 1)
+    },
+
+    #' @description computes BIC of the model
+    BIC = function(){
+      - 2 * private$ll_list[[length(private$ll_list)]] + log(private$n) * self$nparam()
     }
   ),
 

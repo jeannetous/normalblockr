@@ -2,5 +2,5 @@
 
 export(NB)
 export(NB_fixed)
-export(NB_unknown)
+export(NB_fixed_Q)
 export(zi_normal)

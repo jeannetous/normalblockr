@@ -44,3 +44,8 @@ matchingGroupScores <- function(groups1, groups2){
     return(1)}}
   return(ari)
 }
+
+#' gets cluster labels from probability matrix
+get_clusters <- function(tau){
+  return(apply(tau, 1, which.max))
+}

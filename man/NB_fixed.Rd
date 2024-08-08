@@ -31,6 +31,8 @@ R6 class for normal-block model with fixed groups
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="BIC"><a href='../../normalblockr/html/NB.html#method-NB-BIC'><code>normalblockr::NB$BIC()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="nparam"><a href='../../normalblockr/html/NB.html#method-NB-nparam'><code>normalblockr::NB$nparam()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="optimize"><a href='../../normalblockr/html/NB.html#method-NB-optimize'><code>normalblockr::NB$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_loglik"><a href='../../normalblockr/html/NB.html#method-NB-plot_loglik'><code>normalblockr::NB$plot_loglik()</code></a></span></li>
 </ul>

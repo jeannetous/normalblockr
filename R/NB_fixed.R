@@ -100,9 +100,11 @@ NB_fixed <- R6::R6Class(
 
     EM_step = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
       R      <- t(Y - X %*% B)
+
       ## E step
       gamma  <- solve(omegaQ + t(C) %*% (dm1 * C))
       mu     <- t(gamma %*% t(C) %*% (dm1 * R))
+
       ## M step
       B      <- private$XtXm1 %*% t(X) %*% (Y - mu %*% t(C))
       ddiag  <- (1/private$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(C)))

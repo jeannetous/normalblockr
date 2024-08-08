@@ -152,7 +152,7 @@ zi_normal <- R6::R6Class(
 
         ## E step
         kfactor <- (1 - kappa) / kappa
-        gamma   <- 1 / sqrt(2 * pi) * sqrt(dm1) * exp(- .5 * dm1 * t(X %*% B)^2)
+        gamma   <- 1 / sqrt(2 * pi) * sqrt(dm1) * exp(- .5 * dm1 * t(self$X %*% B)^2)
         rho     <- check_one_boundary(check_zero_boundary(self$zeros * t((1 / (1 + kfactor * gamma)))))
 
         ## M step
