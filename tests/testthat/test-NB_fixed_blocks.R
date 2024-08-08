@@ -30,8 +30,8 @@ X    = t(X)
 ###############################################################################
 ###############################################################################
 
-test_that("NB_fixed: check dimensions, optimization and field access", {
-  model <- NB_fixed$new(Y, X, C, niter = 60)
+test_that("NB_fixed_blocks: check dimensions, optimization and field access", {
+  model <- NB_fixed_blocks$new(Y, X, C, niter = 60)
   model$optimize()
   params <- model$get_model_parameters()
   expect_equal(params$n, nrow(Y))

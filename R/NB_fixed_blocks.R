@@ -10,8 +10,8 @@
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
-NB_fixed <- R6::R6Class(
-  classname = "NB_fixed",
+NB_fixed_blocks <- R6::R6Class(
+  classname = "NB_fixed_blocks",
   inherit = NB,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
