@@ -1,5 +1,6 @@
 ###############################################################################
 ###############################################################################
+set.seed(3)
 n     = 200
 p     = 50
 d     = 2
@@ -37,4 +38,6 @@ test_that("NB_fixed_blocks: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
+  expect_lt(model$BIC, 38794)
+  expect_gt(model$loglik, -18973)
 })
