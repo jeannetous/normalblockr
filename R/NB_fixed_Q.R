@@ -3,10 +3,10 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#' R6 class for normal-block model with fixed groups
+#' R6 class for normal-block model with fixed Q (number of groups)
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param Q number of blocks
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
@@ -19,17 +19,12 @@ NB_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
 
-
-    #' @description Create a new [`NB`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
+    #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
-    #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, niter = 50, threshold = 1e-4) {
       super$initialize(Y, X, niter, threshold)
-      private$Q <- Q
+      self$Q = Q
     },
 
     #' @description
@@ -42,14 +37,14 @@ NB_fixed_Q <- R6::R6Class(
     #' @param M variational mean for posterior distribution of W
     #' @param S variational diagonal of variances for posterior distribution of W
     #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`zi_normal`] object
+    #' @return Update the current [`NB_fixed_Q`] object
     update = function(B = NA, dm1 = NA, omegaQ = NA, alpha = NA, tau = NA,
                       M = NA, S = NA, ll_list=NA) {
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(alpha)) private$alpha <- alpha
       if (!anyNA(tau))   private$tau   <- tau
       if (!anyNA(M))     private$M     <- M
-      if (!anyNA(S))     private$M     <- S
+      if (!anyNA(S))     private$S     <- S
     },
 
     #' @description returns the model parameters B, dm1 and kappa
@@ -61,11 +56,6 @@ NB_fixed_Q <- R6::R6Class(
       parameters$M     <- private$M
       parameters$S     <- private$S
       return(parameters)
-    },
-    #' @return nparam, number of parameters
-    nparam = function() {
-      number_parameters <- super$nparam()
-      number_parameters + private$Q + private$p * private$Q + 2 * private$n * private$Q
     }
   ),
 
@@ -78,11 +68,11 @@ NB_fixed_Q <- R6::R6Class(
     M       = NULL, # variational mean for posterior distribution of W
     S       = NULL, # variational diagonal of variances for posterior distribution of W
 
-    loglik  = function(Y, X, B, dm1, omegaQ, alpha, tau, M, S) {
+    compute_loglik  = function(B, dm1, omegaQ, alpha, tau, M, S) {
       ## problem dimensions
-      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
+      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
 
-      R              <- t(Y - X %*% B)
+      R              <- t(self$Y - self$X %*% B)
       ones           <- as.vector(rep(1, n))
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
@@ -107,10 +97,10 @@ NB_fixed_Q <- R6::R6Class(
       elbo
     },
 
-    EM_initialize = function(Y, X) {
-      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
-      B                 <- private$XtXm1%*% t(X) %*% Y
-      R                 <- t(Y - X %*% B)
+    EM_initialize = function() {
+      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
+      B                 <- private$XtXm1%*% t(self$X) %*% self$Y
+      R                 <- t(self$Y - self$X %*% B)
       clustering_kmeans <- kmeans(R, Q, nstart=30)
       cl                <- clustering_kmeans$cluster
       tau               <- as_indicator(cl)
@@ -122,9 +112,9 @@ NB_fixed_Q <- R6::R6Class(
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     },
 
-    EM_step = function(Y, X, B, dm1, omegaQ, alpha, tau, M, S) {
-      n    <- private$n ; p <- private$p
-      R    <- t(Y - X %*% B)
+    EM_step = function(B, dm1, omegaQ, alpha, tau, M, S) {
+      n    <- self$n ; p <- self$p
+      R    <- t(self$Y - self$X %*% B)
       G    <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
       ones <- as.vector(rep(1, n))
 
@@ -137,11 +127,25 @@ NB_fixed_Q <- R6::R6Class(
 
       # M step
       omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
-      B <- private$XtXm1 %*% t(X) %*% (Y- M %*% t(tau))
+      B <- private$XtXm1 %*% t(self$X) %*% (self$Y- M %*% t(tau))
       dm1 <- as.vector(n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
       alpha <- colMeans(tau)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }
-  )
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field nb_param number of parameters in the model
+    nb_param = function() {super$nb_param + self$Q + self$p * self$Q + 2 * self$n * self$Q},
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
+    model_par  = function() {
+      parameters       = super$model_par
+      parameters$alpha = private$alpha
+      parameters},
+    #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
+    var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)})
 )

@@ -1,0 +1,125 @@
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS NB_unknown #######################################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+#' R6 generic class for normal-block models
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param nb_blocks list of number of blocks values to be tested
+#' @param niter number of iterations in model optimization
+#' @param threshold loglikelihood threshold under which optimization stops
+#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @export
+NB_unknown <- R6::R6Class(
+  classname = "NB_unknown",
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PUBLIC MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  public = list(
+    #' @field Y the matrix of responses
+    Y  = NULL,
+    #' @field X the matrix of covariates
+    X = NULL,
+    #' @field nb_blocks list of Q values to be tested for the number of blocks
+    nb_blocks = NULL,
+    #' @field niter number of iterations in model optimization
+    niter = NULL,
+    #' @field threshold loglikelihood threshold under which optimization stops
+    threshold = NULL,
+    #' @field models list of NB_fixed_Q models corresponding to each nb_block value
+    models = NULL,
+
+    #' @description Create a new [`NB_unknown`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @return A new [`nb_fixed`] object
+    initialize = function(Y, X, nb_blocks, niter = 50, threshold = 1e-4) {
+      if (!is.matrix(Y) || !is.matrix(X)) {
+        stop("Y, X and C must be matrices.")
+      }
+      if (nrow(Y) != nrow(X)) {
+        stop("Y and X must have the same number of rows")
+      }
+      if(length(nb_blocks) != length(unique(nb_blocks))){
+        stop("each nb_blocks value can only be present once in nb_blocks")
+      }
+      self$Y <- Y
+      self$X <- X
+      self$niter <- niter
+      self$threshold <- threshold
+      self$nb_blocks <- nb_blocks
+
+      # instantiates an NB_fixed_Q model for each Q in nb_blocks
+      self$models <- purrr::map(order(self$nb_blocks), function(block_rank){
+        model <- NB_fixed_Q$new(self$Y, self$X,
+                                nb_blocks[[block_rank]], self$niter, self$threshold)
+      })
+
+    },
+
+    #' @description returns the model parameters B, dm1 and kappa
+    #' @return A list containing the model parameters B, dm1, kappa
+    get_model_parameters = function() {
+      list("n" = private$n, "p" = private$p, "d" = private$d,
+           "nb_blocks" = private$nb_blocks)
+    },
+
+    #' @description optimizes an NB_fixed_Q object for each value of Q
+    optimize = function(){
+      self$models <- purrr::map(self$models, function(model){
+        model$optimize()
+        model
+      })
+    },
+
+    #' @description returns the NB_fixed_Q model corresponding to given Q
+    #' @param Q number of blocks asked by user
+    #' @return A NB_fixed_Q object with given value Q
+    get_model = function(Q){
+      if(!(Q %in% self$nb_blocks)){
+        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")}
+      Q_rank = which(sort(self$nb_blocks) == Q)
+      return(self$models[[Q_rank]])
+    },
+
+    #' @description Extract best model in the collection
+    #' @param crit a character for the criterion used to performed the selection.
+    #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
+    #' "loglik" is the default criterion
+    #' @return a [`NB_fixed_Q`] object
+    getBestModel = function(crit = c("loglik", "BIC", "AIC")){
+      crit <- match.arg(crit)
+      stopifnot(!anyNA(self$criteria[[crit]]))
+      id <- 1
+      if (length(self$criteria[[crit]]) > 1) {
+        id <- which.min(self$criteria[[crit]])
+      }
+      model <- self$models[[id]]$clone()
+      model
+    },
+
+    #' @description returns the model variables Y, X
+    #' @return A list containing the model parameters Y, X
+    get_model_variables = function() {
+      list(Y = self$Y, X = self$X)
+    }
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field n number of samples
+    n = function() {nrow(self$Y)},
+    #' @field p number of responses per sample
+    p = function() {ncol(self$Y)},
+    #' @field d number of variables (dimensions in X)
+    d = function() {ncol(self$X)},
+    #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
+    criteria = function() { purrr::map(self$models, 'criteria') %>% purrr::reduce(rbind)}
+  )
+
+)

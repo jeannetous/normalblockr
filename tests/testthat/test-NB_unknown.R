@@ -30,10 +30,12 @@ X    = t(X)
 ###############################################################################
 ###############################################################################
 
-test_that("NB_fixed_blocks: check dimensions, optimization and field access", {
-  model <- NB_fixed_blocks$new(Y, X, C, niter = 60)
+test_that("NB_unknown: check dimensions, optimization and field access", {
+  model <- NB_unknown$new(Y, X, c(3,6,4,5), niter = 60)
   model$optimize()
-  params <- model$model_par
+  best_model <- model$getBestModel("BIC")
+  true_model <- model$get_model(Q)
+  expect_equal(true_model$Q, Q)
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))

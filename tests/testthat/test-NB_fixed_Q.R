@@ -33,8 +33,8 @@ X    = t(X)
 test_that("NB_fixed_Q: check dimensions, optimization and field access", {
   model <- NB_fixed_Q$new(Y, X, Q, niter = 60)
   model$optimize()
-  params <- model$get_model_parameters()
-  expect_equal(params$n, nrow(Y))
-  expect_equal(params$p, ncol(Y))
-  expect_equal(params$d, ncol(X))
+  params <- model$model_par
+  expect_equal(model$n, nrow(Y))
+  expect_equal(model$p, ncol(Y))
+  expect_equal(model$d, ncol(X))
 })

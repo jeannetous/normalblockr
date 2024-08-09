@@ -20,22 +20,18 @@ NB_fixed_blocks <- R6::R6Class(
     #' @field C the matrix of species groups
     C = NULL,
 
-    #' @description Create a new [`NB`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
+    #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
-    #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
-    #' @return A new [`NB_unknown`] object
+    #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, C, niter = 50, threshold = 1e-4) {
       super$initialize(Y, X, niter, threshold)
       if (!is.matrix(C)) stop("C must be a matrix.")
       self$C <- C
-      private$Q <- ncol(C)
+      self$Q <- ncol(C)
     },
 
     #' @description
-    #' Update a [`NB_unknown`] object
+    #' Update a [`NB_fixed_blocks`] object
     #' @param B regression matrix
     #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param omegaQ groups inverse variance matrix
@@ -71,49 +67,50 @@ NB_fixed_blocks <- R6::R6Class(
     mu      = NULL,  #  mean for posterior distribution of W
 
 
-    loglik  = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
+    compute_loglik  = function(B, dm1, omegaQ, gamma, mu) {
       ## problem dimensions
-      n   <- private$n; p <-  private$p; d <-  private$d; Q <-  private$Q
+      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
 
-      R   <- Y - X %*% B
+      R   <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       J <- - .5 * n * (p + Q) * log(2 * pi) + .5 * n * sum(log(dm1))
-      J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * C) %*% t(mu))
-      J <- J - .5 * n * sum(diag(t(C) %*% (dm1 * C) %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% t(C) %*%  (dm1 * C)%*% t(mu)))
+      J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * self$C) %*% t(mu))
+      J <- J - .5 * n * sum(diag(t(self$C) %*% (dm1 * self$C) %*% gamma))
+      J <- J - .5 * sum(diag(mu %*% t(self$C) %*%  (dm1 * self$C)%*% t(mu)))
       J <- J + .5 * n * log_det_omegaQ
       J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
       J
     },
 
-    EM_initialize = function(Y, X, C) {
-      B      <- private$XtXm1%*% t(X) %*% Y
-      R      <- t(Y - X %*% B)
+    EM_initialize = function() {
+      B      <- private$XtXm1%*% t(self$X) %*% self$Y
+      R      <- t(self$Y - self$X %*% B)
       dm1    <- 1/check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
-      gamma  <- solve(t(C) %*% (dm1 * C))
-      mu     <- t(gamma %*% t(C) %*% (dm1 * R))
-      omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
+      gamma  <- solve(t(self$C) %*% (dm1 * self$C))
+      mu     <- t(gamma %*% t(self$C) %*% (dm1 * R))
+      omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     },
 
-    EM_step = function(Y, X, C, B, dm1, omegaQ, gamma, mu) {
-      R      <- t(Y - X %*% B)
+    EM_step = function(B, dm1, omegaQ, gamma, mu) {
+      R      <- t(self$Y - self$X %*% B)
 
       ## E step
-      gamma  <- solve(omegaQ + t(C) %*% (dm1 * C))
-      mu     <- t(gamma %*% t(C) %*% (dm1 * R))
+      gamma  <- solve(omegaQ + t(self$C) %*% (dm1 * self$C))
+      mu     <- t(gamma %*% t(self$C) %*% (dm1 * R))
 
       ## M step
-      B      <- private$XtXm1 %*% t(X) %*% (Y - mu %*% t(C))
-      ddiag  <- (1/private$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(C)))
-      ddiag  <- ddiag + (1/private$n) * diag(C %*% t(mu) %*% mu %*% t(C))
-      ddiag  <- ddiag + diag(C %*% gamma %*% t(C))
+      B      <- private$XtXm1 %*% t(self$X) %*% (self$Y - mu %*% t(self$C))
+      ddiag  <- (1/self$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(self$C)))
+      ddiag  <- ddiag + (1/self$n) * diag(self$C %*% t(mu) %*% mu %*% t(self$C))
+      ddiag  <- ddiag + diag(self$C %*% gamma %*% t(self$C))
       dm1    <- as.vector(1/ddiag)
-      omegaQ <- solve(gamma + (1/private$n) * t(mu) %*% mu)
+      omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
   )
 )
+

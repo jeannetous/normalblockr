@@ -24,6 +24,8 @@ NB <- R6::R6Class(
     niter = NULL,
     #' @field threshold loglikelihood threshold under which optimization stops
     threshold = NULL,
+    #' @field Q number of blocks
+    Q = NULL,
 
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
@@ -42,9 +44,6 @@ NB <- R6::R6Class(
       self$X <- X
       self$niter <- niter
       self$threshold <- threshold
-      private$n <- nrow(Y)
-      private$p <- ncol(Y)
-      private$d <- ncol(X)
       private$XtXm1   <- solve(crossprod(X, X))
       private$ll_list <- 0
     },
@@ -66,17 +65,9 @@ NB <- R6::R6Class(
     #' @description calls EM optimization and updates relevant fields
     #' @return optimizes the model and updates its parameters
     optimize = function() {
-      optim_out <- do.call(private$EM_optimize, list(Y = self$Y, X = self$X,
-                                                     C = self$C,
-                                                     niter = self$niter,
-                                                     threshold = self$threshold))
+      optim_out <- private$EM_optimize(niter = self$niter,
+                                       threshold = self$threshold)
       do.call(self$update, optim_out)
-    },
-    #' @description returns the model parameters B, dm1 and kappa
-    #' @return A list containing the model parameters B, dm1, kappa
-    get_model_parameters = function() {
-      list("B" = private$B, "dm1" = private$dm1, "omegaQ" = private$omegaQ,
-           "n" = private$n, "p" = private$p, "d" = private$d, "Q" = private$Q)
     },
     #' @description returns the model variables Y, X
     #' @return A list containing the model parameters Y, X
@@ -86,16 +77,6 @@ NB <- R6::R6Class(
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
       plot(1:length(private$ll_list), private$ll_list)
-    },
-
-    #' @description computes nparam, number of parameters
-    nparam = function() {
-      private$p * private$d + private$p + .5 * private$Q * (private$Q + 1)
-    },
-
-    #' @description computes BIC of the model
-    BIC = function(){
-      - 2 * private$ll_list[[length(private$ll_list)]] + log(private$n) * self$nparam()
     }
   ),
 
@@ -103,10 +84,6 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    n       = NULL, # number of samples
-    p       = NULL, # number of responses
-    Q       = NULL, # number of groups
-    d       = NULL, # number of covariates
     XtXm1   = NULL, # inverse of XtX, useful for EM calculations
     B       = NA,   # regression matrix
     dm1     = NA,   # diagonal vector of inverse variance matrix
@@ -115,15 +92,13 @@ NB <- R6::R6Class(
     rho     = NA,   # posterior probabilities of zero-inflation
     ll_list = NA,   # list of log-likelihood values during optimization
 
-    EM_optimize = function(Y, X, C, niter, threshold) {
+    EM_optimize = function(niter, threshold) {
       variables  <- self$get_model_variables()
-      parameters <- do.call(private$EM_initialize, variables)
-      current    <- c(variables, parameters)
-      ll_list    <- do.call(private$loglik, current)
+      parameters <- do.call(private$EM_initialize, list())
+      ll_list    <- do.call(private$compute_loglik, parameters)
       for (h in 2:niter) {
-        parameters <- do.call(private$EM_step, current)
-        current    <- c(variables, parameters)
-        ll_list    <- c(ll_list, do.call(private$loglik, current))
+        parameters <- do.call(private$EM_step, parameters)
+        ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
           break
       }
@@ -132,6 +107,29 @@ NB <- R6::R6Class(
 
     EM_step = function(){},
     EM_initialize = function(){},
-    loglik  = function() {}
-  )
+    compute_loglik  = function() {}
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field n number of samples
+    n = function() {nrow(self$Y)},
+    #' @field p number of responses per sample
+    p = function() {ncol(self$Y)},
+    #' @field d number of variables (dimensions in X)
+    d = function() {ncol(self$X)},
+    #' @field nb_param number of parameters in the model
+    nb_param = function() {as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1))},
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
+    model_par  = function() {list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ)},
+    #' @field loglik (or its variational lower bound)
+    loglik = function(){private$ll_list[[length(private$ll_list)]]},
+    #' @field BIC (or its variational lower bound)
+    BIC = function(){ - 2 * self$loglik + log(self$n) * self$nb_param},
+    #' @field AIC (or its variational lower bound)
+    AIC = function(){ - 2 * self$loglik + 2 * self$nb_param},
+    #' @field criteria a vector with loglik, BIC and number of parameters
+    criteria   = function() {data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC)})
 )
