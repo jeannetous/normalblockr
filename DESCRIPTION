@@ -10,9 +10,11 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports: 
+    glassoFast,
     MASS,
     nloptr (>= 2.0.3),
     pdfCluster,
+    purrr,
     R6
 RoxygenNote: 7.3.2
 Suggests: 

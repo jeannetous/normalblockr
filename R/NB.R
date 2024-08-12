@@ -20,6 +20,10 @@ NB <- R6::R6Class(
     Y  = NULL,
     #' @field X the matrix of covariates
     X = NULL,
+    #' @field sparsity penalty on the network density
+    sparsity = NULL,
+    #' @field sparsity_weights distribution of sparsity on the lement of the network
+    sparsity_weights = NULL,
     #' @field niter number of iterations in model optimization
     niter = NULL,
     #' @field threshold loglikelihood threshold under which optimization stops
@@ -30,10 +34,11 @@ NB <- R6::R6Class(
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
+    #' @param sparsity penalty on the network density
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X,  sparsity = 0, niter = 50, threshold = 1e-4) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -42,6 +47,12 @@ NB <- R6::R6Class(
       }
       self$Y <- Y
       self$X <- X
+      self$sparsity <- sparsity
+      if(sparsity > 0){
+        sparsity_weights <- matrix(1, self$Q, self$Q)
+        diag(sparsity_weights) <- 0
+        self$sparsity_weights  <- sparsity_weights
+      }
       self$niter <- niter
       self$threshold <- threshold
       private$XtXm1   <- solve(crossprod(X, X))
@@ -69,11 +80,6 @@ NB <- R6::R6Class(
                                        threshold = self$threshold)
       do.call(self$update, optim_out)
     },
-    #' @description returns the model variables Y, X
-    #' @return A list containing the model parameters Y, X
-    get_model_variables = function() {
-      list(Y = self$Y, X = self$X)
-    },
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
       plot(1:length(private$ll_list), private$ll_list)
@@ -93,7 +99,6 @@ NB <- R6::R6Class(
     ll_list = NA,   # list of log-likelihood values during optimization
 
     EM_optimize = function(niter, threshold) {
-      variables  <- self$get_model_variables()
       parameters <- do.call(private$EM_initialize, list())
       ll_list    <- do.call(private$compute_loglik, parameters)
       for (h in 2:niter) {
@@ -126,6 +131,8 @@ NB <- R6::R6Class(
     model_par  = function() {list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ)},
     #' @field loglik (or its variational lower bound)
     loglik = function(){private$ll_list[[length(private$ll_list)]]},
+    #' @field penalty (penalty on log-likelihood due to sparsity)
+    penalty = function(){- self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ))},
     #' @field BIC (or its variational lower bound)
     BIC = function(){ - 2 * self$loglik + log(self$n) * self$nb_param},
     #' @field AIC (or its variational lower bound)
@@ -133,3 +140,5 @@ NB <- R6::R6Class(
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC)})
 )
+
+

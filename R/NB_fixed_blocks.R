@@ -23,11 +23,11 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, niter = 50, threshold = 1e-4) {
-      super$initialize(Y, X, niter, threshold)
+    initialize = function(Y, X, C, sparsity = 0, niter = 50, threshold = 1e-4) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       self$C <- C
       self$Q <- ncol(C)
+      super$initialize(Y, X, sparsity,niter, threshold)
     },
 
     #' @description
@@ -44,18 +44,6 @@ NB_fixed_blocks <- R6::R6Class(
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(gamma)) private$gamma <- gamma
       if (!anyNA(mu))   private$mu   <- mu
-    },
-
-    #' @description returns the model parameters B, dm1, omegaQ, n, p, d, Q, gamma, mu
-    #' @return A list containing the model parameters  B, dm1, omegaQ, n, p, d, Q, gamma, mu
-    get_model_parameters = function() {
-      parameters = super$get_model_parameters()
-      c(parameters, list("gamma" = private$gamma, "mu" = private$mu))
-    },
-    #' @description returns the model variables Y, X, C
-    #' @return A list containing the model parameters Y, X, C
-    get_model_variables = function() {
-      list(Y = self$Y, X = self$X, C = self$C)
     }),
 
 
@@ -81,7 +69,10 @@ NB_fixed_blocks <- R6::R6Class(
       J <- J + .5 * n * log_det_omegaQ
       J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
-      J
+      if(self$sparsity == 0){J
+      }else{
+        J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+      }
     },
 
     EM_initialize = function() {
@@ -107,10 +98,27 @@ NB_fixed_blocks <- R6::R6Class(
       ddiag  <- ddiag + (1/self$n) * diag(self$C %*% t(mu) %*% mu %*% t(self$C))
       ddiag  <- ddiag + diag(self$C %*% gamma %*% t(self$C))
       dm1    <- as.vector(1/ddiag)
-      omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
+      if(self$sparsity == 0){
+        omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
+      }else{
+        sigma_hat <- gamma + (1/self$n) * t(mu) %*% mu
+        glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) break
+        omegaQ<- Matrix::symmpart(glasso_out$wi)
+      }
+
+
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field posterior_par a list with the parameters of posterior distribution W | Y
+    posterior_par  = function() {list(gamma = private$gamma, mu = private$mu)}
   )
 )
 

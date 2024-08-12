@@ -22,9 +22,9 @@ NB_fixed_Q <- R6::R6Class(
     #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, niter = 50, threshold = 1e-4) {
-      super$initialize(Y, X, niter, threshold)
+    initialize = function(Y, X, Q, sparsity = 0, niter = 50, threshold = 1e-4) {
       self$Q = Q
+      super$initialize(Y, X, sparsity, niter, threshold)
     },
 
     #' @description
@@ -45,17 +45,6 @@ NB_fixed_Q <- R6::R6Class(
       if (!anyNA(tau))   private$tau   <- tau
       if (!anyNA(M))     private$M     <- M
       if (!anyNA(S))     private$S     <- S
-    },
-
-    #' @description returns the model parameters B, dm1 and kappa
-    #' @return A list containing the model parameters B, dm1, kappa
-    get_model_parameters = function() {
-      parameters       <- super$get_model_parameters()
-      parameters$alpha <- private$alpha
-      parameters$tau   <- private$tau
-      parameters$M     <- private$M
-      parameters$S     <- private$S
-      return(parameters)
     }
   ),
 
@@ -94,7 +83,10 @@ NB_fixed_Q <- R6::R6Class(
       # Entropy term for C
       elbo <- elbo - sum(xlogx(tau))
 
-      elbo
+      if(self$sparsity == 0){elbo
+      }else{
+        elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+      }
     },
 
     EM_initialize = function() {
@@ -126,7 +118,14 @@ NB_fixed_Q <- R6::R6Class(
       tau       <- t(check_zero_boundary(check_one_boundary(apply(pre_tau, 1, softmax))))
 
       # M step
-      omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
+      if(self$sparsity == 0){
+        omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
+      }else{
+        sigma_hat <- (1/self$n) * (t(M) %*% M + self$n * diag(S))
+        glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) break
+        omegaQ<- Matrix::symmpart(glasso_out$wi)
+      }
       B <- private$XtXm1 %*% t(self$X) %*% (self$Y- M %*% t(tau))
       dm1 <- as.vector(n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
       alpha <- colMeans(tau)
@@ -147,5 +146,8 @@ NB_fixed_Q <- R6::R6Class(
       parameters$alpha = private$alpha
       parameters},
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
-    var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)})
+    var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)},
+    #' @field clustering a list of labels giving the clustering obtained in the model
+    clustering = function() {get_clusters(private$tau)})
+
 )

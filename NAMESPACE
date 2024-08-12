@@ -3,4 +3,5 @@
 export(NB)
 export(NB_fixed_Q)
 export(NB_fixed_blocks)
+export(NB_unknown)
 export(zi_normal)
