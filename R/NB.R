@@ -103,6 +103,7 @@ NB <- R6::R6Class(
         print(h)
         parameters <- do.call(private$EM_step, parameters)
         ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
+        print(ll_list[h])
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
           break
       }

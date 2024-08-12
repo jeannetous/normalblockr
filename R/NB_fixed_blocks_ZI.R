@@ -138,15 +138,14 @@ NB_fixed_blocks_ZI <- R6::R6Class(
       b   <- .5 * as.vector(rep(1, self$n)) %*% t(as.vector(rep(1, self$p)))
       eta <- b * log(2 * pi) + b %*% diag(log(dm1)) ### à récrire
       eta <- eta + .5 * a %*% diag(dm1) + as.vector(rep(1, self$n)) %*% t(log(kappa))
-      eta <- eta - as.vector(rep(1, self$n)) %*% t(log(1 - kappa))
-      rho =  (torch_exp(eta) / (1 + exp(eta)))
-
+      eta <- eta - as.vector(rep(1, self$n)) %*% t(log(1 - kappa)) # ERREUR CALCUL ETA
+      rho =  (exp(eta) / (1 + exp(eta)))
 
       ## M step
       B       <- private$XtXm1 %*% t(self$X) %*% (self$Y - M %*% t(self$C))  ###### CALCULS FAUX - ceux de NB FB sans ZI
       omegaQ  <- self$n * solve(t(M) %*% M + diag(t(S) %*% as.vector(rep(1, self$n))))
-      dm1     <- (as.vector(rep(1, self$n)) %*% (1 - rho)) / (as.vector(rep(1, self$n)) %*% ((1 - rho) * (R^2 - 2 * R * M %*% t(C) + (M^2 + S) %*% t(C))))
-      kappa   <- check_one_boundary(check_zero_boundary(colMeans(Rho)))
+      dm1     <- as.vector((as.vector(rep(1, self$n)) %*% (1 - rho)) / (as.vector(rep(1, self$n)) %*% ((1 - rho) * (R^2 - 2 * R * M %*% t(C) + (M^2 + S) %*% t(C)))))
+      kappa   <- check_one_boundary(check_zero_boundary(colMeans(rho)))
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
            S = S)
