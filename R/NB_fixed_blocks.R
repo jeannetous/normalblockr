@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS nb_fixed #######################################
+##  CLASS NB_fixed_blocks #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -51,23 +51,20 @@ NB_fixed_blocks <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    gamma   = NULL, # variance of  posterior distribution of W
-    mu      = NULL,  #  mean for posterior distribution of W
+    gamma   = NA, # variance of  posterior distribution of W
+    mu      = NA,  #  mean for posterior distribution of W
 
 
     compute_loglik  = function(B, dm1, omegaQ, gamma, mu) {
-      ## problem dimensions
-      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
-
       R   <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
-      J <- - .5 * n * (p + Q) * log(2 * pi) + .5 * n * sum(log(dm1))
+      J <- - .5 * self$n * (self$p + self$Q) * log(2 * pi) + .5 * self$n * sum(log(dm1))
       J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * self$C) %*% t(mu))
-      J <- J - .5 * n * sum(diag(t(self$C) %*% (dm1 * self$C) %*% gamma))
+      J <- J - .5 * self$n * sum(diag(t(self$C) %*% (dm1 * self$C) %*% gamma))
       J <- J - .5 * sum(diag(mu %*% t(self$C) %*%  (dm1 * self$C)%*% t(mu)))
-      J <- J + .5 * n * log_det_omegaQ
-      J <- J - .5 * n * sum(diag(omegaQ %*% gamma))
+      J <- J + .5 * self$n * log_det_omegaQ
+      J <- J - .5 * self$n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
       if(self$sparsity == 0){J
       }else{

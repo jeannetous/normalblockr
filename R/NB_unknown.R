@@ -108,12 +108,6 @@ NB_unknown <- R6::R6Class(
       }
       model <- self$models[[id]]$clone()
       model
-    },
-
-    #' @description returns the model variables Y, X
-    #' @return A list containing the model parameters Y, X
-    get_model_variables = function() {
-      list(Y = self$Y, X = self$X)
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

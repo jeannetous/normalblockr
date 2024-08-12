@@ -45,9 +45,6 @@ zi_normal <- R6::R6Class(
       self$zeros <- 1 * (Y == 0)
       self$niter <- niter
       self$threshold <- threshold
-      private$n <- nrow(Y)
-      private$p <- ncol(Y)
-      private$d <- ncol(X)
     },
 
     #' @description
@@ -77,8 +74,8 @@ zi_normal <- R6::R6Class(
     #' @return A list containing the model parameters B, dm1, kappa
     get_model_parameters = function() {
       return(list("B" = private$B, "dm1" = private$dm1,
-                  "kappa" = private$kappa, "n" = private$n,
-                  "p" = private$p, "d" = private$d))
+                  "kappa" = private$kappa, "n" = self$n,
+                  "p" = self$p, "d" = self$d))
     },
 
     #' @description plots log-likelihood values during model optimization
@@ -91,9 +88,6 @@ zi_normal <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    n       = NULL, # number of samples
-    p       = NULL, # number of responses
-    d       = NULL, # number of covariates
     B       = NA,   # regression matrix
     dm1     = NA,   # diagonal vector of inverse variance matrix
     kappa   = NA,   # vector of zero-inflation probabilities
@@ -111,9 +105,7 @@ zi_normal <- R6::R6Class(
     },
 
     zi_normal_obj_grad_B = function(B_vec, dm1, rho) {
-      YmXB <- self$Y - self$X %*% matrix(B_vec, nrow = private$d, ncol = private$p)
-
-      ## A %*% diag(d) = t(t(A) * d)
+      YmXB <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
       grad <- -t(t(crossprod(self$X, (1 - rho) * YmXB)) * dm1)
       obj <- .5 * sum((1 - rho) * t(t(YmXB^2) * dm1))
 
@@ -134,7 +126,7 @@ zi_normal <- R6::R6Class(
         dm1 = dm1,
         rho = rho
       )
-      newB <- matrix(res$solution, nrow = private$d, ncol = private$p)
+      newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
     },
 
@@ -170,5 +162,30 @@ zi_normal <- R6::R6Class(
       }
       list(B = B, dm1 = dm1, kappa = kappa, rho = rho, ll_list = ll_list)
     }
-  )
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field n number of samples
+    n = function() {nrow(self$Y)},
+    #' @field p number of responses per sample
+    p = function() {ncol(self$Y)},
+    #' @field d number of variables (dimensions in X)
+    d = function() {ncol(self$X)},
+    #' @field nb_param number of parameters in the model
+    nb_param = function() {as.integer(self$p * (self$d + 2))},
+    #' @field model_par a list with the matrices of the model parameters:
+    #' B (regression coefficients), dm1 (species variance),
+    #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)
+    model_par  = function() {list(B = private$B, dm1 = private$dm1, kappa = private$kappa, rho = private$rho)},
+    #' @field loglik (or its variational lower bound)
+    loglik = function(){private$ll_list[[length(private$ll_list)]]},
+    #' @field BIC (or its variational lower bound)
+    BIC = function(){ - 2 * self$loglik + log(self$n) * self$nb_param},
+    #' @field AIC (or its variational lower bound)
+    AIC = function(){ - 2 * self$loglik + 2 * self$nb_param},
+    #' @field criteria a vector with loglik, BIC and number of parameters
+    criteria   = function() {data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC)})
 )

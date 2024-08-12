@@ -52,10 +52,10 @@ NB_fixed_Q <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    alpha   = NULL, # vector of groups probabilities
-    tau     = NULL, # posterior probabilities for group affectation
-    M       = NULL, # variational mean for posterior distribution of W
-    S       = NULL, # variational diagonal of variances for posterior distribution of W
+    alpha   = NA, # vector of groups probabilities
+    tau     = NA, # posterior probabilities for group affectation
+    M       = NA, # variational mean for posterior distribution of W
+    S       = NA, # variational diagonal of variances for posterior distribution of W
 
     compute_loglik  = function(B, dm1, omegaQ, alpha, tau, M, S) {
       ## problem dimensions

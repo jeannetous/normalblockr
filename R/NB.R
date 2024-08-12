@@ -94,14 +94,13 @@ NB <- R6::R6Class(
     B       = NA,   # regression matrix
     dm1     = NA,   # diagonal vector of inverse variance matrix
     omegaQ  = NA,   # groups variance matrix
-    kappa   = NA,   # vector of zero-inflation probabilities
-    rho     = NA,   # posterior probabilities of zero-inflation
     ll_list = NA,   # list of log-likelihood values during optimization
 
     EM_optimize = function(niter, threshold) {
       parameters <- do.call(private$EM_initialize, list())
       ll_list    <- do.call(private$compute_loglik, parameters)
       for (h in 2:niter) {
+        print(h)
         parameters <- do.call(private$EM_step, parameters)
         ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
