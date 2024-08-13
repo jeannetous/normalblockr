@@ -103,9 +103,6 @@ NB_fixed_blocks <- R6::R6Class(
         if (anyNA(glasso_out$wi)) break
         omegaQ<- Matrix::symmpart(glasso_out$wi)
       }
-
-
-
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
   ),
