@@ -18,6 +18,31 @@ R6 generic class for normal-block models
 \item{\code{niter}}{number of iterations in model optimization}
 
 \item{\code{threshold}}{loglikelihood threshold under which optimization stops}
+
+\item{\code{Q}}{number of blocks}
+}
+\if{html}{\out{</div>}}
+}
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{n}}{number of samples}
+
+\item{\code{p}}{number of responses per sample}
+
+\item{\code{d}}{number of variables (dimensions in X)}
+
+\item{\code{nb_param}}{number of parameters in the model}
+
+\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
+
+\item{\code{loglik}}{(or its variational lower bound)}
+
+\item{\code{BIC}}{(or its variational lower bound)}
+
+\item{\code{AIC}}{(or its variational lower bound)}
+
+\item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
 \if{html}{\out{</div>}}
 }
@@ -27,11 +52,8 @@ R6 generic class for normal-block models
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-update}{\code{NB$update()}}
 \item \href{#method-NB-optimize}{\code{NB$optimize()}}
-\item \href{#method-NB-get_model_parameters}{\code{NB$get_model_parameters()}}
 \item \href{#method-NB-get_model_variables}{\code{NB$get_model_variables()}}
 \item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
-\item \href{#method-NB-nparam}{\code{NB$nparam()}}
-\item \href{#method-NB-BIC}{\code{NB$BIC()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
@@ -101,19 +123,6 @@ optimizes the model and updates its parameters
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-get_model_parameters"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-get_model_parameters}{}}}
-\subsection{Method \code{get_model_parameters()}}{
-returns the model parameters B, dm1 and kappa
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$get_model_parameters()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A list containing the model parameters B, dm1, kappa
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-get_model_variables"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-get_model_variables}{}}}
 \subsection{Method \code{get_model_variables()}}{
@@ -133,26 +142,6 @@ A list containing the model parameters Y, X
 plots log-likelihood values during model optimization
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-nparam"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-nparam}{}}}
-\subsection{Method \code{nparam()}}{
-computes nparam, number of parameters
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$nparam()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-BIC"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-BIC}{}}}
-\subsection{Method \code{BIC()}}{
-computes BIC of the model
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$BIC()}\if{html}{\out{</div>}}
 }
 
 }

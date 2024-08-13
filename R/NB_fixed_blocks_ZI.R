@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  NB_fixed_blocks_ZI #######################################
+##  NB_fixed_blocks_zi #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -10,8 +10,8 @@
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
-NB_fixed_blocks_ZI <- R6::R6Class(
-  classname = "NB_fixed_blocks_ZI",
+NB_fixed_blocks_zi <- R6::R6Class(
+  classname = "NB_fixed_blocks_zi",
   inherit = NB,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -20,14 +20,14 @@ NB_fixed_blocks_ZI <- R6::R6Class(
     #' @field C the matrix of species groups
     C = NULL,
 
-    #' @description Create a new [`NB_fixed_blocks_ZI`] object.
+    #' @description Create a new [`NB_fixed_blocks_zi`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X, C, niter = 50, threshold = 1e-4) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       self$C <- C
       self$Q <- ncol(C)
-      super$initialize(Y, X, sparsity,niter, threshold)
+      super$initialize(Y = Y, X = X, niter = niter, threshold = threshold)
     },
 
     #' @description
@@ -66,9 +66,9 @@ NB_fixed_blocks_ZI <- R6::R6Class(
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi))
-      ### deux lignes ci-dessous à récrire pour enlever le diag(dm1)
+      ### ligne ci-dessous à récrire pour enlever le diag(dm1)
       elbo <- elbo + .5 * sum((1 - rho) %*% diag(log(dm1)))
-      elbo <- elbo - .5 * sum(((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(C))) %*% diag(dm1))
+      elbo <- elbo - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) )
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
@@ -95,13 +95,13 @@ NB_fixed_blocks_ZI <- R6::R6Class(
 
     zi_nb_fixed_blocks_obj_grad_M = function(M_vec, B, dm1, omegaQ, rho, kappa, S) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
-      R   <- Y - X %*% B
-      grad <- ((1 - rho) * R) %*%  diag(dm1) %*% C - ((1 - rho) %*% diag(dm1) %*% C) * M - M %*% omegaQ
+      R    <- self$Y - X %*% B
+      grad <- - (((1 - rho) * R) %*%  diag(dm1) %*% self$C - ((1 - rho) %*% diag(dm1) %*% self$C) * M - M %*% omegaQ)
 
-      obj  <- - .5 * sum(((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(C))) %*% diag(dm1))
+      obj  <- - .5 * sum(((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) %*% diag(dm1))
       obj  <- obj - .5 * sum((M %*% omegaQ) * M)
 
-      res  <- list("objective" = obj, "gradient"  = grad)
+      res  <- list("objective" = - obj, "gradient"  = - grad)
       res
     },
 
@@ -127,25 +127,61 @@ NB_fixed_blocks_ZI <- R6::R6Class(
       newM
     },
 
+    zi_nb_fixed_blocks_obj_grad_B = function(B_vec, dm1, omegaQ, rho, kappa,
+                                             M, S) {
+      B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
+      R    <- self$Y - X %*% B
+      grad <- t(X) %*% ((1 - rho) * (R - M %*% t(C))) %*% diag(dm1)
+      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) )
+
+      res  <- list("objective" = - obj, "gradient"  = - grad)
+      res
+    },
+
+    zi_nb_fixed_blocks_nlopt_optim_B = function(B0, dm1, omegaQ, rho, kappa, M,
+                                                S) {
+      B0_vec <- as.vector(B0)
+      res <- nloptr::nloptr(
+        x0 = B0_vec,
+        eval_f = private$zi_nb_fixed_blocks_obj_grad_B,
+        opts = list(
+          algorithm = "NLOPT_LD_LBFGS",
+          xtol_rel = 1e-6,
+          maxeval = 1000
+        ),
+        dm1    = dm1,
+        omegaQ = omegaQ,
+        rho    = rho,
+        kappa  = kappa,
+        M      = M,
+        S      = S
+      )
+      newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
+      newB
+    },
+
     EM_step = function(B, dm1, omegaQ, kappa, rho, M, S) {
-      R      <- self$Y - self$X %*% B
+      R   <- self$Y - self$X %*% B
+      # rho_ind <- which(self$Y == 0, arr.ind=TRUE) ## à modifier
 
-      ## E step
-      M <-  private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ, rho, kappa, S)
-      S <-  1/sweep(((1 - rho) %*% (dm1 * self$C)), 2, diag(omegaQ), "+")
+      # E step
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ, rho,
+                                                    kappa, S)
+      S <-  1/sweep(((1 - rho) %*% (dm1 * C)), 2, diag(omegaQ), "+")
 
-      a   <- R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)
-      b   <- .5 * as.vector(rep(1, self$n)) %*% t(as.vector(rep(1, self$p)))
-      eta <- b * log(2 * pi) + b %*% diag(log(dm1)) ### à récrire
-      eta <- eta + .5 * a %*% diag(dm1) + as.vector(rep(1, self$n)) %*% t(log(kappa))
-      eta <- eta - as.vector(rep(1, self$n)) %*% t(log(1 - kappa)) # ERREUR CALCUL ETA
-      rho =  (exp(eta) / (1 + exp(eta)))
+      eta <- as.vector(rep(1, n)) %*% t(as.vector(rep(1, p))) * log(2 * pi)
+      eta <- eta - as.vector(rep(1, n)) %*% t(log(dm1))
+      eta <- eta + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) * dm1)
+      rho <- 1 /(1 + exp(-.5 * eta) * as.vector(rep(1, n)) %*% t((1 - kappa)/kappa))
+      rho <- check_one_boundary(check_zero_boundary((self$Y == 0)* rho))
 
-      ## M step
-      B       <- private$XtXm1 %*% t(self$X) %*% (self$Y - M %*% t(self$C))  ###### CALCULS FAUX - ceux de NB FB sans ZI
-      omegaQ  <- self$n * solve(t(M) %*% M + diag(t(S) %*% as.vector(rep(1, self$n))))
-      dm1     <- as.vector((as.vector(rep(1, self$n)) %*% (1 - rho)) / (as.vector(rep(1, self$n)) %*% ((1 - rho) * (R^2 - 2 * R * M %*% t(C) + (M^2 + S) %*% t(C)))))
-      kappa   <- check_one_boundary(check_zero_boundary(colMeans(rho)))
+      # M step
+      B        <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, rho,
+                                                           kappa, M, S)
+      omegaQ   <- self$n * solve((t(M) %*% M) + diag(self$n * diag(S)))
+      kappa    <- check_boundaries(colMeans(rho))
+      dd       <- (1/(t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + ((M^2 + S) %*% t(self$C)))) %*% as.vector(rep(1, self$n))
+      dm1      <- as.vector(1/dd)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
            S = S)
@@ -156,8 +192,13 @@ NB_fixed_blocks_ZI <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field posterior_par a list with the parameters of posterior distribution W | Y
-    posterior_par  = function() {list(gamma = private$gamma, mu = private$mu)}
+    #' @field posterior_par a list with variational parameters
+    posterior_par  = function() {list(M = private$M, S = private$S, rho = private$rho)},
+    #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix), kappa (zero-inflation probabilities)
+    model_par  = function() {
+      par       = super$model_par
+      par$kappa = private$kappa
+      par}
   )
 )
 
