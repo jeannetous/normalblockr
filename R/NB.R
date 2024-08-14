@@ -124,7 +124,7 @@ NB <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() {ncol(self$X)},
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1))},
+    nb_param = function() {as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1))}, # À RECALCULER
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() {list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ)},
     #' @field loglik (or its variational lower bound)
