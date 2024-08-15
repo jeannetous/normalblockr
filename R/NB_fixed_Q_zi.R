@@ -90,7 +90,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     },
 
     EM_initialize = function() {
-      init_model <- zi_normal$new(self$Y, self$X)
+      init_model <- normal_zi$new(self$Y, self$X)
       init_model$optimize()
       B          <- init_model$model_par$B
       dm1        <- init_model$model_par$dm1

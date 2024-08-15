@@ -1,17 +1,17 @@
 ###############################################################################
 ###############################################################################
 set.seed(3)
-n     = 300
-p     = 150
+n     = 200
+p     = 50
 d     = 2
 Q     = 4
 Sigma <- matrix(0, Q, Q)
 diag(Sigma) <- 1
 Sigma[row(Sigma) != col(Sigma)] = 0.1
-minB  = 1
-maxB  = 2
-minX  = rep(1, d)
-maxX  = rep(10, d)
+minB  = -1
+maxB  = 1
+minX  = rep(-50, d)
+maxX  = rep(50, d)
 minD  = 0.2
 maxD  = 3
 minKappa = 0.2
@@ -30,21 +30,22 @@ epsilon = t(MASS::mvrnorm(n, mu=matrix(rep(0, p), p, 1), Sigma=D))
 Y = t(B) %*% X + C %*% W + epsilon
 kappa <- runif(p, min=minKappa, max=maxKappa)
 Y[matrix(rbinom(n * p, size = 1, prob = rep(kappa, n)), nrow = p, ncol = n)==1] = 0
-
 Y    = t(Y)
 X    = t(X)
 ###############################################################################
 ###############################################################################
 
-test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
-  model <- NB_fixed_Q_zi$new(Y, X, Q, niter = 60)
+test_that("NB_unknown: check dimensions, optimization and field access", {
+  model <- NB_unknown_zi$new(Y, X, c(3,6,4,5), niter = 60)
   model$optimize()
-  params <- model$model_par
+  best_model <- model$getBestModel("BIC")
+  true_model <- model$get_model(Q)
+  expect_equal(true_model$Q, Q)
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 160916)
-  expect_gt(model$loglik, -79146)
-  model_sparse <- NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0.05, niter = 60)
+  expect_lt(best_model$BIC, 40280)
+  expect_gt(true_model$loglik, -20659)
+  model_sparse <- NB_unknown_zi$new(Y, X, c(3,6,4,5), c(0.01, 0.04, 0.02, 0.03), niter = 60)
   model_sparse$optimize()
 })

@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_unknown #######################################
+##  CLASS NB_unknown_zi #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -9,10 +9,10 @@
 #' @param nb_blocks list of number of blocks values to be tested
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
-#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param models uderlying NB_fixed_Q_zi models for each nb of blocks
 #' @export
-NB_unknown <- R6::R6Class(
-  classname = "NB_unknown",
+NB_unknown_zi <- R6::R6Class(
+  classname = "NB_unknown_zi",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -30,10 +30,10 @@ NB_unknown <- R6::R6Class(
     niter = NULL,
     #' @field threshold loglikelihood threshold under which optimization stops
     threshold = NULL,
-    #' @field models list of NB_fixed_Q models corresponding to each nb_block value
+    #' @field models list of NB_fixed_Q_zi models corresponding to each nb_block value
     models = NULL,
 
-    #' @description Create a new [`NB_unknown`] object.
+    #' @description Create a new [`NB_unknown_zi`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param sparsity penalty on the network density
@@ -60,16 +60,16 @@ NB_unknown <- R6::R6Class(
       self$threshold <- threshold
       self$nb_blocks <- nb_blocks
 
-      # instantiates an NB_fixed_Q model for each Q in nb_blocks
+      # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- purrr::map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
                                  function(block_rank, sparsity_sorted){
-        model <- NB_fixed_Q$new(self$Y, self$X,
-                                nb_blocks[[block_rank]],
-                                sparsity_sorted, self$niter, self$threshold)
-      })
+                                   model <- NB_fixed_Q_zi$new(self$Y, self$X,
+                                                           nb_blocks[[block_rank]],
+                                                           sparsity_sorted, self$niter, self$threshold)
+                                 })
     },
 
-    #' @description optimizes an NB_fixed_Q object for each value of Q
+    #' @description optimizes an NB_fixed_Q_zi object for each value of Q
     optimize = function(){
       self$models <- purrr::map(self$models, function(model){
         model$optimize()
@@ -77,9 +77,9 @@ NB_unknown <- R6::R6Class(
       })
     },
 
-    #' @description returns the NB_fixed_Q model corresponding to given Q
+    #' @description returns the NB_fixed_Q_zi model corresponding to given Q
     #' @param Q number of blocks asked by user
-    #' @return A NB_fixed_Q object with given value Q
+    #' @return A NB_fixed_Q_zi object with given value Q
     get_model = function(Q){
       if(!(Q %in% self$nb_blocks)){
         stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")}
@@ -91,7 +91,7 @@ NB_unknown <- R6::R6Class(
     #' @param crit a character for the criterion used to performed the selection.
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
-    #' @return a [`NB_fixed_Q`] object
+    #' @return a [`NB_fixed_Q_zi`] object
     getBestModel = function(crit = c("loglik", "BIC", "AIC")){
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
