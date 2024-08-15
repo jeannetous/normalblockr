@@ -80,7 +80,7 @@ normal_zi <- R6::R6Class(
 
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(){
-      plot(1:length(private$ll_list), private$ll_list, type = 'b')
+      plot(seq_along(private$ll_list), private$ll_list, type = 'b')
     }
   ),
 
@@ -169,23 +169,23 @@ normal_zi <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples
-    n = function() {nrow(self$Y)},
+    n = function() nrow(self$Y),
     #' @field p number of responses per sample
-    p = function() {ncol(self$Y)},
+    p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
-    d = function() {ncol(self$X)},
+    d = function() ncol(self$X),
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(self$p * (self$d + 2))},
+    nb_param = function() as.integer(self$p * (self$d + 2)),
     #' @field model_par a list with the matrices of the model parameters:
     #' B (regression coefficients), dm1 (species variance),
     #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)
-    model_par  = function() {list(B = private$B, dm1 = private$dm1, kappa = private$kappa, rho = private$rho)},
+    model_par  = function() list(B = private$B, dm1 = private$dm1, kappa = private$kappa, rho = private$rho),
     #' @field loglik (or its variational lower bound)
-    loglik = function(){private$ll_list[[length(private$ll_list)]]},
+    loglik = function() private$ll_list[[length(private$ll_list)]],
     #' @field BIC (or its variational lower bound)
-    BIC = function(){ - 2 * self$loglik + log(self$n) * self$nb_param},
+    BIC = function() - 2 * self$loglik + log(self$n) * self$nb_param,
     #' @field AIC (or its variational lower bound)
-    AIC = function(){ - 2 * self$loglik + 2 * self$nb_param},
+    AIC = function() - 2 * self$loglik + 2 * self$nb_param,
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function() {data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC)})
+    criteria   = function() data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC))
 )

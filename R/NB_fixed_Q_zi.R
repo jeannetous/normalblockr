@@ -7,6 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks in the model
+#' @param sparsity to add on blocks precision matrix
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
@@ -46,7 +47,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB_fixed_Q`] object
     update = function(B = NA, dm1 = NA, omegaQ = NA, alpha = NA, kappa = NA,
-                      M = NA, S = NA, tau = NA, rho = NA, ll_list=NA) {
+                      M = NA, S = NA, tau = NA, rho = NA, ll_list = NA) {
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(alpha)) private$alpha <- alpha
       if (!anyNA(kappa)) private$kappa <- kappa
@@ -74,8 +75,8 @@ NB_fixed_Q_zi <- R6::R6Class(
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi))
-      elbo <- elbo + .5 * sum(t( t(1 - rho) * log(dm1)))
-      elbo <- elbo - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) )
+      elbo <- elbo + .5 * sum(t(t(1 - rho) * log(dm1)))
+      elbo <- elbo - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(tau %*% log(alpha))
@@ -83,8 +84,8 @@ NB_fixed_Q_zi <- R6::R6Class(
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(tau * log(tau))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if(self$sparsity == 0){elbo
-      }else{
+      if (self$sparsity == 0 ) {elbo
+      }else {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
     },
@@ -95,7 +96,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B          <- init_model$model_par$B
       dm1        <- init_model$model_par$dm1
       R          <- self$Y - self$X %*% B
-      cl         <- kmeans(t(R), self$Q, nstart=30)$cluster
+      cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
       tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
       alpha      <- colMeans(tau)
       omegaQ     <- t(tau) %*% diag(dm1) %*% tau
@@ -114,7 +115,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       R    <- self$Y - self$X %*% B
       grad <- - ( t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ)
 
-      obj  <- - .5 * sum( t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))))
+      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))))
       obj  <- obj - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
@@ -149,7 +150,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(tau))))
-      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) )
+      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -184,35 +185,35 @@ NB_fixed_Q_zi <- R6::R6Class(
       # E step
       M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa,
                                                     S, tau, rho)
-      S <-  1/sweep(((1 - rho) %*% (dm1 * tau)), 2, diag(omegaQ), "+")
+      S <-  1 / sweep(((1 - rho) %*% (dm1 * tau)), 2, diag(omegaQ), "+")
 
       nu <- as.vector(rep(1, self$n)) %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
       nu <- nu - as.vector(rep(1, self$n)) %*% t(log(dm1))
 
       nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) * dm1)
-      rho <- 1 /(1 + exp(-.5 * nu) * as.vector(rep(1, self$n)) %*% t((1 - kappa)/kappa))
-      rho <- check_one_boundary(check_zero_boundary((self$Y == 0)* rho))
+      rho <- 1 / (1 + exp(-.5 * nu) * as.vector(rep(1, self$n)) %*% t((1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
       eta <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S) + t((1 - rho) * R) %*% M)
-      eta <- eta + as.vector(rep(1,self$p)) %*% t(log(alpha)) - 1
+      eta <- eta + as.vector(rep(1, self$p)) %*% t(log(alpha)) - 1
       tau <- check_one_boundary(check_zero_boundary(t(apply(eta, 1, softmax))))
 
       # M step
       B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau,
                                               rho)
 
-      if(self$sparsity == 0){
+      if (self$sparsity == 0 ) {
         omegaQ <- self$n * solve((t(M) %*% M) + diag(self$n * diag(S)))
       }else{
         sigma_hat <- (1/self$n) * (t(M) %*% M) + diag(self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) break
-        omegaQ<- Matrix::symmpart(glasso_out$wi)
+        omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       alpha    <- colMeans(tau)
       kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dd       <- (1/(t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau)))) %*% as.vector(rep(1, self$n))
-      dm1      <- as.vector(1/dd)
+      dd       <- (1 / (t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau)))) %*% as.vector(rep(1, self$n))
+      dm1      <- as.vector(1 / dd)
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
            M = M, S = S, rho = rho, tau = tau)
@@ -224,12 +225,12 @@ NB_fixed_Q_zi <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field posterior_par a list with variational parameters
-    posterior_par  = function() {list(M = private$M, S = private$S, rho = private$rho)},
+    posterior_par  = function() list(M = private$M, S = private$S, rho = private$rho),
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (blocks precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
-      par       = super$model_par
-      par$kappa = private$kappa
-      par}
+      par       <- super$model_par
+      par$kappa <- private$kappa
+      par
+      }
   )
 )
-

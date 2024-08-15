@@ -48,7 +48,7 @@ NB <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$sparsity <- sparsity
-      if(sparsity > 0){
+      if (sparsity > 0 ) {
         sparsity_weights <- matrix(1, self$Q, self$Q)
         diag(sparsity_weights) <- 0
         self$sparsity_weights  <- sparsity_weights
@@ -66,7 +66,7 @@ NB <- R6::R6Class(
     #' @param omegaQ groups inverse variance matrix
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`zi_normal`] object
-    update = function(B = NA, dm1 = NA, omegaQ = NA, ll_list=NA) {
+    update = function(B = NA, dm1 = NA, omegaQ = NA, ll_list = NA) {
       if (!anyNA(B))          private$B       <- B
       if (!anyNA(dm1))        private$dm1     <- dm1
       if (!anyNA(omegaQ))     private$omegaQ  <- omegaQ
@@ -81,8 +81,8 @@ NB <- R6::R6Class(
       do.call(self$update, optim_out)
     },
     #' @description plots log-likelihood values during model optimization
-    plot_loglik = function(){
-      plot(1:length(private$ll_list), private$ll_list)
+    plot_loglik = function() {
+      plot(seq_along(private$ll_list), private$ll_list)
     }
   ),
 
@@ -108,9 +108,9 @@ NB <- R6::R6Class(
       c(parameters, list(ll_list = ll_list))
     },
 
-    EM_step = function(){},
-    EM_initialize = function(){},
-    compute_loglik  = function() {}
+    EM_step = function( ) {},
+    EM_initialize = function( ) {},
+    compute_loglik  = function( ) {}
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,25 +118,23 @@ NB <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples
-    n = function() {nrow(self$Y)},
+    n = function() nrow(self$Y),
     #' @field p number of responses per sample
-    p = function() {ncol(self$Y)},
+    p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
-    d = function() {ncol(self$X)},
+    d = function() ncol(self$X),
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1))}, # À RECALCULER
+    nb_param = function() as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1)), # À RECALCULER
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
-    model_par  = function() {list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ)},
+    model_par  = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field loglik (or its variational lower bound)
-    loglik = function(){private$ll_list[[length(private$ll_list)]]},
+    loglik = function() private$ll_list[[length(private$ll_list)]],
     #' @field penalty (penalty on log-likelihood due to sparsity)
-    penalty = function(){- self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ))},
+    penalty = function() - self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ)),
     #' @field BIC (or its variational lower bound)
-    BIC = function(){ - 2 * self$loglik + log(self$n) * self$nb_param},
+    BIC = function() - 2 * self$loglik + log(self$n) * self$nb_param,
     #' @field AIC (or its variational lower bound)
-    AIC = function(){ - 2 * self$loglik + 2 * self$nb_param},
+    AIC = function() - 2 * self$loglik + 2 * self$nb_param,
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function() {data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC)})
+    criteria   = function() data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC))
 )
-
-

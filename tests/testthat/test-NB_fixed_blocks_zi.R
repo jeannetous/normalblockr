@@ -1,19 +1,19 @@
 ###############################################################################
 ###############################################################################
 set.seed(3)
-n     = 300
-p     = 150
-d     = 2
-Q     = 4
+n     <-  300
+p     <-  150
+d     <-  2
+Q     <-  4
 Sigma <- matrix(0, Q, Q)
 diag(Sigma) <- 1
 Sigma[row(Sigma) != col(Sigma)] = 0.1
-minB  = 1
-maxB  = 2
-minX  = rep(1, d)
-maxX  = rep(10, d)
-minD  = 0.2
-maxD  = 3
+minB  <-  1
+maxB  <-  2
+minX  <-  rep(1, d)
+maxX  <-  rep(10, d)
+minD  <-  0.2
+maxD  <-  3
 minKappa = 0.2
 maxKappa = 0.6
 
@@ -31,8 +31,8 @@ Y = t(B) %*% X + C %*% W + epsilon
 kappa <- runif(p, min=minKappa, max=maxKappa)
 Y[matrix(rbinom(n * p, size = 1, prob = rep(kappa, n)), nrow = p, ncol = n)==1] = 0
 
-Y    = t(Y)
-X    = t(X)
+Y    <-  t(Y)
+X    <-  t(X)
 ###############################################################################
 ###############################################################################
 

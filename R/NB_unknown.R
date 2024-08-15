@@ -70,8 +70,8 @@ NB_unknown <- R6::R6Class(
     },
 
     #' @description optimizes an NB_fixed_Q object for each value of Q
-    optimize = function(){
-      self$models <- purrr::map(self$models, function(model){
+    optimize = function() {
+      self$models <- purrr::map(self$models, function(model) {
         model$optimize()
         model
       })
@@ -80,8 +80,8 @@ NB_unknown <- R6::R6Class(
     #' @description returns the NB_fixed_Q model corresponding to given Q
     #' @param Q number of blocks asked by user
     #' @return A NB_fixed_Q object with given value Q
-    get_model = function(Q){
-      if(!(Q %in% self$nb_blocks)){
+    get_model = function(Q) {
+      if(!(Q %in% self$nb_blocks)) {
         stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")}
       Q_rank = which(sort(self$nb_blocks) == Q)
       return(self$models[[Q_rank]])
@@ -92,7 +92,7 @@ NB_unknown <- R6::R6Class(
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q`] object
-    getBestModel = function(crit = c("loglik", "BIC", "AIC")){
+    getBestModel = function(crit = c("loglik", "BIC", "AIC") ) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1

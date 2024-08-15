@@ -7,6 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks
+#' @param sparsity to add on blocks precision matrix
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
@@ -23,7 +24,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, sparsity = 0, niter = 50, threshold = 1e-4) {
-      self$Q = Q
+      self$Q <- Q
       super$initialize(Y, X, sparsity, niter, threshold)
     },
 
@@ -39,7 +40,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB_fixed_Q`] object
     update = function(B = NA, dm1 = NA, omegaQ = NA, alpha = NA, tau = NA,
-                      M = NA, S = NA, ll_list=NA) {
+                      M = NA, S = NA, ll_list = NA) {
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(alpha)) private$alpha <- alpha
       if (!anyNA(tau))   private$tau   <- tau
@@ -66,11 +67,11 @@ NB_fixed_Q <- R6::R6Class(
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       # expectation of log(p(Y | W, C))
-      elbo <- - 0.5 * n * p * log(2*pi) + 0.5 * n * sum(log(dm1))
-      elbo <- elbo - 0.5 * sum(dm1*((R^2 + (tau %*% t(M^2)) - 2*R* (tau %*% t(M))) %*% ones + n * (tau %*% S)))
+      elbo <- - 0.5 * n * p * log(2 * pi) + 0.5 * n * sum(log(dm1))
+      elbo <- elbo - 0.5 * sum(dm1 * ((R^2 + (tau %*% t(M^2)) - 2 * R* (tau %*% t(M))) %*% ones + n * (tau %*% S)))
 
       # expectation of log(p(W))
-      elbo <- elbo - 0.5 * n * Q * log(2*pi) + 0.5 * n * log_det_omegaQ
+      elbo <- elbo - 0.5 * n * Q * log(2 * pi) + 0.5 * n * log_det_omegaQ
       elbo <- elbo - 0.5 * sum(crossprod(ones, (M %*% omegaQ) * M))
       elbo <- elbo - 0.5 * n * S %*% diag(omegaQ)
 
@@ -78,27 +79,27 @@ NB_fixed_Q <- R6::R6Class(
       elbo <- elbo + sum(crossprod(log(alpha), t(tau)))
 
       # Entropy term for W
-      elbo <- elbo + 0.5 * n * Q * log(2*pi* exp(1)) + .5 * n * sum(log(S))
+      elbo <- elbo + 0.5 * n * Q * log(2 * pi* exp(1)) + .5 * n * sum(log(S))
 
       # Entropy term for C
       elbo <- elbo - sum(xlogx(tau))
 
-      if(self$sparsity == 0){elbo
-      }else{
+      if (self$sparsity == 0 ) {elbo
+      }else {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
     },
 
     EM_initialize = function() {
       n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
-      B                 <- private$XtXm1%*% t(self$X) %*% self$Y
+      B                 <- private$XtXm1 %*% t(self$X) %*% self$Y
       R                 <- t(self$Y - self$X %*% B)
-      clustering_kmeans <- kmeans(R, Q, nstart=30)
+      clustering_kmeans <- kmeans(R, Q, nstart = 30)
       cl                <- clustering_kmeans$cluster
       tau               <- as_indicator(cl)
       alpha             <- colMeans(tau)
       S                 <- rep(0.1, Q)
-      M                 <- matrix(rep(0, n * Q), nrow=n)
+      M                 <- matrix(rep(0, n * Q), nrow = n)
       dm1               <- as.vector(rep(1, p))
       omegaQ            <- diag(rep(1, Q))
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
@@ -112,22 +113,22 @@ NB_fixed_Q <- R6::R6Class(
 
       # E step
       M         <- crossprod(as.vector(dm1) * R, tau) %*% G
-      S         <- as.vector(1/(as.vector(dm1) %*% tau + t(diag(omegaQ))))
-      pre_tau   <- -.5 * dm1 %*% t(ones) %*% M^2 -.5 * dm1 %*% t(n*S)
-      pre_tau   <- pre_tau + dm1 * (R %*% M)  + outer(rep(1,p), log(alpha)) - 1
+      S         <- as.vector(1 / (as.vector(dm1) %*% tau + t(diag(omegaQ))))
+      pre_tau   <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
+      pre_tau   <- pre_tau + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
       tau       <- t(check_zero_boundary(check_one_boundary(apply(pre_tau, 1, softmax))))
 
       # M step
-      if(self$sparsity == 0){
-        omegaQ <- n * solve((t(M) %*% M) + n * diag(S))
+      if (self$sparsity == 0 ) {
+        omegaQ <- self$n * solve((t(M) %*% M) + self$n * diag(S))
       }else{
-        sigma_hat <- (1/self$n) * (t(M) %*% M + self$n * diag(S))
+        sigma_hat <- (1 / self$n) * (t(M) %*% M + self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) break
-        omegaQ<- Matrix::symmpart(glasso_out$wi)
+        omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
-      B <- private$XtXm1 %*% t(self$X) %*% (self$Y- M %*% t(tau))
-      dm1 <- as.vector(n/((R^2 - 2*R*(tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
+      B <- private$XtXm1 %*% t(self$X) %*% (self$Y - M %*% t(tau))
+      dm1 <- as.vector(self$n / ((R^2 - 2 * R * (tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
       alpha <- colMeans(tau)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
@@ -142,8 +143,8 @@ NB_fixed_Q <- R6::R6Class(
     nb_param = function() {super$nb_param + self$Q + self$p * self$Q + 2 * self$n * self$Q},
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() {
-      parameters       = super$model_par
-      parameters$alpha = private$alpha
+      parameters       <- super$model_par
+      parameters$alpha <- private$alpha
       parameters},
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
     var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)},

@@ -48,13 +48,13 @@ NB_unknown_zi <- R6::R6Class(
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
-      if(length(nb_blocks) != length(unique(nb_blocks))){
+      if (length(nb_blocks) != length(unique(nb_blocks)) ) {
         stop("each nb_blocks value can only be present once in nb_blocks")
       }
       self$Y <- Y
       self$X <- X
       if (length(sparsity) == 1) sparsity <- rep(sparsity, length(nb_blocks))
-      stopifnot(all.equal(length(sparsity),length(nb_blocks)))
+      stopifnot(all.equal(length(sparsity), length(nb_blocks)))
       self$sparsity <- sparsity
       self$niter <- niter
       self$threshold <- threshold
@@ -62,7 +62,7 @@ NB_unknown_zi <- R6::R6Class(
 
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- purrr::map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
-                                 function(block_rank, sparsity_sorted){
+                                 function(block_rank, sparsity_sorted ) {
                                    model <- NB_fixed_Q_zi$new(self$Y, self$X,
                                                            nb_blocks[[block_rank]],
                                                            sparsity_sorted, self$niter, self$threshold)
@@ -70,7 +70,7 @@ NB_unknown_zi <- R6::R6Class(
     },
 
     #' @description optimizes an NB_fixed_Q_zi object for each value of Q
-    optimize = function(){
+    optimize = function() {
       self$models <- purrr::map(self$models, function(model){
         model$optimize()
         model
@@ -80,10 +80,11 @@ NB_unknown_zi <- R6::R6Class(
     #' @description returns the NB_fixed_Q_zi model corresponding to given Q
     #' @param Q number of blocks asked by user
     #' @return A NB_fixed_Q_zi object with given value Q
-    get_model = function(Q){
-      if(!(Q %in% self$nb_blocks)){
-        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")}
-      Q_rank = which(sort(self$nb_blocks) == Q)
+    get_model = function(Q) {
+      if(!(Q %in% self$nb_blocks) ) {
+        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
+        }
+      Q_rank <- which(sort(self$nb_blocks) == Q)
       return(self$models[[Q_rank]])
     },
 
@@ -92,7 +93,7 @@ NB_unknown_zi <- R6::R6Class(
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q_zi`] object
-    getBestModel = function(crit = c("loglik", "BIC", "AIC")){
+    getBestModel = function(crit = c("loglik", "BIC", "AIC") ) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
@@ -108,13 +109,13 @@ NB_unknown_zi <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples
-    n = function() {nrow(self$Y)},
+    n = function() nrow(self$Y),
     #' @field p number of responses per sample
-    p = function() {ncol(self$Y)},
+    p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
-    d = function() {ncol(self$X)},
+    d = function() ncol(self$X),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function() { purrr::map(self$models, 'criteria') %>% purrr::reduce(rbind)}
+    criteria = function() purrr::map(self$models, 'criteria') %>% purrr::reduce(rbind)
   )
 
 )

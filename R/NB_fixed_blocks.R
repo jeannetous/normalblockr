@@ -7,6 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param sparsity to add on blocks precision matrix
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood threshold under which optimization stops
 #' @export
@@ -62,23 +63,23 @@ NB_fixed_blocks <- R6::R6Class(
       J <- - .5 * self$n * (self$p + self$Q) * log(2 * pi) + .5 * self$n * sum(log(dm1))
       J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * self$C) %*% t(mu))
       J <- J - .5 * self$n * sum(diag(t(self$C) %*% (dm1 * self$C) %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% t(self$C) %*%  (dm1 * self$C)%*% t(mu)))
+      J <- J - .5 * sum(diag(mu %*% t(self$C) %*%  (dm1 * self$C) %*% t(mu)))
       J <- J + .5 * self$n * log_det_omegaQ
       J <- J - .5 * self$n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
-      if(self$sparsity == 0){J
+      if(self$sparsity == 0 ) {J
       }else{
         J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
     },
 
     EM_initialize = function() {
-      B      <- private$XtXm1%*% t(self$X) %*% self$Y
+      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
       R      <- t(self$Y - self$X %*% B)
-      dm1    <- 1/check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
+      dm1    <- 1 / check_one_boundary(check_zero_boundary(diag(cov(t(R)))))
       gamma  <- solve(t(self$C) %*% (dm1 * self$C))
       mu     <- t(gamma %*% t(self$C) %*% (dm1 * R))
-      omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
+      omegaQ <- solve(gamma + (1 / self$n) * t(mu) %*% mu)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     },
 
@@ -91,17 +92,17 @@ NB_fixed_blocks <- R6::R6Class(
 
       ## M step
       B      <- private$XtXm1 %*% t(self$X) %*% (self$Y - mu %*% t(self$C))
-      ddiag  <- (1/self$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(self$C)))
-      ddiag  <- ddiag + (1/self$n) * diag(self$C %*% t(mu) %*% mu %*% t(self$C))
+      ddiag  <- (1 / self$n) * (diag(R %*% t(R)) - 2 * diag(R %*% mu %*% t(self$C)))
+      ddiag  <- ddiag + (1 / self$n) * diag(self$C %*% t(mu) %*% mu %*% t(self$C))
       ddiag  <- ddiag + diag(self$C %*% gamma %*% t(self$C))
-      dm1    <- as.vector(1/ddiag)
-      if(self$sparsity == 0){
-        omegaQ <- solve(gamma + (1/self$n) * t(mu) %*% mu)
-      }else{
-        sigma_hat <- gamma + (1/self$n) * t(mu) %*% mu
+      dm1    <- as.vector(1 / ddiag)
+      if (self$sparsity == 0 ) {
+        omegaQ <- solve(gamma + (1 / self$n) * t(mu) %*% mu)
+      }else {
+        sigma_hat <- gamma + (1 / self$n) * t(mu) %*% mu
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) break
-        omegaQ<- Matrix::symmpart(glasso_out$wi)
+        omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
@@ -112,7 +113,6 @@ NB_fixed_blocks <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
-    posterior_par  = function() {list(gamma = private$gamma, mu = private$mu)}
+    posterior_par  = function() list(gamma = private$gamma, mu = private$mu)
   )
 )
-

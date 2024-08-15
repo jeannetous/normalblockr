@@ -37,11 +37,13 @@ softmax <- function(x) {
 }
 
 #' computes ARI between two clusterings
-matching_group_scores <- function(groups1, groups2){
+matching_group_scores <- function(groups1, groups2 ) {
   ari <- pdfCluster::adj.rand.index(groups1, groups2)
   # If ari is na, we want to see if a relabeling can change that
-  if (is.na(ari)){if((length(unique(groups1)) == 1) & (length(unique(groups2)) == 1)){
-    return(1)}}
+  if (is.na(ari)) {
+    if((length(unique(groups1)) == 1) & (length(unique(groups2)) == 1))
+    { return(1)}
+    }
   return(ari)
 }
 
