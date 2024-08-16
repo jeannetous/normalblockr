@@ -109,14 +109,14 @@ NB_fixed_Q <- R6::R6Class(
       n    <- self$n ; p <- self$p
       R    <- t(self$Y - self$X %*% B)
       G    <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
-      ones <- as.vector(rep(1, n))
+      ones <- as.vector(rep(1, self$n))
 
       # E step
       M         <- crossprod(as.vector(dm1) * R, tau) %*% G
       S         <- as.vector(1 / (as.vector(dm1) %*% tau + t(diag(omegaQ))))
-      pre_tau   <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
-      pre_tau   <- pre_tau + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
-      tau       <- t(check_zero_boundary(check_one_boundary(apply(pre_tau, 1, softmax))))
+      eta       <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
+      eta       <- eta + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
+      tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
       # M step
       if (self$sparsity == 0 ) {
@@ -149,6 +149,12 @@ NB_fixed_Q <- R6::R6Class(
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
     var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)},
     #' @field clustering a list of labels giving the clustering obtained in the model
-    clustering = function() {get_clusters(private$tau)})
-
+    clustering = function() get_clusters(private$tau),
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {
+      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- ent - sum(xlogx(private$tau))
+      return(ent)
+    }
+    ),
 )

@@ -2,6 +2,9 @@
 
 export(NB)
 export(NB_fixed_Q)
+export(NB_fixed_Q_zi)
 export(NB_fixed_blocks)
+export(NB_fixed_blocks_zi)
 export(NB_unknown)
-export(zi_normal)
+export(NB_unknown_zi)
+export(normal_zi)

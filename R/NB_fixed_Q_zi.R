@@ -46,14 +46,14 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param rho variational parameter for zero-inflation probability
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB_fixed_Q`] object
-    update = function(B = NA, dm1 = NA, omegaQ = NA, alpha = NA, kappa = NA,
+    update = function(B = NA, dm1 = NA, alpha = NA, omegaQ = NA, kappa = NA,
                       M = NA, S = NA, tau = NA, rho = NA, ll_list = NA) {
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(alpha)) private$alpha <- alpha
       if (!anyNA(kappa)) private$kappa <- kappa
       if (!anyNA(M))     private$M     <- M
       if (!anyNA(S))     private$S     <- S
-      if (!anyNA(tau))   private$rho   <- tau
+      if (!anyNA(tau))   private$tau   <- tau
       if (!anyNA(rho))   private$rho   <- rho
     }),
 
@@ -96,6 +96,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B          <- init_model$model_par$B
       dm1        <- init_model$model_par$dm1
       R          <- self$Y - self$X %*% B
+      R[self$Y == 0]  <- 0
       cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
       tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
       alpha      <- colMeans(tau)
@@ -181,22 +182,24 @@ NB_fixed_Q_zi <- R6::R6Class(
 
     EM_step = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
       R   <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
 
       # E step
       M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa,
                                                     S, tau, rho)
       S <-  1 / sweep(((1 - rho) %*% (dm1 * tau)), 2, diag(omegaQ), "+")
 
-      nu <- as.vector(rep(1, self$n)) %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
-      nu <- nu - as.vector(rep(1, self$n)) %*% t(log(dm1))
+      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
+      nu <- nu - ones %*% t(log(dm1))
 
       nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) * dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * as.vector(rep(1, self$n)) %*% t((1 - kappa) / kappa))
+      rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
-      eta <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S) + t((1 - rho) * R) %*% M)
-      eta <- eta + as.vector(rep(1, self$p)) %*% t(log(alpha)) - 1
-      tau <- check_one_boundary(check_zero_boundary(t(apply(eta, 1, softmax))))
+      eta     <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(ones) %*% S
+      eta       <- -.5 * dm1 * (t(1 - rho) %*% M^2) - .5 * dm1 * (t(1 - rho) %*% S)
+      eta       <- eta + dm1 * (t((1 - rho) * R) %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
+      tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
       # M step
       B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau,
@@ -216,7 +219,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       dm1      <- as.vector(1 / dd)
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
-           M = M, S = S, rho = rho, tau = tau)
+           M = M, S = S, tau = tau, rho = rho)
     }
   ),
 
@@ -224,13 +227,27 @@ NB_fixed_Q_zi <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field posterior_par a list with variational parameters
-    posterior_par  = function() list(M = private$M, S = private$S, rho = private$rho),
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (blocks precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par
       par$kappa <- private$kappa
+      par$alpha <- private$alpha
       par
-      }
+    },
+    #' @field var_par a list with variational parameters
+    var_par  = function() list(M = private$M, S = private$S,
+                                     rho = private$rho, tau = private$tau),
+    #' @field clustering given as a list of labels
+    clustering = function() get_clusters(private$tau),
+    #' @field nb_param number of parameters in the model
+    nb_param = function() as.integer(super$nb_param + 2 * self$n * self$Q + self$p * (self$n + 1)
+                                     + self$Q * (self$p + 1)),
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {
+      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- ent - sum(xlogx(private$tau))
+      ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
+      ent
+    }
   )
 )

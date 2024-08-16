@@ -1,8 +1,8 @@
 ###############################################################################
 ###############################################################################
 set.seed(3)
-n     <- 300
-p     <- 150
+n     <- 200
+p     <- 50
 d     <- 2
 Q     <- 4
 Sigma <- matrix(0, Q, Q)
@@ -43,8 +43,8 @@ test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 160916)
-  expect_gt(model$loglik, -79146)
+  expect_lt(model$BIC, 99885)
+  expect_gt(model$loglik,  -18116)
   model_sparse <- NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0.05, niter = 60)
   model_sparse$optimize()
 })

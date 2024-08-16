@@ -2,9 +2,6 @@
 #'dimensions (N, Q) with a one-hot encoding of the clustering
 #'
 #'@param clustering a list of labels
-#'
-#'@examples
-#'as_indicator(c(1,1,2,3,2))
 as_indicator <- function(clustering) {
   Q <- max(clustering)
   N <- length(clustering)

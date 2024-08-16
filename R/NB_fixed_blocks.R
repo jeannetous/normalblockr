@@ -113,6 +113,8 @@ NB_fixed_blocks <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
-    posterior_par  = function() list(gamma = private$gamma, mu = private$mu)
+    posterior_par  = function() list(gamma = private$gamma, mu = private$mu),
+    #' @field clustering given as a list of labels
+    clustering = function() get_clusters(self$C)
   )
 )

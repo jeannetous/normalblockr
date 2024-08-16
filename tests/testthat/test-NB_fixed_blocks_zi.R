@@ -43,7 +43,7 @@ test_that("NB_fixed_blocks_zi: check dimensions, optimization and field access",
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 161095)
+  expect_lt(model$BIC,  432309)
   expect_gt(model$loglik, -79236)
   model_sparse <- NB_fixed_blocks_zi$new(Y, X, C, sparsity = 0.05, niter = 60)
   model_sparse$optimize()

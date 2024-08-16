@@ -175,7 +175,7 @@ normal_zi <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(self$p * (self$d + 2)),
+    nb_param = function() as.integer(self$p * (self$d + 1)),
     #' @field model_par a list with the matrices of the model parameters:
     #' B (regression coefficients), dm1 (species variance),
     #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)

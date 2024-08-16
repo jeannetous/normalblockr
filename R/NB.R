@@ -65,7 +65,7 @@ NB <- R6::R6Class(
     #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param omegaQ groups inverse variance matrix
     #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`zi_normal`] object
+    #' @return Update the current [`NB`] object
     update = function(B = NA, dm1 = NA, omegaQ = NA, ll_list = NA) {
       if (!anyNA(B))          private$B       <- B
       if (!anyNA(dm1))        private$dm1     <- dm1
@@ -124,7 +124,7 @@ NB <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1)), # À RECALCULER
+    nb_param = function() as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1)),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field loglik (or its variational lower bound)
@@ -135,6 +135,12 @@ NB <- R6::R6Class(
     BIC = function() - 2 * self$loglik + log(self$n) * self$nb_param,
     #' @field AIC (or its variational lower bound)
     AIC = function() - 2 * self$loglik + 2 * self$nb_param,
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {0},
+    #' @field ICL variational lower bound of the ICL
+    ICL        = function() self$BIC - self$entropy,
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function() data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik, BIC = self$BIC, AIC = self$AIC))
+    criteria   = function() data.frame(Q = self$Q, nb_param = self$nb_param,
+                                       loglik = - self$loglik, BIC = self$BIC,
+                                       AIC = self$AIC, ICL = self$ICL))
 )
