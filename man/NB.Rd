@@ -15,6 +15,10 @@ R6 generic class for normal-block models
 
 \item{\code{X}}{the matrix of covariates}
 
+\item{\code{sparsity}}{penalty on the network density}
+
+\item{\code{sparsity_weights}}{distribution of sparsity on the lement of the network}
+
 \item{\code{niter}}{number of iterations in model optimization}
 
 \item{\code{threshold}}{loglikelihood threshold under which optimization stops}
@@ -38,9 +42,15 @@ R6 generic class for normal-block models
 
 \item{\code{loglik}}{(or its variational lower bound)}
 
+\item{\code{penalty}}{(penalty on log-likelihood due to sparsity)}
+
 \item{\code{BIC}}{(or its variational lower bound)}
 
 \item{\code{AIC}}{(or its variational lower bound)}
+
+\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{ICL}}{variational lower bound of the ICL}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
@@ -52,7 +62,6 @@ R6 generic class for normal-block models
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-update}{\code{NB$update()}}
 \item \href{#method-NB-optimize}{\code{NB$optimize()}}
-\item \href{#method-NB-get_model_variables}{\code{NB$get_model_variables()}}
 \item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
@@ -63,7 +72,7 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, niter = 50, threshold = 1e-04)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, sparsity = 0, niter = 50, threshold = 1e-04)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -72,6 +81,8 @@ Create a new [`NB`] object.
 \item{\code{Y}}{the matrix of responses (called Y in the model).}
 
 \item{\code{X}}{design matrix (called X in the model).}
+
+\item{\code{sparsity}}{penalty on the network density}
 
 \item{\code{niter}}{number of iterations in model optimization}
 
@@ -106,7 +117,7 @@ Update a [`NB`] object
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Update the current [`zi_normal`] object
+Update the current [`NB`] object
 }
 }
 \if{html}{\out{<hr>}}
@@ -120,19 +131,6 @@ calls EM optimization and updates relevant fields
 
 \subsection{Returns}{
 optimizes the model and updates its parameters
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-get_model_variables"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-get_model_variables}{}}}
-\subsection{Method \code{get_model_variables()}}{
-returns the model variables Y, X
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$get_model_variables()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A list containing the model parameters Y, X
 }
 }
 \if{html}{\out{<hr>}}

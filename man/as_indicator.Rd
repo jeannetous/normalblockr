@@ -14,6 +14,3 @@ as_indicator(clustering)
 turns a list clustering of Q cluster labels for N elements into a matrix of
 dimensions (N, Q) with a one-hot encoding of the clustering
 }
-\examples{
-as_indicator(c(1,1,2,3,2))
-}
