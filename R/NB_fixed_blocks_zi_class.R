@@ -78,7 +78,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity == 0 ) {
+      if (self$sparsity == 0) {
         elbo
       }else {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
@@ -106,7 +106,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       R    <- self$Y - self$X %*% B
       grad <- - ( t(t((1 - rho) * R) * dm1) %*% self$C - ( t(dm1 * t(1 - rho)) %*% self$C) * M - M %*% omegaQ)
 
-      obj  <- - .5 * sum( t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))))
+      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))))
       obj  <- obj - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
@@ -140,7 +140,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(self$C))))
-      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) )
+      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -220,7 +220,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     clustering = function() get_clusters(self$C),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * n * sum(log(private$S))
+      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * n * sum(log(private$S))
       ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
       return(ent)
     }

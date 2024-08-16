@@ -16,12 +16,12 @@ minD  <- 0.2
 maxD  <- 3
 
 B <- matrix(rep(1, d * p), nrow = d)
-for(dim in 1:d){B[dim,] = runif(p, min = 0, max = 1)}
+for (dim in 1:d) B[dim, ] <- runif(p, min = 0, max = 1)
 X <- matrix(rep(1, d * n), nrow = d)
-for(dim in 1:d){X[dim,] = runif(n, min=minX[[dim]], max = maxX[[dim]])}
+for(dim in 1:d) X[dim, ] <- runif(n, min = minX[[dim]], max = maxX[[dim]])
 C <- matrix(rep(0, p * Q), nrow = p)
 groups <- sample(1 : Q, size = p, replace <- TRUE)
-for(dim in 1:p){C[dim, groups[[dim]]] = 1}
+for (dim in 1:p) C[dim, groups[[dim]]] <- 1
 D <- diag(runif(p, min = minD, max = maxD))
 W <- t(MASS::mvrnorm(n, mu = matrix(rep(0, Q), Q, 1), Sigma = Sigma))
 epsilon <- t(MASS::mvrnorm(n, mu = matrix(rep(0, p), p, 1), Sigma = D))

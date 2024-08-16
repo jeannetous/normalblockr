@@ -48,7 +48,7 @@ NB_unknown_zi <- R6::R6Class(
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
-      if (length(nb_blocks) != length(unique(nb_blocks)) ) {
+      if (length(nb_blocks) != length(unique(nb_blocks))) {
         stop("each nb_blocks value can only be present once in nb_blocks")
       }
       self$Y <- Y
@@ -71,7 +71,7 @@ NB_unknown_zi <- R6::R6Class(
 
     #' @description optimizes an NB_fixed_Q_zi object for each value of Q
     optimize = function() {
-      self$models <- purrr::map(self$models, function(model){
+      self$models <- purrr::map(self$models, function(model) {
         model$optimize()
         model
       })
@@ -81,7 +81,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @param Q number of blocks asked by user
     #' @return A NB_fixed_Q_zi object with given value Q
     get_model = function(Q) {
-      if(!(Q %in% self$nb_blocks) ) {
+      if(!(Q %in% self$nb_blocks)) {
         stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
         }
       Q_rank <- which(sort(self$nb_blocks) == Q)
@@ -93,7 +93,7 @@ NB_unknown_zi <- R6::R6Class(
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q_zi`] object
-    getBestModel = function(crit = c("loglik", "BIC", "AIC") ) {
+    getBestModel = function(crit = c("loglik", "BIC", "AIC", "ICL")) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
@@ -115,7 +115,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function() purrr::map(self$models, 'criteria') %>% purrr::reduce(rbind)
+    criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
   )
 
 )

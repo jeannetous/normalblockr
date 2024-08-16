@@ -48,7 +48,7 @@ NB <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$sparsity <- sparsity
-      if (sparsity > 0 ) {
+      if (sparsity > 0) {
         sparsity_weights <- matrix(1, self$Q, self$Q)
         diag(sparsity_weights) <- 0
         self$sparsity_weights  <- sparsity_weights
@@ -108,9 +108,9 @@ NB <- R6::R6Class(
       c(parameters, list(ll_list = ll_list))
     },
 
-    EM_step = function( ) {},
-    EM_initialize = function( ) {},
-    compute_loglik  = function( ) {}
+    EM_step = function() {},
+    EM_initialize = function() {},
+    compute_loglik  = function() {}
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,11 +136,12 @@ NB <- R6::R6Class(
     #' @field AIC (or its variational lower bound)
     AIC = function() - 2 * self$loglik + 2 * self$nb_param,
     #' @field entropy Entropy of the variational distribution when applicable
-    entropy    = function() {0},
+    entropy    = function() 0,
     #' @field ICL variational lower bound of the ICL
     ICL        = function() self$BIC - self$entropy,
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function() data.frame(Q = self$Q, nb_param = self$nb_param,
-                                       loglik = - self$loglik, BIC = self$BIC,
-                                       AIC = self$AIC, ICL = self$ICL))
+    criteria   = function() {
+      data.frame(Q = self$Q, nb_param = self$nb_param, loglik = - self$loglik,
+                 BIC = self$BIC,AIC = self$AIC, ICL = self$ICL)}
+    )
 )

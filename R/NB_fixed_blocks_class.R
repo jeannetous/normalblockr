@@ -28,7 +28,7 @@ NB_fixed_blocks <- R6::R6Class(
       if (!is.matrix(C)) stop("C must be a matrix.")
       self$C <- C
       self$Q <- ncol(C)
-      super$initialize(Y, X, sparsity,niter, threshold)
+      super$initialize(Y, X, sparsity, niter, threshold)
     },
 
     #' @description
@@ -41,7 +41,7 @@ NB_fixed_blocks <- R6::R6Class(
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`zi_normal`] object
     update = function(B = NA, dm1 = NA, omegaQ = NA, gamma = NA, mu = NA,
-                      ll_list=NA) {
+                      ll_list = NA) {
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(gamma)) private$gamma <- gamma
       if (!anyNA(mu))   private$mu   <- mu
@@ -67,8 +67,8 @@ NB_fixed_blocks <- R6::R6Class(
       J <- J + .5 * self$n * log_det_omegaQ
       J <- J - .5 * self$n * sum(diag(omegaQ %*% gamma))
       J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
-      if(self$sparsity == 0 ) {J
-      }else{
+      if (self$sparsity == 0) {J
+      }else {
         J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
     },
@@ -96,7 +96,7 @@ NB_fixed_blocks <- R6::R6Class(
       ddiag  <- ddiag + (1 / self$n) * diag(self$C %*% t(mu) %*% mu %*% t(self$C))
       ddiag  <- ddiag + diag(self$C %*% gamma %*% t(self$C))
       dm1    <- as.vector(1 / ddiag)
-      if (self$sparsity == 0 ) {
+      if (self$sparsity == 0) {
         omegaQ <- solve(gamma + (1 / self$n) * t(mu) %*% mu)
       }else {
         sigma_hat <- gamma + (1 / self$n) * t(mu) %*% mu

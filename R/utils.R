@@ -25,7 +25,7 @@ check_zero_boundary <- function(x, zero = .Machine$double.eps) {
 }
 
 #' computes xlogx, setting it to 0 if x = 0
-xlogx <- function(x) ifelse(x < .Machine$double.eps, 0, x*log(x))
+xlogx <- function(x) ifelse(x < .Machine$double.eps, 0, x * log(x))
 
 #' computes softmax
 softmax <- function(x) {
@@ -34,17 +34,18 @@ softmax <- function(x) {
 }
 
 #' computes ARI between two clusterings
-matching_group_scores <- function(groups1, groups2 ) {
+matching_group_scores <- function(groups1, groups2) {
   ari <- pdfCluster::adj.rand.index(groups1, groups2)
   # If ari is na, we want to see if a relabeling can change that
   if (is.na(ari)) {
-    if((length(unique(groups1)) == 1) & (length(unique(groups2)) == 1))
-    { return(1)}
+    if((length(unique(groups1)) == 1) && (length(unique(groups2)) == 1)){
+      return(1)
+      }
     }
   return(ari)
 }
 
 #' gets cluster labels from probability matrix
-get_clusters <- function(tau){
+get_clusters <- function(tau) {
   return(apply(tau, 1, which.max))
 }

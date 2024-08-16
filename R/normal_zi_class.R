@@ -79,8 +79,8 @@ normal_zi <- R6::R6Class(
     },
 
     #' @description plots log-likelihood values during model optimization
-    plot_loglik = function(){
-      plot(seq_along(private$ll_list), private$ll_list, type = 'b')
+    plot_loglik = function() {
+      plot(seq_along(private$ll_list), private$ll_list, type = "b")
     }
   ),
 

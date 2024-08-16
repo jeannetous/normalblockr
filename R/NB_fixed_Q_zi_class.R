@@ -84,7 +84,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(tau * log(tau))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity == 0 ) {elbo
+      if (self$sparsity == 0) {elbo
       }else {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
@@ -205,10 +205,10 @@ NB_fixed_Q_zi <- R6::R6Class(
       B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau,
                                               rho)
 
-      if (self$sparsity == 0 ) {
+      if (self$sparsity == 0) {
         omegaQ <- self$n * solve((t(M) %*% M) + diag(self$n * diag(S)))
-      }else{
-        sigma_hat <- (1/self$n) * (t(M) %*% M) + diag(self$n * diag(S))
+      }else {
+        sigma_hat <- (1 / self$n) * (t(M) %*% M) + diag(self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) break
         omegaQ <- Matrix::symmpart(glasso_out$wi)
@@ -235,16 +235,16 @@ NB_fixed_Q_zi <- R6::R6Class(
       par
     },
     #' @field var_par a list with variational parameters
-    var_par  = function() list(M = private$M, S = private$S,
-                                     rho = private$rho, tau = private$tau),
+    var_par  = function() {list(M = private$M, S = private$S,
+                                     rho = private$rho, tau = private$tau)},
     #' @field clustering given as a list of labels
     clustering = function() get_clusters(private$tau),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + 2 * self$n * self$Q + self$p * (self$n + 1)
-                                     + self$Q * (self$p + 1)),
+    nb_param = function() {as.integer(super$nb_param + 2 * self$n * self$Q + self$p * (self$n + 1)
+                                     + self$Q * (self$p + 1))},
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * self$n * sum(log(private$S))
       ent <- ent - sum(xlogx(private$tau))
       ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
       ent

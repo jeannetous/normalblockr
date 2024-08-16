@@ -68,7 +68,7 @@ NB_fixed_Q <- R6::R6Class(
 
       # expectation of log(p(Y | W, C))
       elbo <- - 0.5 * n * p * log(2 * pi) + 0.5 * n * sum(log(dm1))
-      elbo <- elbo - 0.5 * sum(dm1 * ((R^2 + (tau %*% t(M^2)) - 2 * R* (tau %*% t(M))) %*% ones + n * (tau %*% S)))
+      elbo <- elbo - 0.5 * sum(dm1 * ((R^2 + (tau %*% t(M^2)) - 2 * R * (tau %*% t(M))) %*% ones + n * (tau %*% S)))
 
       # expectation of log(p(W))
       elbo <- elbo - 0.5 * n * Q * log(2 * pi) + 0.5 * n * log_det_omegaQ
@@ -79,12 +79,13 @@ NB_fixed_Q <- R6::R6Class(
       elbo <- elbo + sum(crossprod(log(alpha), t(tau)))
 
       # Entropy term for W
-      elbo <- elbo + 0.5 * n * Q * log(2 * pi* exp(1)) + .5 * n * sum(log(S))
+      elbo <- elbo + 0.5 * n * Q * log(2 * pi * exp(1)) + .5 * n * sum(log(S))
 
       # Entropy term for C
       elbo <- elbo - sum(xlogx(tau))
 
-      if (self$sparsity == 0 ) {elbo
+      if (self$sparsity == 0 ) {
+        elbo
       }else {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
@@ -119,9 +120,9 @@ NB_fixed_Q <- R6::R6Class(
       tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
       # M step
-      if (self$sparsity == 0 ) {
+      if (self$sparsity == 0) {
         omegaQ <- self$n * solve((t(M) %*% M) + self$n * diag(S))
-      }else{
+      }else {
         sigma_hat <- (1 / self$n) * (t(M) %*% M + self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) break
@@ -140,14 +141,14 @@ NB_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
-    nb_param = function() {super$nb_param + self$Q + self$p * self$Q + 2 * self$n * self$Q},
+    nb_param = function() super$nb_param + self$Q + self$p * self$Q + 2 * self$n * self$Q,
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() {
       parameters       <- super$model_par
       parameters$alpha <- private$alpha
       parameters},
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
-    var_par    = function() {list(M = private$M,  S = private$S, tau = private$tau)},
+    var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
     #' @field clustering a list of labels giving the clustering obtained in the model
     clustering = function() get_clusters(private$tau),
     #' @field entropy Entropy of the variational distribution when applicable
