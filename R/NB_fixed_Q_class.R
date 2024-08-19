@@ -8,8 +8,6 @@
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks
 #' @param sparsity to add on blocks precision matrix
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
@@ -23,9 +21,9 @@ NB_fixed_Q <- R6::R6Class(
     #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, sparsity = 0, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X, Q, sparsity = 0) {
       self$Q <- Q
-      super$initialize(Y, X, sparsity, niter, threshold)
+      super$initialize(Y, X, sparsity)
     },
 
     #' @description

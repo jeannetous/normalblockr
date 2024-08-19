@@ -6,8 +6,6 @@
 #' R6 class for zero-inflated normal model
 #' @param Y the matrix of responses (called Y in the model
 #' @param X design matrix (called X in the model).
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 normal_zi <- R6::R6Class(
   classname = "normal_zi",
@@ -22,18 +20,12 @@ normal_zi <- R6::R6Class(
     X = NULL,
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
-    #' @field niter number of iterations in model optimization
-    niter = NULL,
-    #' @field threshold loglikelihood threshold under which optimization stops
-    threshold = NULL,
 
     #' @description Create a new [`normal_zi`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`normal_zi`] object
-    initialize = function(Y, X, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y and X must be matrices.")
       }
@@ -43,8 +35,6 @@ normal_zi <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$zeros <- 1 * (Y == 0)
-      self$niter <- niter
-      self$threshold <- threshold
     },
 
     #' @description
@@ -64,9 +54,11 @@ normal_zi <- R6::R6Class(
     },
 
     #' @description calls EM optimization and updates relevant fields
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
     #' @return optimizes the model and updates its parameters
-    optimize = function() {
-      optim_out <- private$normal_zi_EM(niter = self$niter, threshold = self$threshold)
+    optimize = function(niter = 100, threshold = 1e-4) {
+      optim_out <- private$normal_zi_EM(niter, threshold)
       do.call(self$update, optim_out)
     },
 
@@ -88,11 +80,13 @@ normal_zi <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    B       = NA,   # regression matrix
-    dm1     = NA,   # diagonal vector of inverse variance matrix
-    kappa   = NA,   # vector of zero-inflation probabilities
-    rho     = NA,   # posterior probabilities of zero-inflation
-    ll_list = NA,   # list of log-likelihood values during optimization
+    B         = NA,   # regression matrix
+    dm1       = NA,   # diagonal vector of inverse variance matrix
+    kappa     = NA,   # vector of zero-inflation probabilities
+    rho       = NA,   # posterior probabilities of zero-inflation
+    ll_list   = NA,   # list of log-likelihood values during optimization
+    niter     = NA,   # number of iterations in model optimization
+    threshold = NA,   # threshold loglikelihood threshold under which optimization stops
 
     normal_zi_loglik  = function(B, dm1, rho, kappa) {
 
@@ -160,6 +154,8 @@ normal_zi <- R6::R6Class(
           break
 
       }
+      private$niter = niter
+      private$threshold = threshold
       list(B = B, dm1 = dm1, kappa = kappa, rho = rho, ll_list = ll_list)
     }
   ),

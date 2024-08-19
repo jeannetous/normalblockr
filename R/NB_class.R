@@ -6,8 +6,6 @@
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 NB <- R6::R6Class(
   classname = "NB",
@@ -24,10 +22,6 @@ NB <- R6::R6Class(
     sparsity = NULL,
     #' @field sparsity_weights distribution of sparsity on the lement of the network
     sparsity_weights = NULL,
-    #' @field niter number of iterations in model optimization
-    niter = NULL,
-    #' @field threshold loglikelihood threshold under which optimization stops
-    threshold = NULL,
     #' @field Q number of blocks
     Q = NULL,
 
@@ -38,7 +32,7 @@ NB <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X,  sparsity = 0, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X,  sparsity = 0) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -53,8 +47,6 @@ NB <- R6::R6Class(
         diag(sparsity_weights) <- 0
         self$sparsity_weights  <- sparsity_weights
       }
-      self$niter <- niter
-      self$threshold <- threshold
       private$XtXm1   <- solve(crossprod(X, X))
       private$ll_list <- 0
     },
@@ -74,10 +66,11 @@ NB <- R6::R6Class(
     },
 
     #' @description calls EM optimization and updates relevant fields
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
     #' @return optimizes the model and updates its parameters
-    optimize = function() {
-      optim_out <- private$EM_optimize(niter = self$niter,
-                                       threshold = self$threshold)
+    optimize = function(niter = 100, threshold = 1e-4) {
+      optim_out <- private$EM_optimize(niter, threshold)
       do.call(self$update, optim_out)
     },
     #' @description plots log-likelihood values during model optimization
@@ -90,11 +83,13 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    XtXm1   = NULL, # inverse of XtX, useful for EM calculations
-    B       = NA,   # regression matrix
-    dm1     = NA,   # diagonal vector of inverse variance matrix
-    omegaQ  = NA,   # groups variance matrix
-    ll_list = NA,   # list of log-likelihood values during optimization
+    XtXm1     = NULL, # inverse of XtX, useful for EM calculations
+    B         = NA,   # regression matrix
+    dm1       = NA,   # diagonal vector of inverse variance matrix
+    omegaQ    = NA,   # groups variance matrix
+    ll_list   = NA,   # list of log-likelihood values during optimization
+    niter     = NA,    # number of iterations in model optimization
+    threshold = NA, # threshold loglikelihood threshold under which optimization stops
 
     EM_optimize = function(niter, threshold) {
       parameters <- do.call(private$EM_initialize, list())
@@ -105,6 +100,8 @@ NB <- R6::R6Class(
         if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
           break
       }
+      private$niter     = niter
+      private$threshold = threshold
       c(parameters, list(ll_list = ll_list))
     },
 

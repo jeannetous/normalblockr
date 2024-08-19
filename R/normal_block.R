@@ -12,45 +12,38 @@
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @export
 normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
-                         zero_inflation = FALSE, niter = 100,
-                         threshold = 1e-4) {
+                         zero_inflation = FALSE, niter = 100, threshold = 1e-4) {
   if(! is.null(blocks)){
     if(zero_inflation){
-      model <- NB_fixed_blocks_zi$new(Y, X, blocks, sparsity = sparsity,
-                                      niter = niter, threshold = threshold)
-      model$optimize()
+      model <- NB_fixed_blocks_zi$new(Y, X, blocks, sparsity = sparsity)
+      model$optimize(niter, threshold)
       return(model)
     }else{
-      model <- NB_fixed_blocks$new(Y, X, blocks, sparsity = sparsity,
-                                   niter = niter, threshold = threshold)
-      model$optimize()
+      model <- NB_fixed_blocks$new(Y, X, blocks, sparsity = sparsity)
+      model$optimize(niter, threshold)
       return(model)
     }
   }
 
   if(length(nb_blocks) == 1){
     if(zero_inflation){
-      model <- NB_fixed_Q_zi$new(Y, X, nb_blocks, sparsity = sparsity,
-                                      niter = niter, threshold = threshold)
-      model$optimize()
+      model <- NB_fixed_Q_zi$new(Y, X, nb_blocks, sparsity = sparsity)
+      model$optimize(niter, threshold)
       return(model)
     }else{
-      model <- NB_fixed_Q$new(Y, X, nb_blocks, sparsity = sparsity,
-                              niter = niter, threshold = threshold)
-      model$optimize()
+      model <- NB_fixed_Q$new(Y, X, nb_blocks, sparsity = sparsity)
+      model$optimize(niter, threshold)
       return(model)
     }
   }
 
   if(zero_inflation){
-    models <- NB_unknown_zi$new(Y, X, nb_blocks, sparsity = sparsity,
-                               niter = niter, threshold = threshold)
-    models$optimize()
+    models <- NB_unknown_zi$new(Y, X, nb_blocks, sparsity = sparsity)
+    models$optimize(niter, threshold)
     return(models)
   }else{
-    models <- NB_unknown$new(Y, X, nb_blocks, sparsity = sparsity,
-                            niter = niter, threshold = threshold)
-    models$optimize()
+    models <- NB_unknown$new(Y, X, nb_blocks, sparsity = sparsity)
+    models$optimize(niter, threshold)
     return(models)
   }
 }

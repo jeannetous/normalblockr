@@ -8,8 +8,6 @@
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param sparsity to add on blocks precision matrix
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 NB_fixed_blocks_zi <- R6::R6Class(
   classname = "NB_fixed_blocks_zi",
@@ -26,13 +24,12 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks_zi`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X, C, sparsity = 0) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       self$C <- C
       self$Q <- ncol(C)
       self$zeros <- 1 * (Y == 0)
-      super$initialize(Y = Y, X = X, sparsity = sparsity,
-                       niter = niter, threshold = threshold)
+      super$initialize(Y = Y, X = X, sparsity = sparsity)
     },
 
     #' @description

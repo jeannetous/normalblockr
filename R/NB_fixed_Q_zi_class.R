@@ -8,8 +8,6 @@
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks in the model
 #' @param sparsity to add on blocks precision matrix
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood threshold under which optimization stops
 #' @export
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
@@ -26,11 +24,10 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @description Create a new [`NB_fixed_Q_zi`] object.
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, Q, sparsity = 0, niter = 50, threshold = 1e-4) {
+    initialize = function(Y, X, Q, sparsity = 0) {
       self$Q <- Q
       self$zeros <- 1 * (Y == 0)
-      super$initialize(Y = Y, X = X, sparsity = sparsity,
-                       niter = niter, threshold = threshold)
+      super$initialize(Y = Y, X = X, sparsity = sparsity)
     },
 
     #' @description

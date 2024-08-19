@@ -37,14 +37,14 @@ X    <-  t(X)
 ###############################################################################
 
 test_that("NB_fixed_blocks_zi: check dimensions, optimization and field access", {
-  model <- NB_fixed_blocks_zi$new(Y, X, C, niter = 60)
-  model$optimize()
+  model <- NB_fixed_blocks_zi$new(Y, X, C)
+  model$optimize(niter = 60)
   params <- model$model_par
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
   expect_lt(model$BIC,  432309)
   expect_gt(model$loglik, -79236)
-  model_sparse <- NB_fixed_blocks_zi$new(Y, X, C, sparsity = 0.05, niter = 60)
-  model_sparse$optimize()
+  model_sparse <- NB_fixed_blocks_zi$new(Y, X, C, sparsity = 0.05)
+  model_sparse$optimize(threshold = 1e-5)
 })

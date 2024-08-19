@@ -36,8 +36,8 @@ X    <- t(X)
 ###############################################################################
 
 test_that("NB_unknown: check dimensions, optimization and field access", {
-  model <- NB_unknown_zi$new(Y, X, c(3, 6, 4, 5), niter = 60)
-  model$optimize()
+  model <- NB_unknown_zi$new(Y, X, c(3, 6, 4, 5))
+  model$optimize(niter = 60)
   best_model <- model$getBestModel("BIC")
   true_model <- model$get_model(Q)
   expect_equal(true_model$Q, Q)
@@ -46,6 +46,6 @@ test_that("NB_unknown: check dimensions, optimization and field access", {
   expect_equal(model$d, ncol(X))
   expect_lt(best_model$BIC, 105035)
   expect_gt(true_model$loglik, -22167)
-  model_sparse <- NB_unknown_zi$new(Y, X, c(3, 6, 4, 5), c(0.01, 0.04, 0.02, 0.03), niter = 60)
-  model_sparse$optimize()
+  model_sparse <- NB_unknown_zi$new(Y, X, c(3, 6, 4, 5), c(0.01, 0.04, 0.02, 0.03))
+  model_sparse$optimize(niter = 60)
 })
