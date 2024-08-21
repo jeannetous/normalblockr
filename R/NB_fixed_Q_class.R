@@ -119,9 +119,9 @@ NB_fixed_Q <- R6::R6Class(
 
       # M step
       if (self$sparsity == 0) {
-        omegaQ <- self$n * solve((t(M) %*% M) + self$n * diag(S))
+        omegaQ <- self$n * solve(crossprod(M) + self$n * diag(S) )
       }else {
-        sigma_hat <- (1 / self$n) * (t(M) %*% M + self$n * diag(S))
+        sigma_hat <- (1 / self$n) * (crossprod(M) + self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
@@ -138,8 +138,6 @@ NB_fixed_Q <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field nb_param number of parameters in the model
-    nb_param = function() super$nb_param + self$Q + self$p * self$Q + 2 * self$n * self$Q,
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() {
       parameters       <- super$model_par

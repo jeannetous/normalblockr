@@ -18,7 +18,7 @@ test_that("NB_fixed_Q: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 45780)
+  expect_lt(model$BIC, 36250)
   expect_gt(model$loglik, -17690)
   model_sparse <- NB_fixed_Q$new(Y, X, Q, sparsity = 0.05)
   model_sparse$optimize(niter = 60)

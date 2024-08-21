@@ -73,9 +73,10 @@ NB <- R6::R6Class(
       optim_out <- private$EM_optimize(niter, threshold)
       do.call(self$update, optim_out)
     },
+    #' @param type line type
     #' @description plots log-likelihood values during model optimization
-    plot_loglik = function() {
-      plot(seq_along(private$ll_list), private$ll_list)
+    plot_loglik = function(type = "b") {
+      plot(seq_along(private$ll_list), private$ll_list, type=type)
     }
   ),
 
@@ -121,7 +122,7 @@ NB <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1)),
+    nb_param = function() as.integer(self$p * self$d + self$p + .5 * self$Q * (self$Q + 1) + self$Q - 1),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
     model_par  = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field loglik (or its variational lower bound)

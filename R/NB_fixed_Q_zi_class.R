@@ -81,10 +81,12 @@ NB_fixed_Q_zi <- R6::R6Class(
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(tau * log(tau))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity == 0) {elbo
-      }else {
-        elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+      if (self$sparsity == 0) {
+        elbo <- elbo
+      } else {
+        elbo <- elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
+      elbo
     },
 
     EM_initialize = function() {
@@ -101,7 +103,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
       G          <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
-      M          <- dm1 * R %*% tau %*% G
+      M          <- t(t(R) * dm1) %*% tau %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
@@ -111,9 +113,10 @@ NB_fixed_Q_zi <- R6::R6Class(
                                              tau, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-      grad <- - ( t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ)
+##      grad <- - ( t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ)
+      grad <- - M %*% omegaQ - ( t(dm1 * t(1 - rho)) %*% tau) * M + t(t((1 - rho) * R) * dm1) %*% tau
 
-      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))))
+      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (- 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))))
       obj  <- obj - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
@@ -127,7 +130,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -148,7 +151,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(tau))))
-      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
+      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)))))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -161,7 +164,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -203,9 +206,9 @@ NB_fixed_Q_zi <- R6::R6Class(
                                               rho)
 
       if (self$sparsity == 0) {
-        omegaQ <- self$n * solve((t(M) %*% M) + diag(self$n * diag(S)))
+        omegaQ <- self$n * solve(crossprod(M) + diag(colSums(S)))
       }else {
-        sigma_hat <- (1 / self$n) * (t(M) %*% M) + diag(self$n * diag(S))
+        sigma_hat <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
@@ -237,8 +240,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @field clustering given as a list of labels
     clustering = function() get_clusters(private$tau),
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(super$nb_param + 2 * self$n * self$Q + self$p * (self$n + 1)
-                                     + self$Q * (self$p + 1))},
+    nb_param = function() {as.integer(super$nb_param + self$p)},
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * self$n * sum(log(private$S))
