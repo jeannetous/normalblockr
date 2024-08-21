@@ -240,7 +240,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @field clustering given as a list of labels
     clustering = function() get_clusters(private$tau),
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(super$nb_param + self$p)},
+    nb_param = function() {as.integer(super$nb_param + self$p + self$Q - 1)},
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * self$n * sum(log(private$S))

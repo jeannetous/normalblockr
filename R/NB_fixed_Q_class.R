@@ -143,6 +143,8 @@ NB_fixed_Q <- R6::R6Class(
       parameters       <- super$model_par
       parameters$alpha <- private$alpha
       parameters},
+    #' @field nb_param number of parameters in the model
+    nb_param = function() {as.integer(super$nb_param + self$Q - 1)},
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
     var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
     #' @field clustering a list of labels giving the clustering obtained in the model
