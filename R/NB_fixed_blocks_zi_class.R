@@ -187,7 +187,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       }else {
         sigma_hat <- (1 / self$n) * (t(M) %*% M) + diag(self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) break
+        if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))

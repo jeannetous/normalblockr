@@ -123,7 +123,7 @@ NB_fixed_Q <- R6::R6Class(
       }else {
         sigma_hat <- (1 / self$n) * (t(M) %*% M + self$n * diag(S))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) break
+        if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       B <- private$XtXm1 %*% t(self$X) %*% (self$Y - M %*% t(tau))
