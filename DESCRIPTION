@@ -2,11 +2,18 @@ Package: normalblockr
 Type: Package
 Title: An implementation of Normal block model, normal data with cluster effect
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Authors@R: c(
+  person("Jeanne", "Tous", role = c("aut", "cre")),
+  person("Julien", "Chiquet", role = c("aut"), email = "julien.chiquet@inrae.fr",
+      comment = c(ORCID = "0000-0002-3629-3429"))
+      )
+Maintainer: <jeanne.tous@inrae.fr>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: CC BY 4.0
+BugReports: https://github.com/jeannetous/normalblockr/issues
+License: GPL (>= 3)
+Encoding: UTF-8
 Encoding: UTF-8
 LazyData: true
 Imports: 
