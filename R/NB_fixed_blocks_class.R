@@ -99,7 +99,7 @@ NB_fixed_blocks <- R6::R6Class(
       }else {
         sigma_hat <- gamma + (1 / self$n) * t(mu) %*% mu
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) break
+        if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)

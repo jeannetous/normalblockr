@@ -1,7 +1,7 @@
-#'turns a list clustering of Q cluster labels for N elements into a matrix of
-#'dimensions (N, Q) with a one-hot encoding of the clustering
-#'
-#'@param clustering a list of labels
+# turns a list clustering of Q cluster labels for N elements into a matrix of
+# dimensions (N, Q) with a one-hot encoding of the clustering
+#
+# @param clustering a list of labels
 as_indicator <- function(clustering) {
   Q <- max(clustering)
   N <- length(clustering)
@@ -10,30 +10,30 @@ as_indicator <- function(clustering) {
   Z
 }
 
-#' removes machine's 0 to elements equal to  1 in x
+# removes machine's 0 to elements equal to  1 in x
 check_one_boundary <- function(x, zero = .Machine$double.eps) {
   x[is.nan(x)] <- zero
   x[x >= 1 - zero] <- 1 - zero
   x
 }
 
-#' adds machine's 0 to elements equal to 0 in x
+# adds machine's 0 to elements equal to 0 in x
 check_zero_boundary <- function(x, zero = .Machine$double.eps) {
   x[is.nan(x)] <- zero
   x[x < zero]  <- zero
   x
 }
 
-#' computes xlogx, setting it to 0 if x = 0
+# computes xlogx, setting it to 0 if x = 0
 xlogx <- function(x) ifelse(x < .Machine$double.eps, 0, x * log(x))
 
-#' computes softmax
+# computes softmax
 softmax <- function(x) {
   b <- max(x)
   exp(x - b) / sum(exp(x - b))
 }
 
-#' computes ARI between two clusterings
+# computes ARI between two clusterings
 matching_group_scores <- function(groups1, groups2) {
   ari <- pdfCluster::adj.rand.index(groups1, groups2)
   # If ari is na, we want to see if a relabeling can change that
@@ -45,7 +45,7 @@ matching_group_scores <- function(groups1, groups2) {
   return(ari)
 }
 
-#' gets cluster labels from probability matrix
+# gets cluster labels from probability matrix
 get_clusters <- function(tau) {
   return(apply(tau, 1, which.max))
 }
