@@ -22,6 +22,8 @@ normal_block(
 
 \item{nb_blocks}{number of blocks (if fixed) or list of possible number of blocks otherwise}
 
+\item{blocks, }{if known, under the form of a p * Q matrix}
+
 \item{sparsity}{sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
@@ -29,8 +31,6 @@ normal_block(
 \item{niter}{number of iterations in model optimization}
 
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
-
-\item{C}{blocks, if known, under the form of a p * Q matrix}
 }
 \value{
 an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]

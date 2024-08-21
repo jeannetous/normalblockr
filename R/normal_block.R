@@ -4,7 +4,7 @@
 #' @param Y observations data, n observations of p categories, dim n*p.
 #' @param X covariates data, n observations of d covariates, dim n*d.
 #' @param nb_blocks number of blocks (if fixed) or list of possible number of blocks otherwise
-#' @param C blocks, if known, under the form of a p * Q matrix
+#' @param blocks, if known, under the form of a p * Q matrix
 #' @param sparsity sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param niter number of iterations in model optimization
