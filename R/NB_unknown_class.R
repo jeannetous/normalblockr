@@ -85,7 +85,7 @@ NB_unknown <- R6::R6Class(
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q`] object
-    getBestModel = function(crit = c("loglik", "BIC", "AIC", "ICL")) {
+    get_best_model = function(crit = c("loglik", "BIC", "AIC", "ICL")) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
