@@ -13,7 +13,7 @@ Q <- ncol(C)
 test_that("NB_unknown: check dimensions, optimization and field access", {
   model <- NB_unknown$new(Y, X, c(3, 6, 4, 5))
   model$optimize()
-  best_model <- model$getBestModel("BIC")
+  best_model <- model$get_best_model("BIC")
   true_model <- model$get_model(Q)
   expect_equal(true_model$Q, Q)
   expect_equal(model$n, nrow(Y))
