@@ -66,14 +66,13 @@ NB_fixed_Q_zi <- R6::R6Class(
     tau     = NA, # posterior probabilities for group affectation
     rho     = NA,   # posterior probabilities of zero-inflation
 
-
     compute_loglik  = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
       R              <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi))
-      elbo <- elbo + .5 * sum(t(t(1 - rho) * log(dm1)))
-      elbo <- elbo - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
+      elbo <- elbo + .5 * sum(log(dm1) * t(1 - rho))
+      elbo <- elbo - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(tau %*% log(alpha))
@@ -81,9 +80,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(tau * log(tau))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity == 0) {
-        elbo <- elbo
-      } else {
+      if (self$sparsity != 0) {
         elbo <- elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       elbo
@@ -103,7 +100,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
       G          <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
-      M          <- t(t(R) * dm1) %*% tau %*% G
+      M          <- t(dm1 * t(R)) %*% tau %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
@@ -113,7 +110,7 @@ NB_fixed_Q_zi <- R6::R6Class(
                                              tau, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-      grad <- t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ
+      grad <- ((1 - rho) * R) %*% (dm1 * tau) - ((1 - rho) %*% (dm1 * tau)) * M - M %*% omegaQ
       obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(tau)) - .5 * M^2 %*% t(tau)))) - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
@@ -178,38 +175,36 @@ NB_fixed_Q_zi <- R6::R6Class(
     },
 
     EM_step = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
-      R   <- self$Y - self$X %*% B
+      R <- self$Y - self$X %*% B
       ones <- as.vector(rep(1, self$n))
 
       # E step
-      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa,
-                                                    S, tau, rho)
+      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S, tau, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
 
       nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi) - ones %*% t(log(dm1))
-      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) )
+      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))
       rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
-      eta     <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S))
-      eta     <- eta - .5 * dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
-      tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      eta <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S))
+      eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
+      tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
       # M step
-      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau,
-                                              rho)
+      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau, rho)
 
       if (self$sparsity == 0) {
         omegaQ <- self$n * solve(crossprod(M) + diag(colSums(S)))
-      }else {
+      } else {
         sigma_hat <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
-      alpha    <- colMeans(tau)
-      kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dm1     <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau))))
+      alpha <- colMeans(tau)
+      kappa <- check_one_boundary(check_zero_boundary(colMeans(rho)))
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
