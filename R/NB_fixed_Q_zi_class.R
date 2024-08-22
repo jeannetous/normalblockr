@@ -142,12 +142,10 @@ NB_fixed_Q_zi <- R6::R6Class(
       newM
     },
 
-    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1, omegaQ, kappa,
-                                             M, S, tau, rho) {
+    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, M, tau) {
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       MT   <- M %*% t(tau)
-      dm1_1mrho <- t(dm1 * t(1 - rho))
 
       grad <- crossprod(self$X, dm1_1mrho * (R - MT))
       obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MT))
@@ -159,6 +157,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     zi_nb_fixed_Q_nlopt_optim_B = function(B0, dm1, omegaQ, kappa, M, S,
                                                 tau, rho) {
       B0_vec <- as.vector(B0)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
@@ -167,13 +166,9 @@ NB_fixed_Q_zi <- R6::R6Class(
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1    = dm1,
-        omegaQ = omegaQ,
-        kappa  = kappa,
+        dm1_1mrho = dm1_1mrho,
         M      = M,
-        S      = S,
-        tau    = tau,
-        rho    = rho
+        tau    = tau
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB

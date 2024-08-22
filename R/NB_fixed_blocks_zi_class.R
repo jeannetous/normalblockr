@@ -131,12 +131,10 @@ NB_fixed_blocks_zi <- R6::R6Class(
       newM
     },
 
-    zi_nb_fixed_blocks_obj_grad_B = function(B_vec, dm1, omegaQ, kappa,
-                                             M, S, rho) {
+    zi_nb_fixed_blocks_obj_grad_B = function(B_vec, dm1_1mrho, M) {
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       MC   <- M %*% t(self$C)
-      dm1_1mrho <- t(dm1 * t(1 - rho))
 
       grad <- crossprod(self$X, dm1_1mrho * (R - MC))
       obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MC))
@@ -148,6 +146,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     zi_nb_fixed_blocks_nlopt_optim_B = function(B0, dm1, omegaQ, kappa, M,
                                                 S, rho) {
       B0_vec <- as.vector(B0)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_blocks_obj_grad_B,
@@ -156,12 +155,8 @@ NB_fixed_blocks_zi <- R6::R6Class(
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1    = dm1,
-        omegaQ = omegaQ,
-        kappa  = kappa,
-        M      = M,
-        S      = S,
-        rho    = rho
+        dm1_1mrho = dm1_1mrho,
+        M      = M
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB

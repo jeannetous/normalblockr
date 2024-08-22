@@ -98,9 +98,8 @@ normal_zi <- R6::R6Class(
       J
     },
 
-    normal_zi_obj_grad_B = function(B_vec, dm1, rho) {
+    normal_zi_obj_grad_B = function(B_vec, dm1_1mrho) {
       R <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      dm1_1mrho <- t(dm1 * t(1 - rho))
 
       grad <- crossprod(self$X, dm1_1mrho * R)
       obj <- - .5 * sum(dm1_1mrho * R^2)
@@ -109,8 +108,9 @@ normal_zi <- R6::R6Class(
       res
     },
 
-    normal_zi_optim_B = function(B0, dm1,  rho, kappa) {
+    normal_zi_optim_B = function(B0, dm1, rho) {
       B0_vec <- as.vector(B0)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = B0_vec,
         eval_f = private$normal_zi_obj_grad_B,
@@ -119,8 +119,7 @@ normal_zi <- R6::R6Class(
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1 = dm1,
-        rho = rho
+        dm1_1mrho = dm1_1mrho
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -146,7 +145,7 @@ normal_zi <- R6::R6Class(
         ## M step
         dm1   <- colSums(1 - rho) / colSums((1 - rho) * (self$Y - self$X %*% B)^2)
         kappa <- colMeans(rho)
-        B     <- private$normal_zi_optim_B(B, dm1, rho, kappa)
+        B     <- private$normal_zi_optim_B(B, dm1, rho)
 
         ## Assessing convergence
         loglik <- private$normal_zi_loglik(B, dm1, rho, kappa)
