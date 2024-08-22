@@ -98,27 +98,28 @@ normal_zi <- R6::R6Class(
       J
     },
 
-    normal_zi_obj_grad_B = function(B_vec, dm1, rho) {
-      YmXB <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      grad <- -t(t(crossprod(self$X, (1 - rho) * YmXB)) * dm1)
-      obj <- .5 * sum((1 - rho) * t(t(YmXB^2) * dm1))
+    normal_zi_obj_grad_B = function(B_vec, dm1_1mrho) {
+      R <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
 
-      res <- list("objective" = obj, "gradient"  = grad)
+      grad <- crossprod(self$X, dm1_1mrho * R)
+      obj <- - .5 * sum(dm1_1mrho * R^2)
+
+      res <- list("objective" = - obj, "gradient"  = - grad)
       res
     },
 
-    normal_zi_optim_B = function(B0, dm1,  rho, kappa) {
+    normal_zi_optim_B = function(B0, dm1, rho) {
       B0_vec <- as.vector(B0)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = B0_vec,
         eval_f = private$normal_zi_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1 = dm1,
-        rho = rho
+        dm1_1mrho = dm1_1mrho
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -138,14 +139,13 @@ normal_zi <- R6::R6Class(
 
         ## E step
         kfactor <- (1 - kappa) / kappa
-        gamma   <- 1 / sqrt(2 * pi) * sqrt(dm1) * exp(- .5 * dm1 * t(self$X %*% B)^2)
+        gamma   <- 1 / sqrt(2 * pi) * sqrt(dm1) * exp(-.5 * dm1 * t(self$X %*% B)^2)
         rho     <- check_one_boundary(check_zero_boundary(self$zeros * t((1 / (1 + kfactor * gamma)))))
 
         ## M step
-        R     <- self$Y - self$X %*% B
-        dm1   <- 1 / check_zero_boundary(colSums((1 - rho) * R^2)  / colSums(1 - rho))
+        dm1   <- colSums(1 - rho) / colSums((1 - rho) * (self$Y - self$X %*% B)^2)
         kappa <- colMeans(rho)
-        B     <- private$normal_zi_optim_B(B, dm1, rho, kappa)
+        B     <- private$normal_zi_optim_B(B, dm1, rho)
 
         ## Assessing convergence
         loglik <- private$normal_zi_loglik(B, dm1, rho, kappa)

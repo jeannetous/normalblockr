@@ -71,7 +71,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
-      elbo <- elbo - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
+      elbo <- elbo - .5 * sum((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) %*% diag(dm1))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(tau %*% log(alpha))
@@ -109,8 +109,11 @@ NB_fixed_Q_zi <- R6::R6Class(
                                              tau, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-      grad <- ((1 - rho) * R) %*% (dm1 * tau) - ((1 - rho) %*% (dm1 * tau)) * M - M %*% omegaQ
-      obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(tau)) - .5 * M^2 %*% t(tau)))) - .5 * sum((M %*% omegaQ) * M)
+      MO   <- M %*% omegaQ
+      dm1T <- dm1 * tau
+
+      grad <- ((1 - rho) * R) %*% dm1T - ((1 - rho) %*% dm1T) * M - MO
+      obj  <- sum((1 - rho) * (R * (M %*% t(dm1T)) - .5 * M^2 %*% t(dm1T))) - .5 * sum(MO * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -139,12 +142,13 @@ NB_fixed_Q_zi <- R6::R6Class(
       newM
     },
 
-    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1, omegaQ, kappa,
-                                             M, S, tau, rho) {
+    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, M, tau) {
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
-      grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(tau))))
-      obj  <- - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)))))
+      MT   <- M %*% t(tau)
+
+      grad <- crossprod(self$X, dm1_1mrho * (R - MT))
+      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MT))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -153,6 +157,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     zi_nb_fixed_Q_nlopt_optim_B = function(B0, dm1, omegaQ, kappa, M, S,
                                                 tau, rho) {
       B0_vec <- as.vector(B0)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
@@ -161,13 +166,9 @@ NB_fixed_Q_zi <- R6::R6Class(
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1    = dm1,
-        omegaQ = omegaQ,
-        kappa  = kappa,
+        dm1_1mrho = dm1_1mrho,
         M      = M,
-        S      = S,
-        tau    = tau,
-        rho    = rho
+        tau    = tau
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -181,12 +182,12 @@ NB_fixed_Q_zi <- R6::R6Class(
       M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S, tau, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
 
-      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi) - ones %*% t(log(dm1))
-      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))
-      rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
+      nu <- tcrossprod(ones, as.vector(rep(1, self$p)) * log(2 * pi) - log(dm1))
+      nu <- nu + (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * tcrossprod(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
-      eta <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S))
+      eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
       eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
       tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
