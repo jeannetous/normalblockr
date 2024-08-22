@@ -113,9 +113,7 @@ NB_fixed_Q_zi <- R6::R6Class(
                                              tau, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-##      grad <- - ( t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ)
       grad <- t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ
-
       obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(tau)) - .5 * M^2 %*% t(tau)))) - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
@@ -186,14 +184,10 @@ NB_fixed_Q_zi <- R6::R6Class(
       # E step
       M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa,
                                                     S, tau, rho)
-      S <-  1 / sweep(((1 - rho) %*% (dm1 * tau)), 2, diag(omegaQ), "+")
+      S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
 
-      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
-      nu <- nu - ones %*% t(log(dm1))
-
-      # nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) * dm1)
+      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi) - ones %*% t(log(dm1))
       nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) )
-
       rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
@@ -215,8 +209,6 @@ NB_fixed_Q_zi <- R6::R6Class(
       }
       alpha    <- colMeans(tau)
       kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      # dd       <- (1 / (t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau)))) %*% as.vector(rep(1, self$n))
-      # dm1      <- as.vector(1 / dd)
       dm1     <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau))))
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
