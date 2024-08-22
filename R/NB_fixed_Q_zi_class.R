@@ -150,7 +150,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(tau))))
-      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)))))
+      obj  <- - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)))))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -175,7 +175,6 @@ NB_fixed_Q_zi <- R6::R6Class(
         tau    = tau,
         rho    = rho
       )
-      browser()
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
     },
