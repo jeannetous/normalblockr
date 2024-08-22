@@ -206,7 +206,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @field var_par a list with variational parameters
     var_par  = function() list(M = private$M, S = private$S, rho = private$rho),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + 2 * self$n * self$Q + self$p * (self$n + 1)),
+    nb_param = function() as.integer(super$nb_param + self$p),
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par

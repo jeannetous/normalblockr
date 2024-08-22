@@ -73,9 +73,10 @@ NB <- R6::R6Class(
       optim_out <- private$EM_optimize(niter, threshold)
       do.call(self$update, optim_out)
     },
+    #' @param type line type
     #' @description plots log-likelihood values during model optimization
-    plot_loglik = function() {
-      plot(seq_along(private$ll_list), private$ll_list)
+    plot_loglik = function(type = "b") {
+      plot(seq_along(private$ll_list), private$ll_list, type=type)
     }
   ),
 
