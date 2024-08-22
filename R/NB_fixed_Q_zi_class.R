@@ -70,8 +70,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       R              <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
-      elbo <- -.5 * sum((1 - rho) * log(2 * pi))
-      elbo <- elbo + .5 * sum(log(dm1) * t(1 - rho))
+      elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
       elbo <- elbo - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau))))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
@@ -80,7 +79,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(tau * log(tau))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity != 0) {
+      if (self$sparsity > 0) {
         elbo <- elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       elbo

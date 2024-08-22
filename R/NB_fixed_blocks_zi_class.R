@@ -67,19 +67,17 @@ NB_fixed_blocks_zi <- R6::R6Class(
       R              <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
-      elbo <- -.5 * sum((1 - rho) * log(2 * pi))
-      elbo <- elbo + .5 * sum(t(t(1 - rho) * log(dm1)))
-      elbo <- elbo - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))))
+      elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
+      elbo <- elbo - .5 * sum((1 - rho) * t(dm1 * t((R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
       elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity == 0) {
-        elbo
-      }else {
+      if (self$sparsity > 0) {
         elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
+      elbo
     },
 
     EM_initialize = function() {
@@ -92,7 +90,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       rho        <- init_model$model_par$rho
       G          <- solve(diag(colSums(as.vector(dm1) * self$C)) + omegaQ)
       R          <- self$Y - self$X %*% B
-      M          <- dm1 * R %*% self$C %*% G
+      M          <- t(dm1 * t(R)) %*% self$C %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
            S = S)
@@ -101,10 +99,8 @@ NB_fixed_blocks_zi <- R6::R6Class(
     zi_nb_fixed_blocks_obj_grad_M = function(M_vec, B, dm1, omegaQ, kappa, S, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-      grad <- - ( t(t((1 - rho) * R) * dm1) %*% self$C - ( t(dm1 * t(1 - rho)) %*% self$C) * M - M %*% omegaQ)
-
-      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))))
-      obj  <- obj - .5 * sum((M %*% omegaQ) * M)
+      grad <- ((1 - rho) * R) %*% (dm1 * self$C) - ((1 - rho) %*% (dm1 * self$C)) * M - M %*% omegaQ
+      obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(self$C)) - .5 * M^2 %*% t(self$C)))) - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -117,7 +113,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_nb_fixed_blocks_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -137,7 +133,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
       grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(self$C))))
-      obj  <- - .5 * sum(dm1 * ((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))))
+      obj  <- - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(self$C)))))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -150,7 +146,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_blocks_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -167,32 +163,30 @@ NB_fixed_blocks_zi <- R6::R6Class(
 
     EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
       R   <- self$Y - self$X %*% B
-      # E step
-      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ,
-                                                    kappa, S,  rho)
-      S <-  1 / sweep(((1 - rho) %*% (dm1 * self$C)), 2, diag(omegaQ), "+")
+      ones <- as.vector(rep(1, self$n))
 
-      nu <- as.vector(rep(1, self$n)) %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
-      nu <- nu - as.vector(rep(1, self$n)) %*% t(log(dm1))
-      nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C))) * dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * as.vector(rep(1, self$n)) %*% t((1 - kappa) / kappa))
+      # E step
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S,  rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
+
+      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi) - ones %*% t(log(dm1))
+      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))
+      rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       # M step
-      B        <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ,
-                                                           kappa, M, S, rho)
+      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, rho)
 
       if (self$sparsity == 0 ) {
-        omegaQ <- self$n * solve((t(M) %*% M) + diag(self$n * diag(S)))
-      }else {
-        sigma_hat <- (1 / self$n) * (t(M) %*% M) + diag(self$n * diag(S))
+        omegaQ <- self$n * solve(crossprod(M) + diag(colSums(S)))
+      } else {
+        sigma_hat <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
         glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
       kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dd       <- (1 / (t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + ((M^2 + S) %*% t(self$C)))) %*% as.vector(rep(1, self$n))
-      dm1      <- as.vector(1 / dd)
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
            S = S)
