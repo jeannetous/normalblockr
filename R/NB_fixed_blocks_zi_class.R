@@ -68,7 +68,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
-      elbo <- elbo - .5 * sum((1 - rho) * t(dm1 * t((R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))))
+      elbo <- elbo - .5 * sum((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)) %*% diag(dm1))
       elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
       elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
       elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
@@ -99,8 +99,11 @@ NB_fixed_blocks_zi <- R6::R6Class(
     zi_nb_fixed_blocks_obj_grad_M = function(M_vec, B, dm1, omegaQ, kappa, S, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
-      grad <- ((1 - rho) * R) %*% (dm1 * self$C) - ((1 - rho) %*% (dm1 * self$C)) * M - M %*% omegaQ
-      obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(self$C)) - .5 * M^2 %*% t(self$C)))) - .5 * sum((M %*% omegaQ) * M)
+      MO   <- M %*% omegaQ
+      dm1C <- dm1 * self$C
+
+      grad <- ((1 - rho) * R) %*% (dm1C) - ((1 - rho) %*% (dm1C)) * M - MO
+      obj  <- sum((1 - rho) * (R * (M %*% t(dm1C)) - .5 * M^2 %*% t(dm1C))) - .5 * sum(MO * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -132,8 +135,11 @@ NB_fixed_blocks_zi <- R6::R6Class(
                                              M, S, rho) {
       B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
       R    <- self$Y - self$X %*% B
-      grad <- t(self$X) %*% t(dm1 * t((1 - rho) * (R - M %*% t(self$C))))
-      obj  <- - .5 * sum((1 - rho) * t(dm1 * t(R^2 - 2 * R * (M %*% t(self$C)))))
+      MC   <- M %*% t(self$C)
+      dm1_1mrho <- t(dm1 * t(1 - rho))
+
+      grad <- crossprod(self$X, dm1_1mrho * (R - MC))
+      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MC))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -169,8 +175,8 @@ NB_fixed_blocks_zi <- R6::R6Class(
       M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S,  rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
 
-      nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi) - ones %*% t(log(dm1))
-      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))
+      nu <- tcrossprod(ones, as.vector(rep(1, self$p)) * log(2 * pi) - log(dm1))
+      nu <- nu + (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)) %*% diag(dm1)
       rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
