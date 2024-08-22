@@ -129,7 +129,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -163,7 +163,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_LBFGS",
+          algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -175,6 +175,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         tau    = tau,
         rho    = rho
       )
+      browser()
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
     },
