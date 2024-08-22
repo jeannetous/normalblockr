@@ -114,10 +114,9 @@ NB_fixed_Q_zi <- R6::R6Class(
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       R    <- self$Y - self$X %*% B
 ##      grad <- - ( t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ)
-      grad <- - M %*% omegaQ - ( t(dm1 * t(1 - rho)) %*% tau) * M + t(t((1 - rho) * R) * dm1) %*% tau
+      grad <- t(t((1 - rho) * R) * dm1) %*% tau - ( t(dm1 * t(1 - rho)) %*% tau) * M - M %*% omegaQ
 
-      obj  <- - .5 * sum(t(dm1 * t((1 - rho) * (- 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))))
-      obj  <- obj - .5 * sum((M %*% omegaQ) * M)
+      obj  <- sum((1 - rho) * t(dm1 * t(R * (M %*% t(tau)) - .5 * M^2 %*% t(tau)))) - .5 * sum((M %*% omegaQ) * M)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
@@ -130,7 +129,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
+          algorithm = "NLOPT_LD_LBFGS",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
@@ -164,7 +163,7 @@ NB_fixed_Q_zi <- R6::R6Class(
         x0 = B0_vec,
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
+          algorithm = "NLOPT_LD_LBFGS",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
