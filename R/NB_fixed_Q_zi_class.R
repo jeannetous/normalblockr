@@ -191,13 +191,14 @@ NB_fixed_Q_zi <- R6::R6Class(
       nu <- ones %*% t(as.vector(rep(1, self$p))) * log(2 * pi)
       nu <- nu - ones %*% t(log(dm1))
 
-      nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) * dm1)
+      # nu <- nu + t(t(((self$X %*% B)^2 +  2 * (self$X %*% B) * (M %*% t(tau)) + (M^2 + S) %*% t(tau))) * dm1)
+      nu <- nu + t(dm1 * t(R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) )
+
       rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
-      eta     <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(ones) %*% S
-      eta       <- -.5 * dm1 * (t(1 - rho) %*% M^2) - .5 * dm1 * (t(1 - rho) %*% S)
-      eta       <- eta + dm1 * (t((1 - rho) * R) %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
+      eta     <- -.5 * dm1 * (t(1 - rho) %*% (M^2 + S))
+      eta     <- eta - .5 * dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
       tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
 
       # M step
@@ -214,8 +215,9 @@ NB_fixed_Q_zi <- R6::R6Class(
       }
       alpha    <- colMeans(tau)
       kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dd       <- (1 / (t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau)))) %*% as.vector(rep(1, self$n))
-      dm1      <- as.vector(1 / dd)
+      # dd       <- (1 / (t(1 - rho) %*% as.vector(rep(1, self$n)))) * t((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau)))) %*% as.vector(rep(1, self$n))
+      # dm1      <- as.vector(1 / dd)
+      dm1     <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + ((M^2 + S) %*% t(tau))))
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
