@@ -8,14 +8,12 @@ R6 class for normal-block model with fixed blocks
 
 R6 class for normal-block model with fixed blocks
 }
-\section{Super class}{
-\code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q_zi}
+\section{Super classes}{
+\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q_zi}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{Q}}{number of blocks in the model}
-
 \item{\code{zeros}}{indicator matrix of zeros in Y}
 }
 \if{html}{\out{</div>}}
@@ -46,8 +44,8 @@ R6 class for normal-block model with fixed blocks
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="optimize"><a href='../../normalblockr/html/NB.html#method-NB-optimize'><code>normalblockr::NB$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_loglik"><a href='../../normalblockr/html/NB.html#method-NB-plot_loglik'><code>normalblockr::NB$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
 </ul>
 </details>
 }}

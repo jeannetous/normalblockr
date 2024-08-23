@@ -22,8 +22,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, sparsity = 0) {
-      self$Q <- Q
-      super$initialize(Y, X, sparsity)
+      super$initialize(Y, X, Q, sparsity)
     },
 
     #' @description

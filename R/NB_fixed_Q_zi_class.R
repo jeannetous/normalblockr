@@ -16,8 +16,6 @@ NB_fixed_Q_zi <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field Q number of blocks in the model
-    Q = NULL,
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
 
@@ -25,9 +23,8 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, Q, sparsity = 0) {
-      self$Q <- Q
+      super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
       self$zeros <- 1 * (Y == 0)
-      super$initialize(Y = Y, X = X, sparsity = sparsity)
     },
 
     #' @description

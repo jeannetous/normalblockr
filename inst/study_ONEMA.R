@@ -31,7 +31,9 @@ Y500 <- Y500[, - which(colSums(Y500 == 0) >= 400)]
 n = nrow(Y500)
 Xones <- matrix(rep(1, n), nrow = n)
 
-# trying NB_fixed_Q_zi on Y500, X500
-Xone <- matrix(1, nrow(Y500), 1)
-myModel <- normalblockr::NB_unknown_zi$new(Y500, Xone, c(2:20))
+## ZI inflated normal with diagonal covariance
+zi_normal <- normalblockr::normal_zi$new(Y500, Xones)
+zi_normal$optimize()
+
+myModel <- normalblockr::NB_unknown_zi$new(Y500, Xones, 2:10)
 myModel$optimize()

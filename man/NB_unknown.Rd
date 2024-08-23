@@ -42,7 +42,7 @@ R6 generic class for normal-block models
 \item \href{#method-NB_unknown-new}{\code{NB_unknown$new()}}
 \item \href{#method-NB_unknown-optimize}{\code{NB_unknown$optimize()}}
 \item \href{#method-NB_unknown-get_model}{\code{NB_unknown$get_model()}}
-\item \href{#method-NB_unknown-getBestModel}{\code{NB_unknown$getBestModel()}}
+\item \href{#method-NB_unknown-get_best_model}{\code{NB_unknown$get_best_model()}}
 \item \href{#method-NB_unknown-clone}{\code{NB_unknown$clone()}}
 }
 }
@@ -112,12 +112,12 @@ A NB_fixed_Q object with given value Q
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_unknown-getBestModel"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_unknown-getBestModel}{}}}
-\subsection{Method \code{getBestModel()}}{
+\if{html}{\out{<a id="method-NB_unknown-get_best_model"></a>}}
+\if{latex}{\out{\hypertarget{method-NB_unknown-get_best_model}{}}}
+\subsection{Method \code{get_best_model()}}{
 Extract best model in the collection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$getBestModel(crit = c("loglik", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$get_best_model(crit = c("loglik", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

@@ -8,13 +8,12 @@ R6 class for zero-inflated normal model
 
 R6 class for zero-inflated normal model
 }
+\section{Super class}{
+\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{normal_zi}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{Y}}{the matrix of responses}
-
-\item{\code{X}}{the matrix of covariates}
-
 \item{\code{zeros}}{indicator matrix of zeros in Y}
 }
 \if{html}{\out{</div>}}
@@ -22,25 +21,11 @@ R6 class for zero-inflated normal model
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{n}}{number of samples}
-
-\item{\code{p}}{number of responses per sample}
-
-\item{\code{d}}{number of variables (dimensions in X)}
-
 \item{\code{nb_param}}{number of parameters in the model}
 
 \item{\code{model_par}}{a list with the matrices of the model parameters:
 B (regression coefficients), dm1 (species variance),
 kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
-
-\item{\code{loglik}}{(or its variational lower bound)}
-
-\item{\code{BIC}}{(or its variational lower bound)}
-
-\item{\code{AIC}}{(or its variational lower bound)}
-
-\item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
 \if{html}{\out{</div>}}
 }
@@ -49,12 +34,17 @@ kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
 \itemize{
 \item \href{#method-normal_zi-new}{\code{normal_zi$new()}}
 \item \href{#method-normal_zi-update}{\code{normal_zi$update()}}
-\item \href{#method-normal_zi-optimize}{\code{normal_zi$optimize()}}
-\item \href{#method-normal_zi-get_model_parameters}{\code{normal_zi$get_model_parameters()}}
-\item \href{#method-normal_zi-plot_loglik}{\code{normal_zi$plot_loglik()}}
 \item \href{#method-normal_zi-clone}{\code{normal_zi$clone()}}
 }
 }
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-normal_zi-new"></a>}}
 \if{latex}{\out{\hypertarget{method-normal_zi-new}{}}}
@@ -104,51 +94,6 @@ Update a [`normal_zi`] object
 \subsection{Returns}{
 Update the current [`normal_zi`] object
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-normal_zi-optimize"></a>}}
-\if{latex}{\out{\hypertarget{method-normal_zi-optimize}{}}}
-\subsection{Method \code{optimize()}}{
-calls EM optimization and updates relevant fields
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_zi$optimize(niter = 100, threshold = 1e-04)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-optimizes the model and updates its parameters
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-normal_zi-get_model_parameters"></a>}}
-\if{latex}{\out{\hypertarget{method-normal_zi-get_model_parameters}{}}}
-\subsection{Method \code{get_model_parameters()}}{
-returns the model parameters B, dm1 and kappa
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_zi$get_model_parameters()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A list containing the model parameters B, dm1, kappa
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-normal_zi-plot_loglik"></a>}}
-\if{latex}{\out{\hypertarget{method-normal_zi-plot_loglik}{}}}
-\subsection{Method \code{plot_loglik()}}{
-plots log-likelihood values during model optimization
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_zi$plot_loglik()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-normal_zi-clone"></a>}}

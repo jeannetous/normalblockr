@@ -26,10 +26,9 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, C, sparsity = 0) {
       if (!is.matrix(C)) stop("C must be a matrix.")
+      super$initialize(Y = Y, X = X, ncol(C), sparsity = sparsity)
       self$C <- C
-      self$Q <- ncol(C)
       self$zeros <- 1 * (Y == 0)
-      super$initialize(Y = Y, X = X, sparsity = sparsity)
     },
 
     #' @description
@@ -61,7 +60,6 @@ NB_fixed_blocks_zi <- R6::R6Class(
     S       = NA, # variational diagonal variances for W posterior distribution
     kappa   = NA, # vector of zero-inflation probabilities
     rho     = NA, # posterior probabilities of zero-inflation
-
 
     compute_loglik  = function(B, dm1, omegaQ, kappa, M, S, rho) {
       R              <- self$Y - self$X %*% B
