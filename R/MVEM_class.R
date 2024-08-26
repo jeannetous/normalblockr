@@ -71,10 +71,10 @@ MVEM <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    XtXm1     = NULL, # inverse of XtX, useful for EM calculations
-    B         = NA,   # regression matrix
-    dm1       = NA,   # diagonal vector of inverse variance matrix
-    ll_list   = NA,   # list of log-likelihood values during optimization
+    XtXm1     = NA, # inverse of XtX, useful for EM calculations
+    B         = NA, # regression matrix
+    dm1       = NA, # diagonal vector of inverse variance matrix
+    ll_list   = NA, # list of log-likelihood values during optimization
 
     EM_optimize = function(niter, threshold) {
       parameters <- do.call(private$EM_initialize, list())

@@ -23,7 +23,7 @@ NB <- R6::R6Class(
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param Q required number of groups
+    #' @param Q number of groups
     #' @param sparsity penalty on the network density
     #' @return A new [`nb_fixed`] object
     initialize = function(Y, X, Q, sparsity = 0) {
