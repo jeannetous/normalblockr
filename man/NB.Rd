@@ -8,6 +8,9 @@ R6 generic class for normal-block models
 
 R6 generic class for normal-block models
 }
+\section{Super class}{
+\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{NB}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -26,27 +29,11 @@ R6 generic class for normal-block models
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{n}}{number of samples}
-
-\item{\code{p}}{number of responses per sample}
-
-\item{\code{d}}{number of variables (dimensions in X)}
-
 \item{\code{nb_param}}{number of parameters in the model}
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
 
-\item{\code{loglik}}{(or its variational lower bound)}
-
 \item{\code{penalty}}{(penalty on log-likelihood due to sparsity)}
-
-\item{\code{BIC}}{(or its variational lower bound)}
-
-\item{\code{AIC}}{(or its variational lower bound)}
-
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
-
-\item{\code{ICL}}{variational lower bound of the ICL}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
@@ -57,18 +44,24 @@ R6 generic class for normal-block models
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-update}{\code{NB$update()}}
-\item \href{#method-NB-optimize}{\code{NB$optimize()}}
-\item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
+<ul>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+</ul>
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-new"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-new}{}}}
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, sparsity = 0)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -78,11 +71,9 @@ Create a new [`NB`] object.
 
 \item{\code{X}}{design matrix (called X in the model).}
 
+\item{\code{Q}}{required number of groups}
+
 \item{\code{sparsity}}{penalty on the network density}
-
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
 }
 \if{html}{\out{</div>}}
 }
@@ -115,38 +106,6 @@ Update a [`NB`] object
 \subsection{Returns}{
 Update the current [`NB`] object
 }
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-optimize"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-optimize}{}}}
-\subsection{Method \code{optimize()}}{
-calls EM optimization and updates relevant fields
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$optimize(niter = 100, threshold = 1e-04)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-optimizes the model and updates its parameters
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-plot_loglik"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-plot_loglik}{}}}
-\subsection{Method \code{plot_loglik()}}{
-plots log-likelihood values during model optimization
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik()}\if{html}{\out{</div>}}
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-clone"></a>}}

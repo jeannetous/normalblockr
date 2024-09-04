@@ -23,15 +23,18 @@ stations_env    <- env[idx, ,drop = FALSE] # does not contain NA
 X    <- stations_env[ , 2:ncol(stations_env)]
 Y    <- apply(as.matrix(dcast(onema_community, species ~ opcod, value.var = "biomass", fill = 0))[,-1], 1, as.numeric)
 Y    <- log(1 + Y)
-Y500 <- Y[order(rowSums(Y == 0))[1:500],]
-X500 <- as.matrix(X[order(rowSums(Y == 0))[1:500],])
-rownames(X500) <- NULL
-colnames(X500) <- NULL
-Y500 <- Y500[, - which(colSums(Y500 == 0) >= 400)]
-n = nrow(Y500)
+# Y500 <- Y[order(rowSums(Y == 0))[1:500],]
+# X500 <- as.matrix(X[order(rowSums(Y == 0))[1:500],])
+# rownames(X500) <- NULL
+# colnames(X500) <- NULL
+# Y500 <- Y500[, - which(colSums(Y500 == 0) >= 400)]
+# n = nrow(Y500)
+n <- nrow(Y)
 Xones <- matrix(rep(1, n), nrow = n)
 
-# trying NB_fixed_Q_zi on Y500, X500
-Xone <- matrix(1, nrow(Y500), 1)
-myModel <- normalblockr::NB_unknown_zi$new(Y500, Xone, c(2:20))
+## ZI inflated normal with diagonal covariance
+zi_normal <- normalblockr::normal_zi$new(Y, Xones)
+zi_normal$optimize()
+
+myModel <- normalblockr::NB_unknown_zi$new(Y, Xones, c(2, 5, 10, 20))
 myModel$optimize()

@@ -24,9 +24,8 @@ NB_fixed_blocks <- R6::R6Class(
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, C, sparsity = 0) {
       if (!is.matrix(C)) stop("C must be a matrix.")
+      super$initialize(Y, X, ncol(C), sparsity)
       self$C <- C
-      self$Q <- ncol(C)
-      super$initialize(Y, X, sparsity)
     },
 
     #' @description
@@ -53,22 +52,24 @@ NB_fixed_blocks <- R6::R6Class(
     gamma   = NA, # variance of  posterior distribution of W
     mu      = NA,  #  mean for posterior distribution of W
 
-
     compute_loglik  = function(B, dm1, omegaQ, gamma, mu) {
       R   <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
+      dm1C   <- (dm1 * self$C)
+      Ctdm1C <- t(self$C) %*% dm1C
+      mutmu  <- t(mu) %*% mu
 
       J <- - .5 * self$n * (self$p + self$Q) * log(2 * pi) + .5 * self$n * sum(log(dm1))
-      J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  (dm1 * self$C) %*% t(mu))
-      J <- J - .5 * self$n * sum(diag(t(self$C) %*% (dm1 * self$C) %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% t(self$C) %*%  (dm1 * self$C) %*% t(mu)))
+      J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  dm1C %*% t(mu))
+      J <- J - .5 * self$n * sum(diag(Ctdm1C %*% gamma))
+      J <- J - .5 * sum(diag(Ctdm1C %*% mutmu))
       J <- J + .5 * self$n * log_det_omegaQ
       J <- J - .5 * self$n * sum(diag(omegaQ %*% gamma))
-      J <- J - .5 * sum(diag(mu %*% omegaQ %*% t(mu)))
-      if (self$sparsity == 0) {J
-      }else {
+      J <- J - .5 * sum(diag(omegaQ %*% mutmu))
+      if (self$sparsity > 0) {
         J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
+      J
     },
 
     EM_initialize = function() {

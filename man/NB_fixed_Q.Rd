@@ -8,15 +8,15 @@ R6 class for normal-block model with fixed Q (number of groups)
 
 R6 class for normal-block model with fixed Q (number of groups)
 }
-\section{Super class}{
-\code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q}
+\section{Super classes}{
+\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{nb_param}}{number of parameters in the model}
-
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
+
+\item{\code{nb_param}}{number of parameters in the model}
 
 \item{\code{var_par}}{a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)}
 
@@ -37,8 +37,8 @@ R6 class for normal-block model with fixed Q (number of groups)
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="optimize"><a href='../../normalblockr/html/NB.html#method-NB-optimize'><code>normalblockr::NB$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_loglik"><a href='../../normalblockr/html/NB.html#method-NB-plot_loglik'><code>normalblockr::NB$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
 </ul>
 </details>
 }}

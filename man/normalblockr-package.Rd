@@ -8,4 +8,20 @@
 \description{
 More about what it does (maybe more than one line) Use four spaces when indenting paragraphs within the Description.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/jeannetous/normalblockr/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Jeanne Tous \email{jeanne.tous@inrae.fr}
+
+Authors:
+\itemize{
+  \item Julien Chiquet \email{julien.chiquet@inrae.fr} (\href{https://orcid.org/0000-0002-3629-3429}{ORCID})
+}
+
+}
 \keyword{internal}

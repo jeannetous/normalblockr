@@ -22,8 +22,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, sparsity = 0) {
-      self$Q <- Q
-      super$initialize(Y, X, sparsity)
+      super$initialize(Y, X, Q, sparsity)
     },
 
     #' @description
@@ -107,22 +106,25 @@ NB_fixed_Q <- R6::R6Class(
     EM_step = function(B, dm1, omegaQ, alpha, tau, M, S) {
       n    <- self$n ; p <- self$p
       R    <- t(self$Y - self$X %*% B)
-      G    <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
+      G    <- solve(diag(colSums(as.vector(dm1) * tau), self$Q, self$Q) + omegaQ)
       ones <- as.vector(rep(1, self$n))
 
       # E step
       M         <- crossprod(as.vector(dm1) * R, tau) %*% G
       S         <- as.vector(1 / (as.vector(dm1) %*% tau + t(diag(omegaQ))))
-      eta       <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
-      eta       <- eta + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
-      tau       <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+
+      if (self$Q > 1) {
+        eta <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
+        eta <- eta + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
+        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      }
 
       # M step
+      nSigmaQ <- crossprod(M) + self$n * diag(S, self$Q, self$Q)
       if (self$sparsity == 0) {
-        omegaQ <- self$n * solve(crossprod(M) + self$n * diag(S) )
+        omegaQ <- self$n * solve(nSigmaQ)
       }else {
-        sigma_hat <- (1 / self$n) * (crossprod(M) + self$n * diag(S))
-        glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(nSigmaQ/self$n, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }

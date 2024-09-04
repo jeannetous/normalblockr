@@ -16,8 +16,6 @@ NB_fixed_Q_zi <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field Q number of blocks in the model
-    Q = NULL,
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
 
@@ -25,9 +23,8 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, Q, sparsity = 0) {
-      self$Q <- Q
+      super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
       self$zeros <- 1 * (Y == 0)
-      super$initialize(Y = Y, X = X, sparsity = sparsity)
     },
 
     #' @description
@@ -98,7 +95,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       omegaQ     <- t(tau) %*% diag(dm1) %*% tau
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(as.vector(dm1) * tau)) + omegaQ)
+      G          <- solve(diag(colSums(as.vector(dm1) * tau), self$Q, self$Q) + omegaQ)
       M          <- t(dm1 * t(R)) %*% tau %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
@@ -187,18 +184,19 @@ NB_fixed_Q_zi <- R6::R6Class(
       rho <- 1 / (1 + exp(-.5 * nu) * tcrossprod(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
 
-      eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
-      eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
-      tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      if (self$Q > 1) {
+        eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
+        eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
+        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      }
 
       # M step
       B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau, rho)
-
+      nSigmaQ <- crossprod(M) + diag(colSums(S), self$Q, self$Q)
       if (self$sparsity == 0) {
-        omegaQ <- self$n * solve(crossprod(M) + diag(colSums(S)))
+        omegaQ <- self$n * solve(nSigmaQ)
       } else {
-        sigma_hat <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
-        glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(nSigmaQ/self$n, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
