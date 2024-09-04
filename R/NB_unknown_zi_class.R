@@ -94,6 +94,20 @@ NB_unknown_zi <- R6::R6Class(
       }
       model <- self$models[[id]]$clone()
       model
+    },
+
+    #' @param criterion criterion to plot
+    #' @param type char for line type (see plot.default)
+    #' @param log char for logarithmic axes (see plot.default)
+    #' @param neg boolean plot negative criterion (useful when log="y")
+    #' @description plots given criterion as a function of Q
+    plot_criterion = function(criterion = "loglik", type = "b", log = "",
+                              neg = FALSE) {
+      neg <- ifelse(neg, -1, 1)
+      y   <- self$criteria[[criterion]]
+      plot(seq_along(y), neg * y, type=type, log=log, ylab = criterion,
+           xlab = "nb_blocks", xaxt = "n")
+      axis(1, at = seq_along(y), labels = seq_along(y))
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
