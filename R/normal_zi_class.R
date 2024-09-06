@@ -52,7 +52,7 @@ normal_zi <- R6::R6Class(
     ll_list   = NA,   # list of log-likelihood values during optimization
 
     compute_loglik  = function(B, dm1, rho, kappa) {
-      rho_bar <- 1-rho
+      rho_bar <- 1 - rho
       J <- - .5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
       J <- J - .5 * sum(rho_bar * t(t(self$Y - self$X %*% B)^2 * dm1))
       J <- J + sum(rho %*% log(kappa)) + sum(rho_bar %*% log(1 - kappa))

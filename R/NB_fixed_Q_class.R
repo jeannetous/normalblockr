@@ -98,9 +98,9 @@ NB_fixed_Q <- R6::R6Class(
       J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
 
       if (self$sparsity > 0) {
-        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * outer(S, diag(omegaQ)))))
-        J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
+        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S))))
+        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
