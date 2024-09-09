@@ -50,7 +50,7 @@ NB_unknown <- R6::R6Class(
       self$nb_blocks <- nb_blocks
 
       # instantiates an NB_fixed_Q model for each Q in nb_blocks
-      self$models <- purrr::map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
+      self$models <- map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
                                  function(block_rank, sparsity_sorted) {
         model <- NB_fixed_Q$new(self$Y, self$X,
                                 nb_blocks[[block_rank]],
@@ -63,10 +63,10 @@ NB_unknown <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
-      self$models <- purrr::map(self$models, function(model) {
+      self$models <- furrr::future_map(self$models, function(model) {
         model$optimize(niter, threshold)
         model
-      })
+      }, .options = furrr_options(seed=TRUE))
     },
 
     #' @description returns the NB_fixed_Q model corresponding to given Q
