@@ -63,7 +63,7 @@ MVEM <- R6::R6Class(
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(type = "b", log = "", neg = FALSE) {
       neg <- ifelse(neg, -1, 1)
-      plot(seq_along(private$ll_list), neg * private$ll_list, type=type, log=log)
+      plot(seq_along(private$ll_list[-1]), neg * private$ll_list[-1], type=type, log=log)
     }
   ),
 

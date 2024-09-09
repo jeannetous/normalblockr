@@ -52,30 +52,33 @@ normal_zi <- R6::R6Class(
     ll_list   = NA,   # list of log-likelihood values during optimization
 
     compute_loglik  = function(B, dm1, rho, kappa) {
-      J <- - .5 * sum((1 - rho) %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum((1 - rho) * t(t(self$Y - self$X %*% B)^2 * dm1))
-      J <- J + sum(rho %*% log(kappa)) + sum((1 - rho) %*% log(1 - kappa))
+      rho_bar <- 1 - rho
+      J <- - .5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
+      J <- J - .5 * sum(rho_bar * t(t(self$Y - self$X %*% B)^2 * dm1))
+      J <- J + sum(rho %*% log(kappa)) + sum(rho_bar %*% log(1 - kappa))
+      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       J
     },
 
     EM_initialize = function() {
       rho   <- check_one_boundary(check_zero_boundary(self$zeros))
-      kappa <- check_one_boundary(check_zero_boundary(colMeans(self$zeros)))
-      B     <- solve(crossprod(self$X)) %*% crossprod(self$X, self$Y)
+      kappa <- colMeans(rho)
+      B     <- private$XtXm1 %*% crossprod(self$X, self$Y)
       dm1   <- 1 / check_one_boundary(check_zero_boundary(diag(cov(self$Y - self$X %*% B))))
       list(B = B, dm1 = dm1, kappa = kappa, rho = rho)
     },
 
     EM_step = function(B, dm1, kappa, rho) {
+
       ## E step
-      kfactor <- (1 - kappa) / kappa
-      gamma   <- 1 / sqrt(2 * pi) * sqrt(dm1) * exp(-.5 * dm1 * t(self$X %*% B)^2)
-      rho     <- check_one_boundary(check_zero_boundary(self$zeros * t((1 / (1 + kfactor * gamma)))))
+      rho <- 1/(1 + outer(rep(1, self$n), (1 - kappa) / kappa) * dnorm(0, self$X %*% B, sqrt(1/dm1)))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       ## M step
+      B     <- private$normal_zi_optim_B(B, dm1, rho)
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * (self$Y - self$X %*% B)^2)
       kappa <- colMeans(rho)
-      B     <- private$normal_zi_optim_B(B, dm1, rho)
+
       list(B = B, dm1 = dm1, kappa = kappa, rho = rho)
     },
 

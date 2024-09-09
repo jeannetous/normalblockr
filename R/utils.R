@@ -27,6 +27,9 @@ check_zero_boundary <- function(x, zero = .Machine$double.eps) {
 # computes xlogx, setting it to 0 if x = 0
 xlogx <- function(x) ifelse(x < .Machine$double.eps, 0, x * log(x))
 
+# computes xlogy, setting it to 0 if x = 0
+xlogy <- function(x,y) ifelse(x < .Machine$double.eps, 0, x * log(y))
+
 # computes softmax
 softmax <- function(x) {
   b <- max(x)

@@ -55,7 +55,7 @@ NB_fixed_Q <- R6::R6Class(
     S       = NA, # variational diagonal of variances for posterior distribution of W
     tau     = NA, # posterior probabilities for group affectation
 
-    compute_loglik  = function(B, dm1, omegaQ, alpha, tau, M, S) {
+    compute_loglik_old  = function(B, dm1, omegaQ, alpha, tau, M, S) {
       ## problem dimensions
       n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
 
@@ -88,49 +88,65 @@ NB_fixed_Q <- R6::R6Class(
       }
     },
 
+    compute_loglik  = function(B, dm1, omegaQ, alpha, tau, M, S) {
+
+      log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
+
+      J <- -.5 * self$n * self$p * log(2 * pi * exp(1)) + .5 * self$n * sum(log(dm1))
+      J <- J  + .5 * self$n * log_det_omegaQ
+      J <- J + sum(tau %*% log(alpha))
+      J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
+
+      if (self$sparsity > 0) {
+        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
+        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S))))
+        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+      }
+      J
+    },
+
     EM_initialize = function() {
-      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
-      B                 <- private$XtXm1 %*% t(self$X) %*% self$Y
-      R                 <- t(self$Y - self$X %*% B)
-      clustering_kmeans <- kmeans(R, Q, nstart = 30)
-      cl                <- clustering_kmeans$cluster
-      tau               <- as_indicator(cl)
-      alpha             <- colMeans(tau)
-      S                 <- rep(0.1, Q)
-      M                 <- matrix(rep(0, n * Q), nrow = n)
-      dm1               <- as.vector(rep(1, p))
-      omegaQ            <- diag(rep(1, Q))
+      B       <- private$XtXm1 %*% t(self$X) %*% self$Y
+      R       <- self$Y - self$X %*% B
+      tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30)$cluster)
+      alpha   <- colMeans(tau)
+      S       <- rep(0.1, self$Q)
+      M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
+      dm1     <- as.vector(rep(1, self$p))
+      omegaQ  <- diag(rep(1, self$Q))
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     },
 
     EM_step = function(B, dm1, omegaQ, alpha, tau, M, S) {
-      n    <- self$n ; p <- self$p
-      R    <- t(self$Y - self$X %*% B)
-      G    <- solve(diag(colSums(as.vector(dm1) * tau), self$Q, self$Q) + omegaQ)
-      ones <- as.vector(rep(1, self$n))
+
+      ## Auxiliary variables
+      R     <- self$Y - self$X %*% B
+      Gamma <- solve(omegaQ + diag(colSums(dm1 * tau), self$Q, self$Q))
 
       # E step
-      M         <- crossprod(as.vector(dm1) * R, tau) %*% G
-      S         <- as.vector(1 / (as.vector(dm1) %*% tau + t(diag(omegaQ))))
+      M <- R %*% (dm1 * tau) %*% Gamma
+      S <- diag(Gamma)
 
       if (self$Q > 1) {
-        eta <- -.5 * dm1 %*% t(ones) %*% M^2 - .5 * dm1 %*% t(self$n * S)
-        eta <- eta + dm1 * (R %*% M)  + outer(rep(1, self$p), log(alpha)) - 1
+        eta <- dm1 * (t(R) %*% M) - .5 * outer(dm1,  colSums(M^2) + self$n * S)
+        eta <- eta + outer(rep(1, self$p), log(alpha)) - 1
         tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
 
       # M step
-      nSigmaQ <- crossprod(M) + self$n * diag(S, self$Q, self$Q)
+      MtauT <- M %*% t(tau)
+      B     <- private$XtXm1 %*% t(self$X) %*% (self$Y - MtauT)
+      dm1   <- 1/colMeans(R^2 - 2 * R * MtauT + (M^2 + outer(rep(1, self$n), S)) %*% t(tau))
+      alpha <- colMeans(tau)
+
+      sigmaQ <- crossprod(M)/self$n +  diag(S, self$Q, self$Q)
       if (self$sparsity == 0) {
-        omegaQ <- self$n * solve(nSigmaQ)
+        omegaQ <- solve(sigmaQ)
       }else {
-        glasso_out <- glassoFast::glassoFast(nSigmaQ/self$n, rho = self$sparsity * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
-      B <- private$XtXm1 %*% t(self$X) %*% (self$Y - M %*% t(tau))
-      dm1 <- as.vector(self$n / ((R^2 - 2 * R * (tau %*% t(M)) + tau %*% t(M^2) +  tau %*% t(ones %*% t(S))) %*% ones))
-      alpha <- colMeans(tau)
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }

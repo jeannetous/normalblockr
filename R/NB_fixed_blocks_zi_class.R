@@ -61,7 +61,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     kappa   = NA, # vector of zero-inflation probabilities
     rho     = NA, # posterior probabilities of zero-inflation
 
-    compute_loglik  = function(B, dm1, omegaQ, kappa, M, S, rho) {
+    compute_loglik_old  = function(B, dm1, omegaQ, kappa, M, S, rho) {
       R              <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
 
@@ -78,6 +78,24 @@ NB_fixed_blocks_zi <- R6::R6Class(
       elbo
     },
 
+    compute_loglik  = function(B, dm1, omegaQ, kappa, M, S, rho) {
+      rho_bar        <- 1 - rho
+      A              <- (self$Y - self$X %*% B - M %*% t(self$C))^2 + S %*% t(self$C)
+      log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
+      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
+      J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
+      J <- J + .5 * self$n * log_det_omegaQ
+      J <- J  + .5 * sum(log(S))
+      J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
+      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
+      if (self$sparsity > 0) {
+        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
+        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S)))))
+        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+      }
+      J
+    },
+
     EM_initialize = function() {
       init_model <- normal_zi$new(self$Y, self$X)
       init_model$optimize()
@@ -86,75 +104,65 @@ NB_fixed_blocks_zi <- R6::R6Class(
       omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(as.vector(dm1) * self$C)) + omegaQ)
+      G          <- solve(diag(colSums(dm1 * self$C)) + omegaQ)
       R          <- self$Y - self$X %*% B
-      M          <- t(dm1 * t(R)) %*% self$C %*% G
+      M          <- R %*% (dm1 * self$C) %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
            S = S)
     },
 
-    zi_nb_fixed_blocks_obj_grad_M = function(M_vec, B, dm1, omegaQ, kappa, S, rho) {
+    zi_nb_fixed_blocks_obj_grad_M = function(M_vec, dm1_1mrho, omegaQ, R) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
-      R    <- self$Y - self$X %*% B
+      RmMC <- R - M %*% t(self$C)
       MO   <- M %*% omegaQ
-      dm1C <- dm1 * self$C
 
-      grad <- ((1 - rho) * R) %*% (dm1C) - ((1 - rho) %*% (dm1C)) * M - MO
-      obj  <- sum((1 - rho) * (R * (M %*% t(dm1C)) - .5 * M^2 %*% t(dm1C))) - .5 * sum(MO * M)
+      obj  <- -.5 * sum(dm1_1mrho * RmMC^2) - .5 * sum(MO * M)
+      grad <- (dm1_1mrho * RmMC) %*% self$C - MO
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
     },
 
-    zi_nb_fixed_blocks_nlopt_optim_M = function(M0, B, dm1, omegaQ, kappa,
-                                                S, rho) {
-      M0_vec <- as.vector(M0)
+    zi_nb_fixed_blocks_nlopt_optim_M = function(M0, dm1, omegaQ, B, rho) {
       res <- nloptr::nloptr(
-        x0 = M0_vec,
+        x0 = as.vector(M0),
         eval_f = private$zi_nb_fixed_blocks_obj_grad_M,
         opts = list(
           algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        B      = B,
-        dm1    = dm1,
-        omegaQ = omegaQ,
-        kappa  = kappa,
-        S      = S,
-        rho    = rho
+        dm1_1mrho = t(dm1 * t(1 - rho)),
+        omegaQ    = omegaQ,
+        R         = self$Y - self$X %*% B
       )
       newM <- matrix(res$solution, nrow = self$n, ncol = self$Q)
       newM
     },
 
-    zi_nb_fixed_blocks_obj_grad_B = function(B_vec, dm1_1mrho, M) {
-      B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
-      R    <- self$Y - self$X %*% B
-      MC   <- M %*% t(self$C)
+    zi_nb_fixed_blocks_obj_grad_B = function(B_vec, dm1_1mrho, MC) {
+      R   <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
+      RmMC <- R - MC
 
-      grad <- crossprod(self$X, dm1_1mrho * (R - MC))
-      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MC))
+      obj  <- -.5 * sum(dm1_1mrho * RmMC^2)
+      grad <- crossprod(self$X, dm1_1mrho * RmMC)
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
     },
 
-    zi_nb_fixed_blocks_nlopt_optim_B = function(B0, dm1, omegaQ, kappa, M,
-                                                S, rho) {
-      B0_vec <- as.vector(B0)
-      dm1_1mrho <- t(dm1 * t(1 - rho))
+    zi_nb_fixed_blocks_nlopt_optim_B = function(B0, dm1, omegaQ, M, rho) {
       res <- nloptr::nloptr(
-        x0 = B0_vec,
+        x0 = as.vector(B0),
         eval_f = private$zi_nb_fixed_blocks_obj_grad_B,
         opts = list(
           algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1_1mrho = dm1_1mrho,
-        M      = M
+        dm1_1mrho = t(dm1 * t(1 - rho)),
+        MC = M %*% t(self$C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -165,27 +173,26 @@ NB_fixed_blocks_zi <- R6::R6Class(
       ones <- as.vector(rep(1, self$n))
 
       # E step
-      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S,  rho)
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
-
-      nu <- tcrossprod(ones, as.vector(rep(1, self$p)) * log(2 * pi) - log(dm1))
-      nu <- nu + (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)) %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * ones %*% t((1 - kappa) / kappa))
+      A <- ((R - M %*% t(self$C))^2 + S %*% t(self$C))
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       # M step
-      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, rho)
+      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
+      kappa <- colMeans(rho)
+      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
 
       if (self$sparsity == 0 ) {
-        omegaQ <- self$n * solve(crossprod(M) + diag(colSums(S)))
+        omegaQ <- solve(sigmaQ)
       } else {
-        sigma_hat <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
-        glasso_out <- glassoFast::glassoFast(sigma_hat, rho = self$sparsity * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
-      kappa    <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dm1   <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)))
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
            S = S)
