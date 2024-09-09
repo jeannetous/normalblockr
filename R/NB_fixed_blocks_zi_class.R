@@ -162,7 +162,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
           maxeval = 1000
         ),
         dm1_1mrho = t(dm1 * t(1 - rho)),
-        MC = M %*% t(self$C)
+        MC = tcrossprod(M, self$C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -175,7 +175,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       # E step
       M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
-      A <- ((R - M %*% t(self$C))^2 + S %*% t(self$C))
+      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
       nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
       rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))

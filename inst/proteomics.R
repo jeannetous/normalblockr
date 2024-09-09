@@ -33,10 +33,11 @@ plan("sequential")
 
 par(mfrow = c(1,1))
 plot(nb_blocks, -2*res$criteria$loglik, type = 'l', log = "y")
+lines(nb_blocks, -2 *res$criteria$pen_loglik, col="green")
 lines(nb_blocks, res$criteria$BIC, col="red")
 lines(nb_blocks, res$criteria$EBIC, col="blue")
-legend("topright", legend=c("-2 loglik", "BIC", "EBIC"),
-       col=c("black", "red", "blue"), lty=1, cex=0.8)
+legend("topright", legend=c("-2 loglik", "-2 pen_loglik", "BIC", "EBIC"),
+       col=c("black", "green", "red", "blue"), lty=1, cex=0.8)
 
 K_star <- nb_blocks[which.min(res$criteria$BIC)]
 best_model <- res$models[[which.min(res$criteria$BIC)]]

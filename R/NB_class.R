@@ -70,12 +70,15 @@ NB <- R6::R6Class(
     model_par  = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field penalty (penalty on log-likelihood due to sparsity)
     penalty = function() - self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ)),
+    #' @field pen_loglik variational lower bound of the l1-penalized loglikelihood
+    pen_loglik      = function() {self$loglik + self$penalty},
     #' @field EBIC variational lower bound of the EBIC
     EBIC      = function() {self$BIC - .5 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       res <- super$criteria
       res$EBIC <- self$EBIC
+      res$pen_loglik <- self$pen_loglik
       res$Q <- self$Q
       res$n_edges <- self$n_edges
       res

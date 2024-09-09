@@ -102,12 +102,9 @@ NB_fixed_Q_zi <- R6::R6Class(
            M = M, S = S, tau = tau, rho = rho)
     },
 
-    zi_nb_fixed_Q_obj_grad_M = function(M_vec, B, dm1, omegaQ, kappa, S,
-                                             tau, rho) {
+    zi_nb_fixed_Q_obj_grad_M = function(M_vec, R, dm1T, omegaQ, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
-      R    <- self$Y - self$X %*% B
       MO   <- M %*% omegaQ
-      dm1T <- dm1 * tau
 
       grad <- ((1 - rho) * R) %*% dm1T - ((1 - rho) %*% dm1T) * M - MO
       obj  <- sum((1 - rho) * (R * (M %*% t(dm1T)) - .5 * M^2 %*% t(dm1T))) - .5 * sum(MO * M)
@@ -116,8 +113,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       res
     },
 
-    zi_nb_fixed_Q_nlopt_optim_M = function(M0, B, dm1, omegaQ, kappa,
-                                           S, tau, rho) {
+    zi_nb_fixed_Q_nlopt_optim_M = function(M0, B, dm1, omegaQ, tau, rho) {
       M0_vec <- as.vector(M0)
       res <- nloptr::nloptr(
         x0 = M0_vec,
@@ -127,45 +123,36 @@ NB_fixed_Q_zi <- R6::R6Class(
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        B      = B,
-        dm1    = dm1,
+        R = self$Y - self$X %*% B,
+        dm1T    = dm1 * tau,
         omegaQ = omegaQ,
-        kappa  = kappa,
-        S      = S,
-        tau    = tau,
         rho    = rho
       )
       newM <- matrix(res$solution, nrow = self$n, ncol = self$Q)
       newM
     },
 
-    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, M, tau) {
-      B    <- matrix(B_vec, nrow = self$d, ncol = self$p)
-      R    <- self$Y - self$X %*% B
-      MT   <- M %*% t(tau)
-
-      grad <- crossprod(self$X, dm1_1mrho * (R - MT))
-      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MT))
+    zi_nb_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, Mtau) {
+      R    <- self$Y - self$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
+      grad <- crossprod(self$X, dm1_1mrho * (R - Mtau))
+      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * Mtau))
 
       res  <- list("objective" = - obj, "gradient"  = - grad)
       res
     },
 
-    zi_nb_fixed_Q_nlopt_optim_B = function(B0, dm1, omegaQ, kappa, M, S,
-                                                tau, rho) {
-      B0_vec <- as.vector(B0)
+    zi_nb_fixed_Q_nlopt_optim_B = function(B0, dm1, omegaQ, M, tau, rho) {
       dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
-        x0 = B0_vec,
+        x0 = as.vector(B0),
         eval_f = private$zi_nb_fixed_Q_obj_grad_B,
         opts = list(
           algorithm = "NLOPT_LD_MMA",
           xtol_rel = 1e-6,
           maxeval = 1000
         ),
-        dm1_1mrho = dm1_1mrho,
-        M      = M,
-        tau    = tau
+        dm1_1mrho = t(dm1 * t(1 - rho)),
+        Mtau = tcrossprod(M, tau)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -176,33 +163,32 @@ NB_fixed_Q_zi <- R6::R6Class(
       ones <- as.vector(rep(1, self$n))
 
       # E step
-      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, kappa, S, tau, rho)
+      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, tau, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
-
-      nu <- tcrossprod(ones, as.vector(rep(1, self$p)) * log(2 * pi) - log(dm1))
-      nu <- nu + (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * tcrossprod(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary((self$Y == 0) * rho))
-
       if (self$Q > 1) {
         eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
         eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
         tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
+      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       # M step
-      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, kappa, M, S, tau, rho)
-      nSigmaQ <- crossprod(M) + diag(colSums(S), self$Q, self$Q)
-      if (self$sparsity == 0) {
-        omegaQ <- self$n * solve(nSigmaQ)
+      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, M, tau, rho)
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
+      alpha <- colMeans(tau)
+      kappa <- colMeans(rho)
+      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
+
+      if (self$sparsity == 0 ) {
+        omegaQ <- solve(sigmaQ)
       } else {
-        glasso_out <- glassoFast::glassoFast(nSigmaQ/self$n, rho = self$sparsity * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) stop("GLasso fails")
         omegaQ <- Matrix::symmpart(glasso_out$wi)
       }
-      alpha <- colMeans(tau)
-      kappa <- check_one_boundary(check_zero_boundary(colMeans(rho)))
-      dm1   <- colSums(1 - rho) / colSums((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)))
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
