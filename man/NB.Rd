@@ -14,10 +14,6 @@ R6 generic class for normal-block models
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{Y}}{the matrix of responses}
-
-\item{\code{X}}{the matrix of covariates}
-
 \item{\code{sparsity}}{penalty on the network density}
 
 \item{\code{sparsity_weights}}{distribution of sparsity on the lement of the network}
@@ -30,6 +26,8 @@ R6 generic class for normal-block models
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{nb_param}}{number of parameters in the model}
+
+\item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
 
@@ -71,7 +69,7 @@ Create a new [`NB`] object.
 
 \item{\code{X}}{design matrix (called X in the model).}
 
-\item{\code{Q}}{required number of groups}
+\item{\code{Q}}{number of groups}
 
 \item{\code{sparsity}}{penalty on the network density}
 }
