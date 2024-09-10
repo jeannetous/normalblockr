@@ -73,39 +73,6 @@ NB_fixed_Q <- R6::R6Class(
     S       = NA, # variational diagonal of variances for posterior distribution of W
     tau     = NA, # posterior probabilities for group affectation
 
-    compute_loglik_old  = function(B, dm1, omegaQ, alpha, tau, M, S) {
-      ## problem dimensions
-      n   <- self$n; p <-  self$p; d <-  self$d; Q <-  self$Q
-
-      R              <- t(self$Y - self$X %*% B)
-      ones           <- as.vector(rep(1, n))
-      log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
-
-      # expectation of log(p(Y | W, C))
-      elbo <- - 0.5 * n * p * log(2 * pi) + 0.5 * n * sum(log(dm1))
-      elbo <- elbo - 0.5 * sum(dm1 * ((R^2 + (tau %*% t(M^2)) - 2 * R * (tau %*% t(M))) %*% ones + n * (tau %*% S)))
-
-      # expectation of log(p(W))
-      elbo <- elbo - 0.5 * n * Q * log(2 * pi) + 0.5 * n * log_det_omegaQ
-      elbo <- elbo - 0.5 * sum(crossprod(ones, (M %*% omegaQ) * M))
-      elbo <- elbo - 0.5 * n * S %*% diag(omegaQ)
-
-      # expectation of log(p(C))
-      elbo <- elbo + sum(crossprod(log(alpha), t(tau)))
-
-      # Entropy term for W
-      elbo <- elbo + 0.5 * n * Q * log(2 * pi * exp(1)) + .5 * n * sum(log(S))
-
-      # Entropy term for C
-      elbo <- elbo - sum(xlogx(tau))
-
-      if (self$sparsity == 0 ) {
-        elbo
-      }else {
-        elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
-      }
-    },
-
     compute_loglik  = function(B, dm1, omegaQ, alpha, tau, M, S) {
 
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
@@ -117,7 +84,7 @@ NB_fixed_Q <- R6::R6Class(
 
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
-        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S))))
+        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S, self$Q, self$Q))))
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
@@ -137,7 +104,7 @@ NB_fixed_Q <- R6::R6Class(
       S       <- rep(0.1, self$Q)
       M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
       dm1     <- as.vector(rep(1, self$p))
-      omegaQ  <- diag(rep(1, self$Q))
+      omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     },
 

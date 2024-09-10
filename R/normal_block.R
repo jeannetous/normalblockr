@@ -13,7 +13,7 @@
 #' @export
 normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
                          zero_inflation = FALSE, niter = 100, threshold = 1e-4) {
-  if(! is.null(blocks)){
+  if(!is.null(blocks)){
     if(zero_inflation){
       model <- NB_fixed_blocks_zi$new(Y, X, blocks, sparsity = sparsity)
       model$optimize(niter, threshold)
