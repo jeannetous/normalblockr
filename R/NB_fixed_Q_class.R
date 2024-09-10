@@ -8,6 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks
 #' @param sparsity to add on blocks precision matrix
+#' @param clustering_init to propose an initial clustering
 #' @export
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
@@ -17,12 +18,29 @@ NB_fixed_Q <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
+    #' @field clustering_init model initial clustering
+    clustering_init = NULL,
 
     #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, sparsity = 0) {
+    initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
       super$initialize(Y, X, Q, sparsity)
+      if (!is.null(clustering_init)) {
+        if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
+        if (is.vector(clustering_init)) {
+          if (any(clustering_init < 1 | clustering_init > Q))
+            stop("Cluster labels must be between 1 and Q")
+          if (length(clustering_init) != ncol(Y))
+            stop("Cluster labels must match the number of Y's columns")
+        } else {
+          if (nrow(clustering_init) != ncol(Y))
+            stop("Cluster-indicating matrix must have as many rows as Y has columns")
+          if (ncol(clustering_init) != Q)
+            stop("Cluster-indicating matrix must have Q columns")
+        }
+      }
+      self$clustering_init <- clustering_init
     },
 
     #' @description
@@ -108,7 +126,13 @@ NB_fixed_Q <- R6::R6Class(
     EM_initialize = function() {
       B       <- private$XtXm1 %*% t(self$X) %*% self$Y
       R       <- self$Y - self$X %*% B
-      tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+      if(is.null(self$clustering_init)){
+        tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+      }else{
+        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+        }else{ tau <- self$clustering_init}
+      }
+      tau     <- check_one_boundary(check_zero_boundary(tau))
       alpha   <- colMeans(tau)
       S       <- rep(0.1, self$Q)
       M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
@@ -172,6 +196,11 @@ NB_fixed_Q <- R6::R6Class(
       ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
       ent <- ent - sum(xlogx(private$tau))
       return(ent)
+    },
+    #' @field fitted Y values predicted by the model Y values predicted by the model
+    fitted = function(){
+      inferred_C <- t(apply(private$tau, 1, function(x) as.integer(x == max(x))))
+      self$X %*% private$B + private$M  %*%  t(inferred_C)
     }
     ),
 )

@@ -18,13 +18,30 @@ NB_fixed_Q_zi <- R6::R6Class(
   public = list(
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
+    #' @field clustering_init model initial clustering
+    clustering_init = NULL,
 
     #' @description Create a new [`NB_fixed_Q_zi`] object.
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, Q, sparsity = 0) {
+    initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
       super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
       self$zeros <- 1 * (Y == 0)
+      if (!is.null(clustering_init)) {
+        if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
+        if (is.vector(clustering_init)) {
+          if (any(clustering_init < 1 | clustering_init > Q))
+            stop("Cluster labels must be between 1 and Q")
+          if (length(clustering_init) != ncol(Y))
+            stop("Cluster labels must match the number of Y's columns")
+        } else {
+          if (nrow(clustering_init) != ncol(Y))
+            stop("Cluster-indicating matrix must have as many rows as Y has columns")
+          if (ncol(clustering_init) != Q)
+            stop("Cluster-indicating matrix must have Q columns")
+        }
+      }
+      self$clustering_init <- clustering_init
     },
 
     #' @description
@@ -89,8 +106,15 @@ NB_fixed_Q_zi <- R6::R6Class(
       dm1        <- init_model$model_par$dm1
       R          <- self$Y - self$X %*% B
       R[self$Y == 0]  <- 0 # improve final value of objective
-      cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
-      tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
+      # cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
+      # tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
+      if(is.null(self$clustering_init)){
+        tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+      }else{
+        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+        }else{ tau <- self$clustering_init}
+      }
+      tau     <- check_one_boundary(check_zero_boundary(tau))
       alpha      <- colMeans(tau)
       omegaQ     <- t(tau) %*% diag(dm1) %*% tau
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
@@ -219,6 +243,12 @@ NB_fixed_Q_zi <- R6::R6Class(
       ent <- ent - sum(xlogx(private$tau))
       ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
       ent
+    },
+    #' @field fitted Y values predicted by the model Y values predicted by the model
+    fitted = function(){
+      inferred_C <- t(apply(private$tau, 1, function(x) as.integer(x == max(x))))
+      inferred_zeros <- (1 - apply(private$rho , c(1, 2), function(x) as.integer(x> 0.5)))
+      inferred_zeros *(self$X %*% private$B + private$M  %*%  t(inferred_C))
     }
   )
 )
