@@ -123,6 +123,6 @@ normal_zi <- R6::R6Class(
       par
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function() (1 - apply(private$rho , c(1, 2), function(x) as.integer(x> 0.5))) * (self$X %*% private$B)),
+    fitted = function() (1 - private$rho) * (self$X %*% private$B)),
 
 )
