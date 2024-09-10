@@ -90,7 +90,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S)))))
+        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
@@ -104,7 +104,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * self$C)) + omegaQ)
+      G          <- solve(diag(colSums(dm1 * self$C, self$Q, self$Q)) + omegaQ)
       R          <- self$Y - self$X %*% B
       M          <- R %*% (dm1 * self$C) %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
@@ -162,7 +162,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
           maxeval = 1000
         ),
         dm1_1mrho = t(dm1 * t(1 - rho)),
-        MC = M %*% t(self$C)
+        MC = tcrossprod(M, self$C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -175,7 +175,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       # E step
       M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
-      A <- ((R - M %*% t(self$C))^2 + S %*% t(self$C))
+      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
       nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
       rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
@@ -184,7 +184,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
       kappa <- colMeans(rho)
-      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
+      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S), self$Q, self$Q))
 
       if (self$sparsity == 0 ) {
         omegaQ <- solve(sigmaQ)

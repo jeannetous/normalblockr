@@ -100,7 +100,7 @@ NB_fixed_Q <- R6::R6Class(
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
         J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        # J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
@@ -108,7 +108,7 @@ NB_fixed_Q <- R6::R6Class(
     EM_initialize = function() {
       B       <- private$XtXm1 %*% t(self$X) %*% self$Y
       R       <- self$Y - self$X %*% B
-      tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30)$cluster)
+      tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
       alpha   <- colMeans(tau)
       S       <- rep(0.1, self$Q)
       M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)

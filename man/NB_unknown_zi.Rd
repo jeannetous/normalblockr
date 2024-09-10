@@ -43,6 +43,7 @@ R6 generic class for normal-block models
 \item \href{#method-NB_unknown_zi-optimize}{\code{NB_unknown_zi$optimize()}}
 \item \href{#method-NB_unknown_zi-get_model}{\code{NB_unknown_zi$get_model()}}
 \item \href{#method-NB_unknown_zi-get_best_model}{\code{NB_unknown_zi$get_best_model()}}
+\item \href{#method-NB_unknown_zi-plot_criterion}{\code{NB_unknown_zi$plot_criterion()}}
 \item \href{#method-NB_unknown_zi-clone}{\code{NB_unknown_zi$clone()}}
 }
 }
@@ -133,6 +134,34 @@ Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
 }
 \subsection{Returns}{
 a [`NB_fixed_Q_zi`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB_unknown_zi-plot_criterion"></a>}}
+\if{latex}{\out{\hypertarget{method-NB_unknown_zi-plot_criterion}{}}}
+\subsection{Method \code{plot_criterion()}}{
+plots given criterion as a function of Q
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_zi$plot_criterion(
+  criterion = "loglik",
+  type = "b",
+  log = "",
+  neg = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{criterion}}{criterion to plot}
+
+\item{\code{type}}{char for line type (see plot.default)}
+
+\item{\code{log}}{char for logarithmic axes (see plot.default)}
+
+\item{\code{neg}}{boolean plot negative criterion (useful when log="y")}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

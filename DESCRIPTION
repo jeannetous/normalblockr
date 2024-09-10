@@ -22,6 +22,7 @@ Imports:
     nloptr (>= 2.0.3),
     pdfCluster,
     purrr,
+    furrr,
     R6
 RoxygenNote: 7.3.2
 Suggests: 
