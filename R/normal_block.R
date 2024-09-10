@@ -25,6 +25,7 @@ normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
     }
   }
 
+  if(is.null(nb_blocks)){nb_blocks = 1:ncol(Y)}
   if(length(nb_blocks) == 1){
     if(zero_inflation){
       model <- NB_fixed_Q_zi$new(Y, X, nb_blocks, sparsity = sparsity)
