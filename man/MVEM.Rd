@@ -41,6 +41,8 @@ R6 generic class for Multivariate Model inferred with EM
 \item{\code{ICL}}{variational lower bound of the ICL}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
+
+\item{\code{objective}}{evolution of the objective function during (V)EM algorithm}
 }
 \if{html}{\out{</div>}}
 }

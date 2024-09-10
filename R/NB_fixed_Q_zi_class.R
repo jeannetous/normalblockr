@@ -64,21 +64,22 @@ NB_fixed_Q_zi <- R6::R6Class(
     rho     = NA,   # posterior probabilities of zero-inflation
 
     compute_loglik  = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
-      R              <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
-
-      elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
-      elbo <- elbo - .5 * sum((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) %*% diag(dm1))
-      elbo <- elbo + .5 * self$n * log_det_omegaQ + sum(tau %*% log(alpha))
-      elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
-      elbo <- elbo - sum(tau * log(tau)) + .5 * sum(log(S))
-      elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
+      rho_bar <- 1 - rho
+      R <- self$Y - self$X %*% B
+      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
+      J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
+      J <- J + .5 * self$n * log_det_omegaQ + sum(tau %*% log(alpha))
+      J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
+      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
+      J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        elbo <- elbo + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        elbo <- elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
+        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
-      elbo
+      J
     },
 
     EM_initialize = function() {
@@ -87,7 +88,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       B          <- init_model$model_par$B
       dm1        <- init_model$model_par$dm1
       R          <- self$Y - self$X %*% B
-  #    R[self$Y == 0]  <- 0
+      R[self$Y == 0]  <- 0 # improve final value of objective
       cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
       tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
       alpha      <- colMeans(tau)

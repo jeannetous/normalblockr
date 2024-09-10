@@ -61,23 +61,6 @@ NB_fixed_blocks_zi <- R6::R6Class(
     kappa   = NA, # vector of zero-inflation probabilities
     rho     = NA, # posterior probabilities of zero-inflation
 
-    compute_loglik_old  = function(B, dm1, omegaQ, kappa, M, S, rho) {
-      R              <- self$Y - self$X %*% B
-      log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
-
-      elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
-      elbo <- elbo - .5 * sum((1 - rho) * (R^2 - 2 * R * (M %*% t(self$C)) + (M^2 + S) %*% t(self$C)) %*% diag(dm1))
-      elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
-      elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
-      elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
-      elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
-      elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
-      if (self$sparsity > 0) {
-        elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
-      }
-      elbo
-    },
-
     compute_loglik  = function(B, dm1, omegaQ, kappa, M, S, rho) {
       rho_bar        <- 1 - rho
       A              <- (self$Y - self$X %*% B - M %*% t(self$C))^2 + S %*% t(self$C)
@@ -104,7 +87,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * self$C, self$Q, self$Q)) + omegaQ)
+      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
       R          <- self$Y - self$X %*% B
       M          <- R %*% (dm1 * self$C) %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
