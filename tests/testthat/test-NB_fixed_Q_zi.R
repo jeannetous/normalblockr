@@ -11,7 +11,7 @@ Q <- ncol(C)
 
 test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
   expect_true(inherits(model <- NB_fixed_Q_zi$new(Y, X, Q), "NB_fixed_Q_zi"))
-  expect_silent(model$optimize(niter = 60))
+  expect_silent(model$optimize())
   params <- model$model_par
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
