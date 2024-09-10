@@ -165,6 +165,6 @@ NB_fixed_Q <- R6::R6Class(
       return(ent)
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function() self$X %*% private$B + private$M  %*%  private$tau
+    fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)
     ),
 )
