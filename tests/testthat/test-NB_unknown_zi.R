@@ -11,7 +11,7 @@ Q <- ncol(C)
 
 test_that("NB_unknown: check dimensions, optimization and field access", {
   model <- NB_unknown_zi$new(Y, X, c(3, 6, 4, 5))
-  model$optimize(niter = 60)
+  model$optimize()
   best_model <- model$get_best_model("BIC")
   true_model <- model$get_model(Q)
   expect_equal(true_model$Q, Q)

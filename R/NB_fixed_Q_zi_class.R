@@ -69,14 +69,13 @@ NB_fixed_Q_zi <- R6::R6Class(
 
       elbo <- -.5 * sum((1 - rho) * log(2 * pi)) + .5 * sum(log(dm1) * t(1 - rho))
       elbo <- elbo - .5 * sum((1 - rho) * (R^2 - 2 * R * (M %*% t(tau)) + (M^2 + S) %*% t(tau)) %*% diag(dm1))
-      elbo <- elbo - .5 * self$n * self$Q * log(2 * pi) + .5 * self$n * log_det_omegaQ
-      elbo <- elbo - .5 * sum((M %*% omegaQ) * M) - .5 * sum(S %*% diag(omegaQ))
-      elbo <- elbo + sum(tau %*% log(alpha))
+      elbo <- elbo + .5 * self$n * log_det_omegaQ + sum(tau %*% log(alpha))
       elbo <- elbo + sum(rho %*% log(kappa) + (1 - rho) %*% log(1 - kappa))
-      elbo <- elbo + .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(S))
-      elbo <- elbo - sum(tau * log(tau))
+      elbo <- elbo - sum(tau * log(tau)) + .5 * sum(log(S))
       elbo <- elbo - sum(rho * log(rho) + (1 - rho) * log(1 - rho))
       if (self$sparsity > 0) {
+        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
+        elbo <- elbo + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
         elbo <- elbo - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       elbo
@@ -88,15 +87,15 @@ NB_fixed_Q_zi <- R6::R6Class(
       B          <- init_model$model_par$B
       dm1        <- init_model$model_par$dm1
       R          <- self$Y - self$X %*% B
-      R[self$Y == 0]  <- 0
+  #    R[self$Y == 0]  <- 0
       cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
       tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
       alpha      <- colMeans(tau)
       omegaQ     <- t(tau) %*% diag(dm1) %*% tau
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(as.vector(dm1) * tau), self$Q, self$Q) + omegaQ)
-      M          <- t(dm1 * t(R)) %*% tau %*% G
+      G          <- solve(diag(colSums(dm1 * tau), self$Q, self$Q) + omegaQ)
+      M          <- R %*% (dm1 * tau) %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)
@@ -180,7 +179,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
       alpha <- colMeans(tau)
       kappa <- colMeans(rho)
-      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
+      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S), self$Q, self$Q))
 
       if (self$sparsity == 0 ) {
         omegaQ <- solve(sigmaQ)

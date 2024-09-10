@@ -90,7 +90,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S)))))
+        J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
@@ -104,7 +104,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * self$C)) + omegaQ)
+      G          <- solve(diag(colSums(dm1 * self$C, self$Q, self$Q)) + omegaQ)
       R          <- self$Y - self$X %*% B
       M          <- R %*% (dm1 * self$C) %*% G
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
@@ -184,7 +184,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
       kappa <- colMeans(rho)
-      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S)))
+      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S), self$Q, self$Q))
 
       if (self$sparsity == 0 ) {
         omegaQ <- solve(sigmaQ)
