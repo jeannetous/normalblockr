@@ -32,6 +32,8 @@ R6 class for normal-block model with fixed groups
 \item{\code{clustering}}{given as a list of labels}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }

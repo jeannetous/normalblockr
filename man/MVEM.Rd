@@ -32,6 +32,8 @@ R6 generic class for Multivariate Model inferred with EM
 
 \item{\code{loglik}}{(or its variational lower bound)}
 
+\item{\code{penalty}}{(for cases when a penalty is placed on the precision matrix)}
+
 \item{\code{BIC}}{(or its variational lower bound)}
 
 \item{\code{AIC}}{(or its variational lower bound)}

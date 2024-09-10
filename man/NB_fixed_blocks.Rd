@@ -24,6 +24,8 @@ R6 class for normal-block model with fixed groups
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
 \item{\code{clustering}}{given as a list of labels}
+
+\item{\code{fitted}}{Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }

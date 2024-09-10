@@ -15,6 +15,8 @@ R6 class for normal-block model with fixed blocks
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{zeros}}{indicator matrix of zeros in Y}
+
+\item{\code{clustering_init}}{model initial clustering}
 }
 \if{html}{\out{</div>}}
 }
@@ -30,6 +32,8 @@ R6 class for normal-block model with fixed blocks
 \item{\code{nb_param}}{number of parameters in the model}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }
@@ -55,7 +59,7 @@ R6 class for normal-block model with fixed blocks
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0, clustering_init = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

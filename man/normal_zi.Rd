@@ -26,6 +26,8 @@ R6 class for zero-inflated normal model
 \item{\code{model_par}}{a list with the matrices of the model parameters:
 B (regression coefficients), dm1 (species variance),
 kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
+
+\item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }

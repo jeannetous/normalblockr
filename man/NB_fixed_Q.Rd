@@ -11,6 +11,13 @@ R6 class for normal-block model with fixed Q (number of groups)
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q}
 }
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{clustering_init}}{model initial clustering}
+}
+\if{html}{\out{</div>}}
+}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -23,6 +30,8 @@ R6 class for normal-block model with fixed Q (number of groups)
 \item{\code{clustering}}{a list of labels giving the clustering obtained in the model}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }
@@ -48,7 +57,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, sparsity = 0, clustering_init = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -61,6 +70,8 @@ Create a new [`NB_fixed_Q`] object.
 \item{\code{Q}}{required number of groups}
 
 \item{\code{sparsity}}{to add on blocks precision matrix}
+
+\item{\code{clustering_init}}{to propose an initial clustering}
 }
 \if{html}{\out{</div>}}
 }
