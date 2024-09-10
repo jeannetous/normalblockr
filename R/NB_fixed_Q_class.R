@@ -165,9 +165,6 @@ NB_fixed_Q <- R6::R6Class(
       return(ent)
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function(){
-      inferred_C <- t(apply(private$tau, 1, function(x) as.integer(x == max(x))))
-      self$X %*% private$B + private$M  %*%  t(inferred_C)
-    }
+    fitted = function() self$X %*% private$B + private$M  %*%  private$tau
     ),
 )
