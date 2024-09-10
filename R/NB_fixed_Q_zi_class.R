@@ -247,8 +247,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function(){
       inferred_C <- t(apply(private$tau, 1, function(x) as.integer(x == max(x))))
-      inferred_zeros <- (1 - apply(private$rho , c(1, 2), function(x) as.integer(x> 0.5)))
-      inferred_zeros *(self$X %*% private$B + private$M  %*%  t(inferred_C))
+      (1 - private$rho) *(self$X %*% private$B + private$M  %*%  t(inferred_C))
     }
   )
 )
