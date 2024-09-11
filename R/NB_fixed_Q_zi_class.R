@@ -8,6 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks in the model
 #' @param sparsity to add on blocks precision matrix
+#' @param verbose telling if information should be printed during optimization
 #' @export
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
@@ -23,6 +24,7 @@ NB_fixed_Q_zi <- R6::R6Class(
 
     #' @description Create a new [`NB_fixed_Q_zi`] object.
     #' @param C block matrix C_jq = 1 if species j belongs to block q
+    #' @param clustering_init model initial clustering
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
       super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
