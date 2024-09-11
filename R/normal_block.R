@@ -9,6 +9,7 @@
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
+#' @param verbose telling if information should be printed during optimization
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @export
 normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,

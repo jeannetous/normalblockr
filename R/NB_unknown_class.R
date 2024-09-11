@@ -8,6 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param nb_blocks list of number of blocks values to be tested
 #' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param verbose telling if information should be printed during optimization
 #' @export
 NB_unknown <- R6::R6Class(
   classname = "NB_unknown",
@@ -67,7 +68,7 @@ NB_unknown <- R6::R6Class(
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
       self$models <- furrr::future_map(self$models, function(model) {
-        cat("\tnumber of blocks =", model$Q, "          \r")
+        if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         model

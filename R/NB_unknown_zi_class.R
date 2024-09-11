@@ -8,6 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param nb_blocks list of number of blocks values to be tested
 #' @param models uderlying NB_fixed_Q_zi models for each nb of blocks
+#' @param verbose telling if information should be printed during optimization
 #' @export
 NB_unknown_zi <- R6::R6Class(
   classname = "NB_unknown_zi",
@@ -26,6 +27,8 @@ NB_unknown_zi <- R6::R6Class(
     sparsity = NULL,
     #' @field models list of NB_fixed_Q_zi models corresponding to each nb_block value
     models = NULL,
+    #' @field verbose say whether information should be given about the optimization
+    verbose = NULL,
 
     #' @description Create a new [`NB_unknown_zi`] object.
     #' @param Y the matrix of responses (called Y in the model).
@@ -33,7 +36,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @param sparsity penalty on the network density
     #' @param threshold loglikelihood threshold under which optimization stops
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, nb_blocks, sparsity = 0) {
+    initialize = function(Y, X, nb_blocks, sparsity = 0, verbose = TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -49,6 +52,7 @@ NB_unknown_zi <- R6::R6Class(
       stopifnot(all.equal(length(sparsity), length(nb_blocks)))
       self$sparsity <- sparsity
       self$nb_blocks <- nb_blocks
+      self$verbose   <- verbose
 
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
@@ -64,6 +68,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
       self$models <- furrr::future_map(self$models, function(model) {
+        if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
         model$optimize(niter, threshold)
         model
       }, .options = furrr_options(seed=TRUE))
