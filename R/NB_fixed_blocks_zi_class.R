@@ -49,6 +49,13 @@ NB_fixed_blocks_zi <- R6::R6Class(
       if (!anyNA(M))     private$M     <- M
       if (!anyNA(S))     private$S     <- S
       if (!anyNA(rho))   private$rho   <- rho
+    },
+    #' @description calls EM optimization and updates relevant fields
+    #' @param niter number of iterations in model optimization
+    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @return optimizes the model and updates its parameters
+    optimize = function(niter = 100, threshold = 1e-4) {
+      super$optimize()
     }),
 
 
@@ -90,6 +97,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
       R          <- self$Y - self$X %*% B
       M          <- R %*% (dm1 * self$C) %*% G
+
       S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
            S = S)
