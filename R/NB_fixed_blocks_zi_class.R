@@ -205,8 +205,6 @@ NB_fixed_blocks_zi <- R6::R6Class(
       return(ent)
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function(){
-      (1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
-    }
+    fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
   )
 )

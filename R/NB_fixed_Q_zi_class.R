@@ -245,9 +245,6 @@ NB_fixed_Q_zi <- R6::R6Class(
       ent
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function(){
-      inferred_C <- t(apply(private$tau, 1, function(x) as.integer(x == max(x))))
-      (1 - private$rho) *(self$X %*% private$B + private$M  %*%  t(inferred_C))
-    }
+    fitted = function()(1 - private$rho) *(self$X %*% private$B + tcrossprod(private$M, private$tau))
   )
 )
