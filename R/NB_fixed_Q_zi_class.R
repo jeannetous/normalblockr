@@ -9,7 +9,6 @@
 #' @param Q number of blocks in the model
 #' @param sparsity to add on blocks precision matrix
 #' @param verbose telling if information should be printed during optimization
-#' @export
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
   inherit = NB,

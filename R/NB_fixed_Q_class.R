@@ -9,7 +9,6 @@
 #' @param Q number of blocks
 #' @param sparsity to add on blocks precision matrix
 #' @param clustering_init to propose an initial clustering
-#' @export
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
   inherit = NB,

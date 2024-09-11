@@ -9,7 +9,6 @@
 #' @param nb_blocks list of number of blocks values to be tested
 #' @param models uderlying NB_fixed_Q models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
-#' @export
 NB_unknown <- R6::R6Class(
   classname = "NB_unknown",
 
