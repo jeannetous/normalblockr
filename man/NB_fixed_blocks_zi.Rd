@@ -42,13 +42,13 @@ R6 class for normal-block model with fixed groups
 \itemize{
 \item \href{#method-NB_fixed_blocks_zi-new}{\code{NB_fixed_blocks_zi$new()}}
 \item \href{#method-NB_fixed_blocks_zi-update}{\code{NB_fixed_blocks_zi$update()}}
+\item \href{#method-NB_fixed_blocks_zi-optimize}{\code{NB_fixed_blocks_zi$optimize()}}
 \item \href{#method-NB_fixed_blocks_zi-clone}{\code{NB_fixed_blocks_zi$clone()}}
 }
 }
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
 </ul>
 </details>
@@ -120,6 +120,28 @@ Update a [`NB_fixed_Q`] object
 }
 \subsection{Returns}{
 Update the current [`NB_fixed_Q`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB_fixed_blocks_zi-optimize"></a>}}
+\if{latex}{\out{\hypertarget{method-NB_fixed_blocks_zi-optimize}{}}}
+\subsection{Method \code{optimize()}}{
+calls EM optimization and updates relevant fields
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_zi$optimize(niter = 100, threshold = 1e-04)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{niter}}{number of iterations in model optimization}
+
+\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+optimizes the model and updates its parameters
 }
 }
 \if{html}{\out{<hr>}}

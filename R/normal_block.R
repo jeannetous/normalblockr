@@ -11,6 +11,11 @@
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param verbose telling if information should be printed during optimization
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
+#' @examples
+#' data("example_data")
+#' Y <- example_data$Y
+#' X <- example_data$X
+#' my_normal_block <- normal_block(Y, X, nb_blocks = 1:6, zero_inflation = TRUE)
 #' @export
 normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
                          zero_inflation = FALSE, niter = 100, threshold = 1e-4,

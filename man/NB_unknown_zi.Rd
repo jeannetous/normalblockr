@@ -20,6 +20,8 @@ R6 generic class for normal-block models
 \item{\code{sparsity}}{penalty on the network density}
 
 \item{\code{models}}{list of NB_fixed_Q_zi models corresponding to each nb_block value}
+
+\item{\code{verbose}}{say whether information should be given about the optimization}
 }
 \if{html}{\out{</div>}}
 }
@@ -53,7 +55,7 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB_unknown_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_zi$new(Y, X, nb_blocks, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_zi$new(Y, X, nb_blocks, sparsity = 0, verbose = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -66,6 +68,8 @@ Create a new [`NB_unknown_zi`] object.
 \item{\code{nb_blocks}}{list of number of blocks values to be tested}
 
 \item{\code{sparsity}}{penalty on the network density}
+
+\item{\code{verbose}}{telling if information should be printed during optimization}
 
 \item{\code{threshold}}{loglikelihood threshold under which optimization stops}
 }

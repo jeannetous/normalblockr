@@ -73,6 +73,8 @@ Create a new [`NB_fixed_Q_zi`] object.
 
 \item{\code{sparsity}}{to add on blocks precision matrix}
 
+\item{\code{clustering_init}}{model initial clustering}
+
 \item{\code{C}}{block matrix C_jq = 1 if species j belongs to block q}
 }
 \if{html}{\out{</div>}}

@@ -12,7 +12,8 @@ normal_block(
   sparsity = 0,
   zero_inflation = FALSE,
   niter = 100,
-  threshold = 1e-04
+  threshold = 1e-04,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -31,10 +32,18 @@ normal_block(
 \item{niter}{number of iterations in model optimization}
 
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
+
+\item{verbose}{telling if information should be printed during optimization}
 }
 \value{
 an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 }
 \description{
 Fit a normal-block model with a variational algorithm
+}
+\examples{
+data("example_data")
+Y <- example_data$Y
+X <- example_data$X
+my_normal_block <- normal_block(Y, X, nb_blocks = 1:6, zero_inflation = TRUE)
 }
