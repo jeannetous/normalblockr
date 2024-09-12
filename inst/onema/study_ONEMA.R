@@ -1,9 +1,9 @@
 library(reshape2)
 
 ## loading data
-onema_community <- read.csv("inst/onema/community_data.csv")
-env             <- read.csv("inst/onema/environment.csv")
-protocol        <- read.csv("inst/onema/fishing_protocol.csv") # link between opcods & stations
+onema_community <- read.csv("community_data.csv")
+env             <- read.csv("environment.csv")
+protocol        <- read.csv("fishing_protocol.csv") # link between opcods & stations
 
 onema_community$species <- factor(onema_community$species,
                                   levels = unique(onema_community$species))
