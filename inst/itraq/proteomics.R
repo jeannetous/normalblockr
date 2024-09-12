@@ -1,7 +1,7 @@
 library(tidyverse)
 library(future)
 
-proteomics <- read_csv(file = "itraq/77_cancer_proteomes_CPTAC_itraq.csv")
+proteomics <- read_csv(file = "77_cancer_proteomes_CPTAC_itraq.csv")
 metadata <- dplyr::select(proteomics, c(RefSeq_accession_number, gene_symbol, gene_name))
 proteom <- dplyr::select(proteomics, -c(RefSeq_accession_number, gene_symbol, gene_name))
 
