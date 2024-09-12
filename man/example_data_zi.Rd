@@ -7,9 +7,9 @@
 \format{
 A list with 3 data frames:
 \describe{
-  \item{Y}{a 300 x 100 matrix of simulated abundancies}
-  \item{X}{a 300 x 2 data frame of 2 simulated covariates values for 300 sites}
-  \item{C}{a 100 x 4 data frame describing the groups (among 4) each element belongs to}
+  \item{Y}{a 200 x 50 matrix of simulated abundancies}
+  \item{X}{a 200 x 2 data frame of 2 simulated covariates values for 200 sites}
+  \item{C}{a 50 x 4 data frame describing the groups (among 4) each element belongs to}
 }
 }
 \usage{
