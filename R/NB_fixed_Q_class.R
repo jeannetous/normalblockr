@@ -161,7 +161,7 @@ NB_fixed_Q <- R6::R6Class(
     entropy    = function() {
       ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
       ent <- ent - sum(xlogx(private$tau))
-      return(ent)
+      ent
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)

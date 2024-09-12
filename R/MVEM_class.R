@@ -118,7 +118,7 @@ MVEM <- R6::R6Class(
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() 0,
     #' @field ICL variational lower bound of the ICL
-    ICL        = function() self$BIC + self$entropy,
+    ICL        = function() self$BIC + 2 * self$entropy,
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       data.frame(nb_param = self$nb_param, loglik = self$loglik,

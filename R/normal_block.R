@@ -15,7 +15,14 @@
 #' data("example_data")
 #' Y <- example_data$Y
 #' X <- example_data$X
-#' my_normal_block <- normal_block(Y, X, nb_blocks = 1:6, zero_inflation = TRUE)
+#' my_normal_block <- normal_block(Y, X, nb_blocks = 1:6)
+#' \dontrun{
+#' my_normal_block$plot_criterion("loglik")
+#' my_normal_block$plot_criterion("BIC")
+#' my_normal_block$plot_criterion("ICL")
+#' Y_hat <- my_normal_block$get_best_model()$fitted
+#' plot(Y, Y_hat); abline(0,1)
+#' }
 #' @export
 normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
                          zero_inflation = FALSE, niter = 100, threshold = 1e-4,
