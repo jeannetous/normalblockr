@@ -207,9 +207,9 @@ NB_fixed_blocks_zi <- R6::R6Class(
     clustering = function() get_clusters(self$C),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * n * sum(log(private$S))
+      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
       ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
-      return(ent)
+      ent
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))

@@ -240,7 +240,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     nb_param = function() {as.integer(super$nb_param + self$p + self$Q - 1)},
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
       ent <- ent - sum(xlogx(private$tau))
       ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
       ent

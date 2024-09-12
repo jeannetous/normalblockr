@@ -51,43 +51,12 @@ NB_fixed_blocks <- R6::R6Class(
     gamma   = NA, # variance of  posterior distribution of W
     mu      = NA, #  mean for posterior distribution of W
 
-    # compute_complete_loglik  = function(B, dm1, omegaQ, gamma, mu) {
-    #   R   <- self$Y - self$X %*% B
-    #   log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
-    #   dm1C   <- (dm1 * self$C)
-    #   Ctdm1C <- t(self$C) %*% dm1C
-    #   mutmu  <- t(mu) %*% mu
-    #
-    #   J <- - .5 * self$n * (self$p + self$Q) * log(2 * pi) + .5 * self$n * sum(log(dm1))
-    #   J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  dm1C %*% t(mu))
-    #   J <- J - .5 * self$n * sum(diag(Ctdm1C %*% (gamma + mutmu/self$n)))
-    #   J <- J + .5 * self$n * log_det_omegaQ
-    #   ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-    #   if (self$sparsity > 0) {
-    #     J <- J - .5 * self$n * sum(diag(omegaQ %*% (gamma + mutmu/self$n)))
-    #   } else {
-    #     J <- J - .5 * self$n * self$Q
-    #   }
-    #   if (self$sparsity > 0) {
-    #     J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
-    #   }
-    #   J
-    # },
-
     compute_loglik  = function(B, dm1, omegaQ, gamma, mu) {
       R   <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
       log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
       mutmu  <- t(mu) %*% mu
 
-      # dm1C   <- (dm1 * self$C)
-      # Ctdm1C <- t(self$C) %*% dm1C
-      # muCT  <-  mu %*% t(self$C)
-      # I have a problem with these two terms... not sure to understand what they correspond to
-      # J <- J - .5 * sum(R %*% (dm1 * t(R))) + sum(R %*%  dm1C %*% t(mu))
-      # J <- J - .5 * self$n * sum(diag(Ctdm1C %*% (gamma + mutmu/self$n)))
-      # Should be equivalent to the following (which exactly equal, by definition of d_hat, -np/2)
-      ## - .5 * self$n * sum(diag( dm1 * (crossprod(R - muCT)/self$n + self$C %*% gamma %*% t(self$C))))
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
       J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_omegaQ
       if (self$sparsity > 0) {
@@ -143,6 +112,12 @@ NB_fixed_blocks <- R6::R6Class(
     posterior_par  = function() list(gamma = private$gamma, mu = private$mu),
     #' @field clustering given as a list of labels
     clustering = function() get_clusters(self$C),
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {
+      log_det_Gamma <- determinant(private$gamma)$modulus
+      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
+      ent
+    },
     #' @field fitted Y values predicted by the model
     fitted = function() self$X %*% private$B + private$mu %*% t(self$C)
 
