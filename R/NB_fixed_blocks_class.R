@@ -52,27 +52,25 @@ NB_fixed_blocks <- R6::R6Class(
     mu      = NA, #  mean for posterior distribution of W
 
     compute_loglik  = function(B, dm1, omegaQ, gamma, mu) {
-      R   <- self$Y - self$X %*% B
       log_det_omegaQ <- as.numeric(determinant(omegaQ, logarithm = TRUE)$modulus)
       log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
-      mutmu  <- t(mu) %*% mu
 
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
       J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_omegaQ
+      J <- J + .5 * self$n * log_det_gamma
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (self$n * gamma + mutmu)))
+        J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (self$n * gamma + t(mu) %*% mu)))
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
-      J <- J + .5 * self$n * log_det_gamma
       J
     },
 
     EM_initialize = function() {
       B      <- private$XtXm1 %*% t(self$X) %*% self$Y
       R      <- self$Y - self$X %*% B
-      dm1    <- 1 / check_one_boundary(check_zero_boundary(diag(cov(R))))
-      gamma  <- solve(t(self$C) %*% (dm1 * self$C))
+      dm1    <- 1 / apply(R, 2, var)
+      gamma  <- diag(1/colSums(dm1 * self$C))
       mu     <- R %*% (dm1 * self$C) %*% gamma
       omegaQ <- solve(gamma + (1 / self$n) * crossprod(mu))
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
@@ -80,17 +78,15 @@ NB_fixed_blocks <- R6::R6Class(
 
     EM_step = function(B, dm1, omegaQ, gamma, mu) {
 
-      R <- self$Y - self$X %*% B
-
       ## E step
-      gamma <- solve(omegaQ + diag(colSums(dm1 * self$C)))
-      mu <- R %*% (dm1 * self$C) %*% gamma
+      gamma <- solve(omegaQ + diag(colSums(dm1 * self$C), self$Q, self$Q))
+      mu    <- (self$Y - self$X %*% B) %*% (dm1 * self$C) %*% gamma
 
       ## M step
       muCT   <- mu %*% t(self$C)
       B      <- private$XtXm1 %*% crossprod(self$X, self$Y - muCT)
-      ddiag  <- colMeans((R - muCT)^2) + diag(self$C %*% gamma %*% t(self$C))
-      dm1    <- as.vector(1 / ddiag)
+      ddiag  <- colMeans((self$Y - self$X %*% B - muCT)^2) + self$C %*% diag(gamma)
+      dm1    <- 1 / as.vector(ddiag)
       sigmaQ <- gamma + (1 / self$n) * crossprod(mu)
 
       if (self$sparsity == 0) {
@@ -114,7 +110,7 @@ NB_fixed_blocks <- R6::R6Class(
     clustering = function() get_clusters(self$C),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      log_det_Gamma <- determinant(private$gamma)$modulus
+      log_det_Gamma <- as.numeric(determinant(private$gamma)$modulus)
       ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
       ent
     },

@@ -159,11 +159,11 @@ NB_fixed_Q <- R6::R6Class(
     clustering = function() get_clusters(private$tau),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
       ent <- ent - sum(xlogx(private$tau))
       ent
     },
-    #' @field fitted Y values predicted by the model Y values predicted by the model
+    #' @field fitted Y values predicted by the model
     fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)
     ),
 )
