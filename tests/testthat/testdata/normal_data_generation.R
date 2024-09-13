@@ -26,5 +26,5 @@ epsilon <- t(MASS::mvrnorm(n, mu = matrix(rep(0, p), p, 1), Sigma = D))
 Y    <- t(B) %*% X + C %*% W + epsilon
 Y    <- t(Y)
 X    <- t(X)
-testdata <- list(Y = Y, X = X, C = C)
+testdata <- list(Y = Y, X = X, C = C, B = B, D = D, Sigma = Sigma)
 saveRDS(testdata, file = "tests/testthat/testdata/testdata_normal.RDS")
