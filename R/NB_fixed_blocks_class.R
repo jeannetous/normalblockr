@@ -106,6 +106,8 @@ NB_fixed_blocks <- R6::R6Class(
   active = list(
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
     posterior_par  = function() list(gamma = private$gamma, mu = private$mu),
+    #' @field cond_par a list with the matrices of the conditional latent distirbution: mu (mean), Gamma (variance)
+    cond_par    = function() list(mu = private$mu,  Gamma = private$gamma),
     #' @field clustering given as a list of labels
     clustering = function() get_clusters(self$C),
     #' @field entropy Entropy of the variational distribution when applicable
