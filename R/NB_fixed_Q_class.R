@@ -98,6 +98,7 @@ NB_fixed_Q <- R6::R6Class(
         if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
         }else{ tau <- self$clustering_init}
       }
+      self$clustering_init <- get_clusters(tau)
       tau     <- check_one_boundary(check_zero_boundary(tau))
       alpha   <- colMeans(tau)
       S       <- rep(0.1, self$Q)

@@ -113,7 +113,7 @@ NB_fixed_blocks <- R6::R6Class(
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       log_det_Gamma <- as.numeric(determinant(private$gamma)$modulus)
-      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
+      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
       ent
     },
     #' @field fitted Y values predicted by the model
