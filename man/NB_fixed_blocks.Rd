@@ -23,6 +23,8 @@ R6 class for normal-block model with fixed groups
 \describe{
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
+\item{\code{cond_par}}{a list with the matrices of the conditional latent distirbution: mu (mean), Gamma (variance)}
+
 \item{\code{clustering}}{given as a list of labels}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}

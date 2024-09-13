@@ -31,7 +31,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
-\item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
+\item{\code{fitted}}{Y values predicted by the model}
 }
 \if{html}{\out{</div>}}
 }
