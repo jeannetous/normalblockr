@@ -71,7 +71,7 @@ NB <- R6::R6Class(
     #' @field penalty (penalty on log-likelihood due to sparsity)
     penalty = function() - self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ)),
     #' @field EBIC variational lower bound of the EBIC
-    EBIC      = function() {self$BIC - .5 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
+    EBIC      = function() {self$BIC + ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       res <- super$criteria
