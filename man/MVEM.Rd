@@ -34,11 +34,13 @@ R6 generic class for Multivariate Model inferred with EM
 
 \item{\code{penalty}}{(for cases when a penalty is placed on the precision matrix)}
 
+\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{deviance}}{(or its variational lower bound)}
+
 \item{\code{BIC}}{(or its variational lower bound)}
 
 \item{\code{AIC}}{(or its variational lower bound)}
-
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{ICL}}{variational lower bound of the ICL}
 

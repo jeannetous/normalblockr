@@ -2,7 +2,6 @@
 ##  CLASS NB_fixed_blocks #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 #' R6 class for normal-block model with fixed groups
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
@@ -11,43 +10,12 @@
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
   inherit = NB,
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-    #' @field C the matrix of species groups
-    C = NULL,
-
-    #' @description Create a new [`NB_fixed_blocks`] object.
-    #' @param C group matrix C_jq = 1 if species j belongs to group q
-    #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0) {
-      if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y, X, ncol(C), sparsity)
-      self$C <- C
-    },
-
-    #' @description
-    #' Update a [`NB_fixed_blocks`] object
-    #' @param B regression matrix
-    #' @param dm1 diagonal vector of species inverse variance matrix
-    #' @param omegaQ groups inverse variance matrix
-    #' @param gamma  variance of  posterior distribution of W
-    #' @param mu  mean for posterior distribution of W
-    #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`zi_normal`] object
-    update = function(B = NA, dm1 = NA, omegaQ = NA, gamma = NA, mu = NA,
-                      ll_list = NA) {
-      super$update(B, dm1, omegaQ, ll_list)
-      if (!anyNA(gamma)) private$gamma <- gamma
-      if (!anyNA(mu))   private$mu   <- mu
-    }),
-
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    C       = NA, # the matrix of species groups
     gamma   = NA, # variance of  posterior distribution of W
     mu      = NA, #  mean for posterior distribution of W
 
@@ -64,39 +32,40 @@ NB_fixed_blocks <- R6::R6Class(
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
+    }
+
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PUBLIC MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  public = list(
+
+    #' @description Create a new [`NB_fixed_blocks`] object.
+    #' @param C group matrix C_jq = 1 if species j belongs to group q
+    #' @return A new [`NB_fixed_blocks`] object
+    initialize = function(Y, X, C, sparsity = 0) {
+      if (!is.matrix(C)) stop("C must be a matrix.")
+      super$initialize(Y, X, ncol(C), sparsity)
+      private$C     <- C
+      private$mu    <- matrix(0, self$n, self$Q)
+      private$gamma <- diag(1, self$Q, self$Q)
     },
 
-    EM_initialize = function() {
-      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
-      R      <- self$Y - self$X %*% B
-      dm1    <- 1 / apply(R, 2, var)
-      gamma  <- diag(1/colSums(dm1 * self$C))
-      mu     <- R %*% (dm1 * self$C) %*% gamma
-      omegaQ <- solve(gamma + (1 / self$n) * crossprod(mu))
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
-    },
-
-    EM_step = function(B, dm1, omegaQ, gamma, mu) {
-
-      ## E step
-      gamma <- solve(omegaQ + diag(colSums(dm1 * self$C), self$Q, self$Q))
-      mu    <- (self$Y - self$X %*% B) %*% (dm1 * self$C) %*% gamma
-
-      ## M step
-      muCT   <- mu %*% t(self$C)
-      B      <- private$XtXm1 %*% crossprod(self$X, self$Y - muCT)
-      ddiag  <- colMeans((self$Y - self$X %*% B - muCT)^2) + self$C %*% diag(gamma)
-      dm1    <- 1 / as.vector(ddiag)
-      sigmaQ <- gamma + (1 / self$n) * crossprod(mu)
-
-      if (self$sparsity == 0) {
-        omegaQ <- solve(sigmaQ)
-      } else {
-        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) stop("GLasso fails")
-        omegaQ <- Matrix::symmpart(glasso_out$wi)
-      }
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
+    #' @description
+    #' Update a [`NB_fixed_blocks`] object
+    #' @param B regression matrix
+    #' @param dm1 diagonal vector of species inverse variance matrix
+    #' @param omegaQ groups inverse variance matrix
+    #' @param gamma  variance of  posterior distribution of W
+    #' @param mu  mean for posterior distribution of W
+    #' @param ll_list log-likelihood during optimization
+    #' @return Update the current [`zi_normal`] object
+    update = function(B = NA, dm1 = NA, omegaQ = NA, gamma = NA, mu = NA,
+                      ll_list = NA) {
+      super$update(B, dm1, omegaQ, ll_list)
+      if (!anyNA(gamma)) private$gamma <- gamma
+      if (!anyNA(mu))   private$mu   <- mu
     }
   ),
 
@@ -106,18 +75,91 @@ NB_fixed_blocks <- R6::R6Class(
   active = list(
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
     posterior_par  = function() list(gamma = private$gamma, mu = private$mu),
-    #' @field cond_par a list with the matrices of the conditional latent distirbution: mu (mean), Gamma (variance)
-    cond_par    = function() list(mu = private$mu,  Gamma = private$gamma),
     #' @field clustering given as a list of labels
-    clustering = function() get_clusters(self$C),
+    clustering = function() get_clusters(private$C),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       log_det_Gamma <- as.numeric(determinant(private$gamma)$modulus)
-      ent <- 0.5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
+      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
       ent
     },
     #' @field fitted Y values predicted by the model
-    fitted = function() self$X %*% private$B + private$mu %*% t(self$C)
+    fitted = function() self$X %*% private$B + private$mu %*% t(private$C)
+  )
+)
 
+#' R6 class for normal-block model with fixed groups and diagonal residual covariance
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param sparsity to add on blocks precision matrix
+NB_fixed_blocks_diagonal <- R6::R6Class(
+  classname = "NB_fixed_blocksdiagonal",
+  inherit = NB_fixed_blocks,
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
+
+    EM_initialize = function() {
+      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
+      dm1    <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
+      omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+    },
+
+    EM_step = function(B, dm1, omegaQ, gamma, mu) {
+
+      ## E step
+      gamma <- solve(omegaQ + diag(colSums(dm1 * private$C), self$Q, self$Q))
+      mu    <- (self$Y - self$X %*% B) %*% (dm1 * private$C) %*% gamma
+
+      ## M step
+      YmmuCT <- self$Y - mu %*% t(private$C)
+      B      <- private$XtXm1 %*% crossprod(self$X, YmmuCT)
+      ddiag  <- colMeans((YmmuCT - self$X %*% B)^2) + private$C %*% diag(gamma)
+      dm1    <- 1 / as.vector(ddiag)
+      omegaQ <- private$get_omegaQ(crossprod(mu)/self$n + gamma)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
+    }
+  )
+)
+
+#' R6 class for normal-block model with fixed groups and spherical residual covariance
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param sparsity to add on blocks precision matrix
+NB_fixed_blocks_spherical <- R6::R6Class(
+  classname = "NB_fixed_blocks_spherical",
+  inherit = NB_fixed_blocks,
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
+
+    EM_initialize = function() {
+      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
+      dm1    <- rep(1/mean((self$Y - self$X %*% B)^2), self$p)
+      omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+    },
+
+    EM_step = function(B, dm1, omegaQ, gamma, mu) {
+
+      ## E step
+      gamma <- solve(omegaQ + dm1[1] * diag(colSums(private$C), self$Q, self$Q))
+      mu    <- (self$Y - self$X %*% B) %*% private$C %*% gamma * dm1[1]
+
+      ## M step
+      YmmuCT <- self$Y - mu %*% t(private$C)
+      B      <- private$XtXm1 %*% crossprod(self$X, YmmuCT)
+      sigma2 <- mean((YmmuCT - self$X %*% B)^2) + sum(colMeans(private$C) * diag(gamma))
+      omegaQ <- private$get_omegaQ(crossprod(mu)/self$n + gamma)
+
+      list(B = B, dm1 = rep(1/sigma2, self$p), omegaQ = omegaQ, gamma = gamma, mu = mu)
+    }
   )
 )

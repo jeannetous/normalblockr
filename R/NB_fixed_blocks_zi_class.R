@@ -174,15 +174,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
       B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
       kappa <- colMeans(rho)
-      sigmaQ <- (1 / self$n) * (crossprod(M) + diag(colSums(S), self$Q, self$Q))
-
-      if (self$sparsity == 0 ) {
-        omegaQ <- solve(sigmaQ)
-      } else {
-        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) stop("GLasso fails")
-        omegaQ <- Matrix::symmpart(glasso_out$wi)
-      }
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
            S = S)

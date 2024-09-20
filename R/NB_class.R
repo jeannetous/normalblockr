@@ -55,7 +55,18 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    omegaQ    = NA   # groups variance matrix
+    omegaQ    = NA,   # groups variance matrix
+    ## funciton to optimize OmegaQ (in the sparse and non sparse case)
+    get_omegaQ = function(sigmaQ) {
+      if (self$sparsity == 0) {
+        omegaQ <- solve(sigmaQ)
+      } else {
+        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) stop("GLasso fails")
+        omegaQ <- Matrix::symmpart(glasso_out$wi)
+      }
+      omegaQ
+    }
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,18 +76,17 @@ NB <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function() as.integer(super$nb_param + self$Q + self$n_edges),
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
-    n_edges         = function() {sum(private$omegaQ[upper.tri(private$omegaQ, diag = FALSE)] != 0)},
+    n_edges  = function() {sum(private$omegaQ[upper.tri(private$omegaQ, diag = FALSE)] != 0)},
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
-    model_par  = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
+    model_par = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field penalty (penalty on log-likelihood due to sparsity)
-    penalty = function() - self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ)),
-    #' @field EBIC variational lower bound of the EBIC
-    EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
+    penalty = function() self$sparsity * sum(abs(self$sparsity_weights * private$omegaQ)),
+    # #' @field EBIC variational lower bound of the EBIC
+    # EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       res <- super$criteria
-      res$EBIC <- self$EBIC
-      res$pen_loglik <- self$pen_loglik
+      ## res$EBIC <- self$EBIC
       res$Q <- self$Q
       res$n_edges <- self$n_edges
       res

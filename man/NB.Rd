@@ -33,8 +33,6 @@ R6 generic class for normal-block models
 
 \item{\code{penalty}}{(penalty on log-likelihood due to sparsity)}
 
-\item{\code{EBIC}}{variational lower bound of the EBIC}
-
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
 \if{html}{\out{</div>}}
