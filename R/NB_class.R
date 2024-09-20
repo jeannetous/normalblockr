@@ -55,7 +55,18 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    omegaQ    = NA   # groups variance matrix
+    omegaQ    = NA,   # groups variance matrix
+    ## funciton to optimize OmegaQ (in the sparse and non sparse case)
+    get_omegaQ = function(sigmaQ) {
+      if (self$sparsity == 0) {
+        omegaQ <- solve(sigmaQ)
+      } else {
+        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) stop("GLasso fails")
+        omegaQ <- Matrix::symmpart(glasso_out$wi)
+      }
+      omegaQ
+    }
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -75,7 +86,7 @@ NB <- R6::R6Class(
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       res <- super$criteria
-      res$EBIC <- self$EBIC
+      ## res$EBIC <- self$EBIC
       res$Q <- self$Q
       res$n_edges <- self$n_edges
       res

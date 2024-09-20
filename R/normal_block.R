@@ -38,7 +38,7 @@ normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
     }else{
       if(verbose) cat("Fitting a normal-block model with fixed blocks...\n")
       if(verbose) cat("Initialization...\n")
-      model <- NB_fixed_blocks$new(Y, X, blocks, sparsity = sparsity)
+      model <- NB_fixed_blocks_diagonal$new(Y, X, blocks, sparsity = sparsity)
       model$optimize(niter, threshold)
       if(verbose) cat("DONE")
       return(model)

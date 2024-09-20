@@ -63,7 +63,7 @@ MVEM <- R6::R6Class(
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(type = "b", log = "", neg = FALSE) {
       neg <- ifelse(neg, -1, 1)
-      plot(seq_along(private$ll_list[-1]), neg * private$ll_list[-1], type=type, log=log)
+      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
     }
   ),
 
@@ -108,21 +108,23 @@ MVEM <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance)
     model_par  = function() list(B = private$B, dm1 = private$dm1),
     #' @field loglik (or its variational lower bound)
-    loglik = function() private$ll_list[[length(private$ll_list)]],
+    loglik = function() private$ll_list[[length(private$ll_list)]]- self$penalty,
     #' @field penalty (for cases when a penalty is placed on the precision matrix)
     penalty = function() 0,
-    #' @field BIC (or its variational lower bound)
-    BIC = function() - 2 * self$loglik - self$penalty + log(self$n) * self$nb_param,
-    #' @field AIC (or its variational lower bound)
-    AIC = function() - 2 * self$loglik - self$penalty + 2 * self$nb_param,
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() 0,
+    #' @field deviance (or its variational lower bound)
+    deviance = function() - 2 * self$loglik,
+    #' @field BIC (or its variational lower bound)
+    BIC = function() self$deviance + log(self$n) * self$nb_param,
+    #' @field AIC (or its variational lower bound)
+    AIC = function() self$deviance + 2 * self$nb_param,
     #' @field ICL variational lower bound of the ICL
     ICL        = function() self$BIC + 2 * self$entropy,
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       data.frame(nb_param = self$nb_param, loglik = self$loglik,
-                 BIC = self$BIC,AIC = self$AIC, ICL = self$ICL)
+                 deviance = self$deviance, BIC = self$BIC,AIC = self$AIC, ICL = self$ICL)
     },
     #' @field objective evolution of the objective function during (V)EM algorithm
     objective = function() private$ll_list[-1]
