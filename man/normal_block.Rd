@@ -7,10 +7,10 @@
 normal_block(
   Y,
   X,
-  nb_blocks = NULL,
-  blocks = NULL,
+  blocks,
   sparsity = 0,
   zero_inflation = FALSE,
+  noise_cov = c("diagonal", "spherical"),
   niter = 100,
   threshold = 1e-04,
   verbose = TRUE
@@ -21,13 +21,14 @@ normal_block(
 
 \item{X}{covariates data, n observations of d covariates, dim n*d.}
 
-\item{nb_blocks}{number of blocks (if fixed) or list of possible number of blocks otherwise}
-
-\item{blocks, }{if known, under the form of a p * Q matrix}
+\item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
+or a p * Q matrix (for indicating block membership when its known)}
 
 \item{sparsity}{sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
+
+\item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
 
 \item{niter}{number of iterations in model optimization}
 
@@ -45,7 +46,7 @@ Fit a normal-block model with a variational algorithm
 data("example_data")
 Y <- example_data$Y
 X <- example_data$X
-my_normal_block <- normal_block(Y, X, nb_blocks = 1:6)
+my_normal_block <- normal_block(Y, X, blocks = 1:6)
 \dontrun{
 my_normal_block$plot_criterion("loglik")
 my_normal_block$plot_criterion("BIC")

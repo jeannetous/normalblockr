@@ -3,10 +3,11 @@
 #' Fit a normal-block model with a variational algorithm
 #' @param Y observations data, n observations of p categories, dim n*p.
 #' @param X covariates data, n observations of d covariates, dim n*d.
-#' @param nb_blocks number of blocks (if fixed) or list of possible number of blocks otherwise
-#' @param blocks, if known, under the form of a p * Q matrix
+#' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
+#'  or a p * Q matrix (for indicating block membership when its known)
 #' @param sparsity sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
+#' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param verbose telling if information should be printed during optimization
@@ -15,7 +16,7 @@
 #' data("example_data")
 #' Y <- example_data$Y
 #' X <- example_data$X
-#' my_normal_block <- normal_block(Y, X, nb_blocks = 1:6)
+#' my_normal_block <- normal_block(Y, X, blocks = 1:6)
 #' \dontrun{
 #' my_normal_block$plot_criterion("loglik")
 #' my_normal_block$plot_criterion("BIC")
@@ -24,59 +25,34 @@
 #' plot(Y, Y_hat); abline(0,1)
 #' }
 #' @export
-normal_block <- function(Y, X, nb_blocks = NULL, blocks = NULL, sparsity = 0,
-                         zero_inflation = FALSE, niter = 100, threshold = 1e-4,
+normal_block <- function(Y, X, blocks,
+                         sparsity = 0,
+                         zero_inflation = FALSE,
+                         noise_cov = c("diagonal","spherical"),
+                         niter = 100, threshold = 1e-4,
                          verbose=TRUE) {
-  if(!is.null(blocks)){
-    if(zero_inflation){
-      if(verbose) cat("Fitting a zero-inflated normal-block model with fixed blocks...\n")
-      if(verbose) cat("Initialization...\n")
-      model <- NB_fixed_blocks_zi$new(Y, X, blocks, sparsity = sparsity)
-      model$optimize(niter, threshold)
-      if(verbose) cat("DONE")
-      return(model)
-    }else{
-      if(verbose) cat("Fitting a normal-block model with fixed blocks...\n")
-      if(verbose) cat("Initialization...\n")
-      model <- NB_fixed_blocks_diagonal$new(Y, X, blocks, sparsity = sparsity)
-      model$optimize(niter, threshold)
-      if(verbose) cat("DONE")
-      return(model)
-    }
-  }
 
-  if(is.null(nb_blocks)){nb_blocks = 1:ncol(Y)}
-  if(length(nb_blocks) == 1){
-    if(zero_inflation){
-      if(verbose) cat("Fitting a zero-inflated normal-block model with fixed number of blocks...\n")
-      if(verbose) cat("Initialization...\n")
-      model <- NB_fixed_Q_zi$new(Y, X, nb_blocks, sparsity = sparsity)
-      model$optimize(niter, threshold)
-      if(verbose) cat("DONE")
-      return(model)
-    }else{
-      if(verbose) cat("Fitting a normal-block model with fixed number of blocks...\n")
-      if(verbose) cat("Initialization...\n")
-      model <- NB_fixed_Q$new(Y, X, nb_blocks, sparsity = sparsity)
-      model$optimize(niter, threshold)
-      if(verbose) cat("DONE")
-      return(model)
-    }
-  }
+  ## Recovering the requested model from the function arguments
+  stopifnot(is.numeric(blocks) | is.matrix(blocks))
+  noise_cov <- match.arg(noise_cov)
+  block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
+                        ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
+  zi_class <- ifelse(zero_inflation, "_zi",  "")
 
-  if(zero_inflation){
-    if(verbose) cat("Fitting", as.character(length(nb_blocks)), "normal-block models with fixed number of blocks...\n")
-    if(verbose) cat("Initialization...\n")
-    models <- NB_unknown_zi$new(Y, X, nb_blocks, sparsity = sparsity)
-    models$optimize(niter, threshold)
-    if(verbose) cat("\n DONE \n ")
-    return(models)
-  }else{
-    if(verbose) cat("Fitting", as.character(length(nb_blocks)), "normal-block models with fixed number of blocks...\n")
-    if(verbose) cat("Initialization...\n")
-    models <- NB_unknown$new(Y, X, nb_blocks, sparsity = sparsity)
-    models$optimize(niter, threshold)
-    if(verbose) cat("\n DONE \n ")
-    return(models)
-  }
+### FIX until all mdel have their spherical variante
+  noise_cov <- ifelse(!zero_inflation & block_class == "fixed_blocks", paste0("_",noise_cov), "")
+
+  ## Instantiating model
+  myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class)))
+  model <- myClass$new(Y, X, blocks, sparsity = sparsity)
+
+  ## Estimation/optimization
+  if(verbose)
+    cat("Fitting a",  ifelse(zero_inflation, "zero-inflated",  ""),
+        "normal-block model with", block_class, "...\n")
+  model$optimize(niter, threshold)
+
+  ## Finishing
+  if(verbose) cat("DONE\n")
+  model
 }

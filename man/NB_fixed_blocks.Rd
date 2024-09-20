@@ -11,19 +11,10 @@ R6 class for normal-block model with fixed groups
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_blocks}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{C}}{the matrix of species groups}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
-
-\item{\code{cond_par}}{a list with the matrices of the conditional latent distirbution: mu (mean), Gamma (variance)}
 
 \item{\code{clustering}}{given as a list of labels}
 

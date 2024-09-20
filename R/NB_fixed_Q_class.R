@@ -129,15 +129,7 @@ NB_fixed_Q <- R6::R6Class(
       B     <- private$XtXm1 %*% t(self$X) %*% (self$Y - MtauT)
       dm1   <- 1/colMeans(R^2 - 2 * R * MtauT + (M^2 + outer(rep(1, self$n), S)) %*% t(tau))
       alpha <- colMeans(tau)
-
-      sigmaQ <- crossprod(M)/self$n +  diag(S, self$Q, self$Q)
-      if (self$sparsity == 0) {
-        omegaQ <- solve(sigmaQ)
-      }else {
-        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$sparsity * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) stop("GLasso fails")
-        omegaQ <- Matrix::symmpart(glasso_out$wi)
-      }
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }

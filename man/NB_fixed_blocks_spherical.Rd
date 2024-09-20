@@ -14,7 +14,6 @@ R6 class for normal-block model with fixed groups and spherical residual covaria
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-NB_fixed_blocks_spherical-update}{\code{NB_fixed_blocks_spherical$update()}}
 \item \href{#method-NB_fixed_blocks_spherical-clone}{\code{NB_fixed_blocks_spherical$clone()}}
 }
 }
@@ -24,46 +23,10 @@ R6 class for normal-block model with fixed groups and spherical residual covaria
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB_fixed_blocks" data-id="initialize"><a href='../../normalblockr/html/NB_fixed_blocks.html#method-NB_fixed_blocks-initialize'><code>normalblockr::NB_fixed_blocks$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB_fixed_blocks" data-id="update"><a href='../../normalblockr/html/NB_fixed_blocks.html#method-NB_fixed_blocks-update'><code>normalblockr::NB_fixed_blocks$update()</code></a></span></li>
 </ul>
 </details>
 }}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_fixed_blocks_spherical-update"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_fixed_blocks_spherical-update}{}}}
-\subsection{Method \code{update()}}{
-Update a [`NB_fixed_blocks`] object
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_spherical$update(
-  B = NA,
-  sigma2 = NA,
-  omegaQ = NA,
-  gamma = NA,
-  mu = NA,
-  ll_list = NA
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{regression matrix}
-
-\item{\code{sigma2}}{variance of the residuals (scalar)}
-
-\item{\code{omegaQ}}{groups inverse variance matrix}
-
-\item{\code{gamma}}{variance of  posterior distribution of W}
-
-\item{\code{mu}}{mean for posterior distribution of W}
-
-\item{\code{ll_list}}{log-likelihood during optimization}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Update the current [`zi_normal`] object
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB_fixed_blocks_spherical-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-NB_fixed_blocks_spherical-clone}{}}}

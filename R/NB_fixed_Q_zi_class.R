@@ -205,7 +205,7 @@ NB_fixed_Q_zi <- R6::R6Class(
       dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
       alpha <- colMeans(tau)
       kappa <- colMeans(rho)
-      omegaQ <- private$get_omegaQ((1 / self$n) * (crossprod(M) + diag(colSums(S), self$Q, self$Q)))
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 
       list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
            M = M, S = S, tau = tau, rho = rho)

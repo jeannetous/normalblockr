@@ -108,7 +108,7 @@ MVEM <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance)
     model_par  = function() list(B = private$B, dm1 = private$dm1),
     #' @field loglik (or its variational lower bound)
-    loglik = function() private$ll_list[[length(private$ll_list)]]- self$penalty,
+    loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty,
     #' @field penalty (for cases when a penalty is placed on the precision matrix)
     penalty = function() 0,
     #' @field entropy Entropy of the variational distribution when applicable

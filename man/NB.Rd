@@ -31,9 +31,7 @@ R6 generic class for normal-block models
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
 
-\item{\code{penalty}}{(penalty on log-likelihood due to sparsity)
-#' @field EBIC variational lower bound of the EBIC
-EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},}
+\item{\code{penalty}}{(penalty on log-likelihood due to sparsity)}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
