@@ -6,10 +6,13 @@
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param nb_blocks list of number of blocks values to be tested
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalties list of penalties to be tested
+#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
+#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
 #' @param models uderlying NB_fixed_Q models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
-NB_unknown <- R6::R6Class(
+NB_fixed_blocks_sparse <- R6::R6Class(
   classname = "NB_unknown",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -18,48 +21,57 @@ NB_unknown <- R6::R6Class(
   public = list(
     #' @field Y the matrix of responses
     Y  = NULL,
-    #' @field X the matrix of covariates
+    #' @field X the design matrix
     X = NULL,
-    #' @field nb_blocks list of Q values to be tested for the number of blocks
-    nb_blocks = NULL,
-    #' @field sparsity penalty on the network density
-    sparsity = NULL,
+    #' @field C the group matrix
+    C = NULL,
+    #' @field penalties list of penalties values for omegaQ sparsity
+    penalties = NULL,
+    #' @field n_penalties number of penalty values
+    n_penalties = NULL,
+    #' @field min_ratio ratio between min and max penalty to be tested
+    min_ratio = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
     #' @field verbose say whether information should be given about the optimization
     verbose = NULL,
 
-    #' @description Create a new [`NB_unknown`] object.
+    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param nb_blocks list of Q values to be tested for the number of blocks
-    #' @param sparsity penalty on the network density
-    #' @return A new [`nb_unknown] object
-    initialize = function(Y, X, nb_blocks, sparsity = 0, verbose=TRUE) {
+    #' @param C group matrix.
+    #' @param penalties list of penalties on the network density
+    #' @param n_penalties number of penalty values
+    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @return A new [`nb_fixed_blocks_sparse`] object
+    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
+                          min_ratio = 0.05, verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
-      if (length(nb_blocks) != length(unique(nb_blocks))) {
-        stop("each nb_blocks value can only be present once in nb_blocks")
-      }
       self$Y <- Y
       self$X <- X
-      if (length(sparsity) == 1) sparsity <- rep(sparsity, length(nb_blocks))
-      stopifnot(all.equal(length(sparsity), length(nb_blocks)))
-      self$sparsity <- sparsity
-      self$nb_blocks <- nb_blocks
+      self$C <- C
+      self$n_penalties <- n_penalties
+      self$min_ratio   <- min_ratio
+      if (is.null(penalties)){
+        init_model <- normal_block(Y, X, C, verbose = FALSE)
+        init_model$optimize(5, verbose)
+        sigmaQ    <- solve(init_model$model_par$omegaQ)
+        max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
+        self$penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
+        }
       self$verbose <- verbose
 
       # instantiates an NB_fixed_Q model for each Q in nb_blocks
-      self$models <- map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
-                                 function(block_rank, sparsity_sorted) {
-        model <- NB_fixed_Q$new(self$Y, self$X,
-                                nb_blocks[[block_rank]],
-                                sparsity_sorted)
-      })
+      self$models <- map(self$penalties[order(self$penalties)],
+                          function(penalty) {
+                            model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
+                                                                  self$C, penalty)
+                          })
     },
 
 
@@ -68,7 +80,7 @@ NB_unknown <- R6::R6Class(
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
       self$models <- furrr::future_map(self$models, function(model) {
-        if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
+        if(self$verbose) cat("\t penalty =", model$sparsity, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         model
@@ -76,14 +88,15 @@ NB_unknown <- R6::R6Class(
     },
 
     #' @description returns the NB_fixed_Q model corresponding to given Q
-    #' @param Q number of blocks asked by user
+    #' @param penalty penalty asked by user
     #' @return A NB_fixed_Q object with given value Q
-    get_model = function(Q) {
-      if(!(Q %in% self$nb_blocks)) {
-        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
-        }
-      Q_rank <- which(sort(self$nb_blocks) == Q)
-      return(self$models[[Q_rank]])
+    get_model = function(penalty) {
+      if(!(penalty %in% self$penalties)) {
+        closest_penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
+        paste0("No model with this penalty in the collection. Returning model with closest penalty : ", closest_penalty,  " Collection penalty values can be found via $penalties")
+      }
+      penalty_rank <- which(sort(self$penalties) == penalty)
+      return(self$models[[penalty_rank]])
     },
 
     #' @description Extract best model in the collection
@@ -126,6 +139,8 @@ NB_unknown <- R6::R6Class(
     p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
+    #' @field Q number of blocks
+    Q = function() ncol(self$C),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
   )

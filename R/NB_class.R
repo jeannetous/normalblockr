@@ -89,6 +89,7 @@ NB <- R6::R6Class(
       ## res$EBIC <- self$EBIC
       res$Q <- self$Q
       res$n_edges <- self$n_edges
+      res$sparsity <- self$sparsity
       res
     }
   )
