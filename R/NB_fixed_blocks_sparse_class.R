@@ -119,18 +119,26 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       model
     },
 
-    #' @param criterion criterion to plot
-    #' @param type char for line type (see plot.default)
-    #' @param log char for logarithmic axes (see plot.default)
-    #' @param neg boolean plot negative criterion (useful when log="y")
-    #' @description plots given criterion as a function of Q
-    plot_criterion = function(criterion = "loglik", type = "b", log = "",
-                              neg = FALSE) {
-      neg <- ifelse(neg, -1, 1)
-      y   <- self$criteria[[criterion]]
-      plot(self$penalties, neg * y, type=type, log=log, ylab = paste0(ifelse(neg == -1, "-", ""), criterion),
-           xlab = "penalties")
-      axis(1, at = seq_along(y), labels = self$penalties)
+    #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
+    #' @param criteria vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.
+    #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
+    #' @return a [`ggplot`] graph
+    plot = function(criteria = c("loglik", "BIC", "AIC", "ICL"), log.x = TRUE) {
+      vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$sparsity)
+      stopifnot(!anyNA(self$criteria[criteria]))
+
+      dplot <- self$criteria %>%
+        dplyr::select(dplyr::all_of(c("sparsity", criteria))) %>%
+        tidyr::gather(key = "criterion", value = "value", -sparsity) %>%
+        dplyr::group_by(criterion)
+      if("loglik" %in% criteria){dplot[dplot$criterion == "loglik",]$value <- - dplot[dplot$criterion == "loglik",]$value}
+      p <- ggplot2::ggplot(dplot, ggplot2::aes(x = sparsity, y = value, group = criterion, colour = criterion)) +
+           ggplot2::geom_line() + ggplot2::geom_point() +
+           ggplot2::ggtitle(label    = "Model selection criteria",
+                  subtitle = "Lower is better" ) +
+            ggplot2::theme_bw() + ggplot2::geom_vline(xintercept = vlines, linetype = "dashed", alpha = 0.25)
+      if (log.x) p <- p + ggplot2::coord_trans(x = "log10")
+      p
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
