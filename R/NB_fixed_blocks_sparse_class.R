@@ -62,7 +62,7 @@ NB_fixed_blocks_sparse <- R6::R6Class(
         self$n_penalties <- n_penalties
         self$min_ratio   <- min_ratio
         init_model <- normal_block(Y, X, C, verbose = FALSE)
-        init_model$optimize(5, verbose)
+        init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
         self$penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
@@ -75,10 +75,18 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
-      self$models <- furrr::future_map(self$models, function(model) {
-        if(self$verbose) cat("\t penalty =", model$sparsity, "          \r")
+      self$models <- furrr::future_map(seq_along(self$models), function(m) {
+        model <- self$models[[m]]
+        if(self$verbose) cat("\t penalty =", self$models[[m]]$sparsity, "          \r")
         flush.console()
         model$optimize(niter, threshold)
+        if(m < self$n_penalties){
+          self$models[[m + 1]]$update(B      = model$model_par$B,
+                                      dm1    = model$model_par$dm1,
+                                      omegaQ = model$model_par$omegaQ,
+                                      gamma  = model$posterior_par$gamma,
+                                      mu     = model$posterior_par$mu)
+        }
         model
       }, .options = furrr_options(seed=TRUE))
     },
@@ -177,7 +185,8 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
-                                                                 self$C, penalty)
+                                                                 self$C,
+                                                                 sparsity = penalty)
                          })
     }
   )

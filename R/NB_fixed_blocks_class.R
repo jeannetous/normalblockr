@@ -103,10 +103,15 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
   private = list(
 
     EM_initialize = function() {
-      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
-      dm1    <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
-      omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+      if(any(sapply(self$model_par, function(x) any(is.na(x))))){
+        B      <- private$XtXm1 %*% t(self$X) %*% self$Y
+        dm1    <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
+        omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
+        list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+      }else{
+        list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ,
+             gamma = private$gamma, mu = private$mu)
+      }
     },
 
     EM_step = function(B, dm1, omegaQ, gamma, mu) {

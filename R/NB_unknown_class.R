@@ -49,9 +49,9 @@ NB_unknown <- R6::R6Class(
       self$X <- X
       if (length(sparsity) == 1) sparsity <- rep(sparsity, length(nb_blocks))
       stopifnot(all.equal(length(sparsity), length(nb_blocks)))
-      self$sparsity <- sparsity
+      self$sparsity  <- sparsity
       self$nb_blocks <- nb_blocks
-      self$verbose <- verbose
+      self$verbose   <- verbose
 
       # instantiates an NB_fixed_Q model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
@@ -61,7 +61,6 @@ NB_unknown <- R6::R6Class(
                                 sparsity_sorted)
       })
     },
-
 
     #' @description optimizes an NB_fixed_Q object for each value of Q
     #' @param niter number of iterations in model optimization
