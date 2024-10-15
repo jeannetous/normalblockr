@@ -111,7 +111,7 @@ NB_unknown <- R6::R6Class(
                               neg = FALSE) {
       neg <- ifelse(neg, -1, 1)
       y   <- self$criteria[[criterion]]
-      plot(seq_along(y), neg * y, type=type, log=log, ylab = criterion,
+      plot(seq_along(y), neg * y, type=type, log=log, ylab = paste0(ifelse(neg == -1, "-", ""), criterion),
            xlab = "nb_blocks", xaxt = "n")
       axis(1, at = seq_along(y), labels = seq_along(y))
     }

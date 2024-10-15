@@ -26,7 +26,7 @@
 #' }
 #' @export
 normal_block <- function(Y, X, blocks,
-                         sparsity = 0,
+                         sparsity = FALSE,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
@@ -38,21 +38,24 @@ normal_block <- function(Y, X, blocks,
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
   zi_class <- ifelse(zero_inflation, "_zi",  "")
+  sparse_class <- ifelse(sparsity, "_sparse", "")
 
-### FIX until all mdel have their spherical variante
+### FIX until all mdel have their spherical variante & their sparse variant
   noise_cov <- ifelse(!zero_inflation & block_class == "fixed_blocks", paste0("_",noise_cov), "")
-
+  sparse_class <- ifelse(!zero_inflation & sparsity, sparse_class, "")
   ## Instantiating model
-  myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class)))
-  model <- myClass$new(Y, X, blocks, sparsity = sparsity)
+  myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class)))
+  model <- myClass$new(Y, X, blocks)
 
   ## Estimation/optimization
   if(verbose)
-    cat("Fitting a",  ifelse(zero_inflation, "zero-inflated",  ""),
+    cat("Fitting a", sub('.', '', noise_cov),
+        sub('.', '',sparse_class),
+        ifelse(zero_inflation, "zero-inflated",  ""),
         "normal-block model with", block_class, "...\n")
   model$optimize(niter, threshold)
 
   ## Finishing
-  if(verbose) cat("DONE\n")
+  if(verbose) cat("\n DONE\n")
   model
 }

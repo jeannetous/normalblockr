@@ -10,10 +10,10 @@
 #' @param penalties list of penalties to be tested
 #' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param models uderlying NB_fixed_blocks models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_blocks_sparse <- R6::R6Class(
-  classname = "NB_unknown",
+  classname = "NB_fixed_blocks_sparse",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -55,9 +55,12 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$C <- C
-      self$n_penalties <- n_penalties
-      self$min_ratio   <- min_ratio
-      if (is.null(penalties)){
+      if(!is.null(penalties)){
+        self$n_penalties <- length(penalties)
+        self$penalties <- penalties[order(penalties)]
+      }else{
+        self$n_penalties <- n_penalties
+        self$min_ratio   <- min_ratio
         init_model <- normal_block(Y, X, C, verbose = FALSE)
         init_model$optimize(5, verbose)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
@@ -65,13 +68,6 @@ NB_fixed_blocks_sparse <- R6::R6Class(
         self$penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
         }
       self$verbose <- verbose
-
-      # instantiates an NB_fixed_Q model for each Q in nb_blocks
-      self$models <- map(self$penalties[order(self$penalties)],
-                          function(penalty) {
-                            model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
-                                                                  self$C, penalty)
-                          })
     },
 
 
@@ -124,9 +120,9 @@ NB_fixed_blocks_sparse <- R6::R6Class(
                               neg = FALSE) {
       neg <- ifelse(neg, -1, 1)
       y   <- self$criteria[[criterion]]
-      plot(seq_along(y), neg * y, type=type, log=log, ylab = criterion,
-           xlab = "nb_blocks", xaxt = "n")
-      axis(1, at = seq_along(y), labels = seq_along(y))
+      plot(self$penalties, neg * y, type=type, log=log, ylab = paste0(ifelse(neg == -1, "-", ""), criterion),
+           xlab = "penalties")
+      axis(1, at = seq_along(y), labels = self$penalties)
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,5 +139,86 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     Q = function() ncol(self$C),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
+  )
+)
+
+
+#' R6 generic class for normal-block models
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalties list of penalties to be tested
+#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
+#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
+#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param verbose telling if information should be printed during optimization
+NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
+  classname = "NB_fixed_blocks_diagonal_sparse",
+  inherit = NB_fixed_blocks_sparse,
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PUBLIC MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  public = list(
+
+    #' @description Create a new [`NB_fixed_blocks_diagonal_sparse`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
+    #' @param C group matrix.
+    #' @param penalties list of penalties on the network density
+    #' @param n_penalties number of penalty values
+    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @return A new [`NB_fixed_blocks_diagonal_sparse`] object
+    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
+                          min_ratio = 0.05, verbose=TRUE) {
+      super$initialize(Y, X, C, penalties, n_penalties,
+                       min_ratio, verbose)
+      # instantiates an NB_fixed_blocks_diagonal model for each Q in nb_blocks
+      self$models <- map(self$penalties[order(self$penalties)],
+                         function(penalty) {
+                           model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
+                                                                 self$C, penalty)
+                         })
+    }
+  )
+)
+
+#' R6 generic class for normal-block models
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalties list of penalties to be tested
+#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
+#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
+#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param verbose telling if information should be printed during optimization
+NB_fixed_blocks_spherical_sparse <- R6::R6Class(
+  classname = "NB_fixed_blocks_spherical_sparse",
+  inherit = NB_fixed_blocks_sparse,
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PUBLIC MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  public = list(
+
+    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
+    #' @param C group matrix.
+    #' @param penalties list of penalties on the network density
+    #' @param n_penalties number of penalty values
+    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @return A new [`nb_fixed_blocks_sparse`] object
+    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
+                          min_ratio = 0.05, verbose=TRUE) {
+      super$initialize(Y, X, C, penalties, n_penalties,
+                       min_ratio, verbose)
+      # instantiates an NB_fixed_blocks_spherical model for each Q in nb_blocks
+      self$models <- map(self$penalties[order(self$penalties)],
+                         function(penalty) {
+                           model <- NB_fixed_blocks_spherical$new(self$Y, self$X,
+                                                                 self$C, penalty)
+                         })
+    }
   )
 )
