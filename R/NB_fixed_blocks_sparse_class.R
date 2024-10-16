@@ -35,6 +35,10 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     models = NULL,
     #' @field verbose say whether information should be given about the optimization
     verbose = NULL,
+    #' @field latest_niter latest niter value used for optimization
+    latest_niter = NULL,
+    #' @field latest_threshold latest threshold value used for optimization
+    latest_threshold = NULL,
 
     #' @description Create a new [`NB_fixed_blocks_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
@@ -65,7 +69,8 @@ NB_fixed_blocks_sparse <- R6::R6Class(
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
-        self$penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
+        penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
+        self$penalties <- penalties[order(penalties)]
         }
       self$verbose <- verbose
     },
@@ -75,6 +80,9 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
+      self$latest_niter     <- niter
+      self$latest_threshold <- threshold
+
       self$models <- furrr::future_map(seq_along(self$models), function(m) {
         model <- self$models[[m]]
         if(self$verbose) cat("\t penalty =", self$models[[m]]$sparsity, "          \r")
@@ -91,13 +99,13 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       }, .options = furrr_options(seed=TRUE))
     },
 
-    #' @description returns the NB_fixed_Q model corresponding to given Q
+    #' @description returns the NB_fixed_blocks_sparse model corresponding to given penalty
     #' @param penalty penalty asked by user
-    #' @return A NB_fixed_Q object with given value Q
+    #' @return A NB_fixed_blocks_sparse object with given value penalty
     get_model = function(penalty) {
       if(!(penalty %in% self$penalties)) {
-        closest_penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
-        paste0("No model with this penalty in the collection. Returning model with closest penalty : ", closest_penalty,  " Collection penalty values can be found via $penalties")
+        penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
+        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties"))
       }
       penalty_rank <- which(sort(self$penalties) == penalty)
       return(self$models[[penalty_rank]])
@@ -108,14 +116,29 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q`] object
-    get_best_model = function(crit = c("loglik", "BIC", "AIC", "ICL")) {
+    get_best_model = function(crit = c("loglik", "BIC", "AIC", "ICL", "StARS"),
+                              stability = 0.9) {
       crit <- match.arg(crit)
-      stopifnot(!anyNA(self$criteria[[crit]]))
-      id <- 1
-      if (length(self$criteria[[crit]]) > 1) {
-        id <- which.min(self$criteria[[crit]])
+      if (crit == "StARS") {
+        if (is.null(private$stab_path)) self$stability_selection()
+        max_stab <- max(self$criteria$stability)
+        if(max_stab < stability){
+          cat(paste0("No model reaches the required stability ", stability, ", returning model with highest stability: ", max_stab))
+          stability <- max_stab
+        }
+        id_stars <- self$criteria %>%
+                    dplyr::select(sparsity, stability) %>% dplyr::rename(Stability = stability) %>%
+                    dplyr::filter(Stability >= stability) %>%
+                    dplyr::pull(sparsity) %>% min() %>% match(self$penalties)
+        model <- self$models[[id_stars]]$clone()
+      }else{
+        stopifnot(!anyNA(self$criteria[[crit]]))
+        id <- 1
+        if (length(self$criteria[[crit]]) > 1) {
+          id <- which.min(self$criteria[[crit]])
+        }
+        model <- self$models[[id]]$clone()
       }
-      model <- self$models[[id]]$clone()
       model
     },
 
@@ -142,6 +165,12 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ------
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
+    stab_path = NULL # a field to store the stability path,
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
@@ -154,7 +183,25 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @field Q number of blocks
     Q = function() ncol(self$C),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
+    criteria = function(){
+      crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
+      crit$stability <- self$stability
+      crit},
+    stability_path = function() private$stab_path,
+    #' @field stability mean edge stability along the penalty path
+    stability = function() {
+      if (!is.null(private$stab_path)) {
+        stability <- self$stability_path %>%
+          dplyr::select(Penalty, Prob) %>%
+          dplyr::group_by(Penalty) %>%
+          dplyr::summarize(Stability = 1 - mean(4 * Prob * (1 - Prob))) %>%
+          dplyr::arrange(desc(Penalty)) %>%
+          dplyr::pull(Stability)
+      } else {
+        stability <- rep(NA, length(self$penalties))
+      }
+      stability
+    }
   )
 )
 
@@ -196,6 +243,57 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
                                                                  self$C,
                                                                  sparsity = penalty)
                          })
+    },
+
+    ## Stability -------------------------
+    #' @description Compute the stability path by stability selection
+    #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
+    stability_selection = function(subsamples = NULL) {
+
+      ## select default subsamples according to Liu et al. (2010) recommendations.
+      if (is.null(subsamples)) {
+        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
+        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
+      }
+
+      ## got for stability selection
+      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
+      cat("\nsubsampling: ")
+
+      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+        cat("+")
+        inception_ <- self$get_model(self$penalties[[1]])$clone()
+        inception_$update(
+          mu     = inception_$posterior_par$mu[subsample, ]
+        )
+
+
+        data <- list(
+          Y  = self$Y  [subsample, , drop = FALSE],
+          X  = self$X [subsample, , drop = FALSE])
+
+        myNB <- NB_fixed_blocks_diagonal_sparse$new(data$Y, data$X, self$C, self$penalties)
+        myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
+
+        nets <- do.call(cbind, lapply(myNB$models, function(model) {
+          as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
+        }))
+        nets
+      }, future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+
+      prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
+      ## formatting/tyding
+      node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
+      colnames(prob) <- self$penalties
+      private$stab_path <- prob %>%
+        as.data.frame() %>%
+        dplyr::mutate(Edge = 1:dplyr::n()) %>%
+        tidyr::gather(key = "Penalty", value = "Prob", -Edge) %>%
+        dplyr::mutate(Penalty = as.numeric(Penalty),
+                      Node1   = node_set[edge_to_node(Edge)$node1],
+                      Node2   = node_set[edge_to_node(Edge)$node2],
+                      Edge    = paste0(Node1, "|", Node2))
+      invisible(subsamples)
     }
   )
 )
@@ -236,6 +334,57 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
                            model <- NB_fixed_blocks_spherical$new(self$Y, self$X,
                                                                  self$C, penalty)
                          })
+    },
+
+
+    ## Stability -------------------------
+    #' @description Compute the stability path by stability selection
+    #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
+    stability_selection = function(subsamples = NULL) {
+
+      ## select default subsamples according to Liu et al. (2010) recommendations.
+      if (is.null(subsamples)) {
+        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
+        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
+      }
+
+      ## got for stability selection
+      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
+      cat("\nsubsampling: ")
+
+      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+        cat("+")
+        inception_ <- self$get_model(self$penalties[[1]])$clone()
+        inception_$update(
+          mu     = inception_$posterior_par$mu[subsample, ]
+        )
+
+
+        data <- list(
+          Y  = self$Y  [subsample, , drop = FALSE],
+          X  = self$X [subsample, , drop = FALSE])
+
+        myNB <- NB_fixed_blocks_spherical_sparse$new(data$Y, data$X, self$C, self$penalties)
+        myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
+        nets <- do.call(cbind, lapply(myNB$models, function(model) {
+          as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
+        }))
+        nets
+      }, future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+
+      prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
+      ## formatting/tyding
+      node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
+      colnames(prob) <- self$penalties
+      private$stab_path <- prob %>%
+        as.data.frame() %>%
+        dplyr::mutate(Edge = 1:dplyr::n()) %>%
+        tidyr::gather(key = "Penalty", value = "Prob", -Edge) %>%
+        dplyr::mutate(Penalty = as.numeric(Penalty),
+                      Node1   = node_set[edge_to_node(Edge)$node1],
+                      Node2   = node_set[edge_to_node(Edge)$node2],
+                      Edge    = paste0(Node1, "|", Node2))
+      invisible(subsamples)
     }
   )
 )
