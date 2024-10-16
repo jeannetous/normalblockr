@@ -90,21 +90,28 @@ NB_fixed_Q <- R6::R6Class(
     },
 
     EM_initialize = function() {
-      B       <- private$XtXm1 %*% t(self$X) %*% self$Y
-      R       <- self$Y - self$X %*% B
-      if(is.null(self$clustering_init)){
-        tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+      if(any(sapply(self$model_par, function(x) any(is.na(x)))) | any(sapply(self$var_par, function(x) any(is.na(x))))){
+        B       <- private$XtXm1 %*% t(self$X) %*% self$Y
+        R       <- self$Y - self$X %*% B
+        if(is.null(self$clustering_init)){
+          tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+        }else{
+          if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+          }else{ tau <- self$clustering_init}
+        }
+        self$clustering_init <- get_clusters(tau)
+        tau     <- check_one_boundary(check_zero_boundary(tau))
+        alpha   <- colMeans(tau)
+        S       <- rep(0.1, self$Q)
+        M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
+        dm1     <- as.vector(rep(1, self$p))
+        omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
       }else{
-        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
-        }else{ tau <- self$clustering_init}
+        B <- private$B ; dm1 <- private$dm1 ; omegaQ <- private$omegaQ
+        alpha <- private$alpha
+        tau <- private$tau ; M <- private$M ; S <- private$S
       }
-      self$clustering_init <- get_clusters(tau)
-      tau     <- check_one_boundary(check_zero_boundary(tau))
-      alpha   <- colMeans(tau)
-      S       <- rep(0.1, self$Q)
-      M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
-      dm1     <- as.vector(rep(1, self$p))
-      omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
+
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     },
 

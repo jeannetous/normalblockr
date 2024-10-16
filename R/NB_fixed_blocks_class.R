@@ -66,27 +66,6 @@ NB_fixed_blocks <- R6::R6Class(
       super$update(B, dm1, omegaQ, ll_list)
       if (!anyNA(gamma)) private$gamma <- gamma
       if (!anyNA(mu))   private$mu   <- mu
-    },
-
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Extractors ------------------------
-    #' @description Extract interaction network in the latent space
-    #' @param type edge value in the network. Can be "support" (binary edges), "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species)
-    #' @importFrom Matrix Matrix
-    #' @return a square matrix of size `NB_fixed_blocks_class$Q`
-    latent_network = function(type = c("partial_cor", "support", "precision")) {
-      net <- switch(
-        match.arg(type),
-        "support"     = 1 * (private$omegaQ != 0 & !diag(TRUE, ncol(private$omegaQ))),
-        "precision"   = private$omegaQ,
-        "partial_cor" = {
-          tmp <- -private$omegaQ / tcrossprod(sqrt(diag(private$omegaQ))); diag(tmp) <- 1
-          tmp
-        }
-      )
-      ## Enforce sparse Matrix encoding to avoid downstream problems with igraph::graph_from_adjacency_matrix
-      ## as it fails when given dsyMatrix objects
-      Matrix(net, sparse = TRUE)
     }
   ),
 
