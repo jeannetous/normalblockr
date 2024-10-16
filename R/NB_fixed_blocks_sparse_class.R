@@ -99,13 +99,13 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       }, .options = furrr_options(seed=TRUE))
     },
 
-    #' @description returns the NB_fixed_blocks_sparse model corresponding to given penalty
+    #' @description returns the NB_fixed_block model corresponding to given penalty
     #' @param penalty penalty asked by user
     #' @return A NB_fixed_blocks_sparse object with given value penalty
     get_model = function(penalty) {
       if(!(penalty %in% self$penalties)) {
         penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
-        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties"))
+        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties \n"))
       }
       penalty_rank <- which(sort(self$penalties) == penalty)
       return(self$models[[penalty_rank]])
@@ -213,7 +213,7 @@ NB_fixed_blocks_sparse <- R6::R6Class(
 #' @param penalties list of penalties to be tested
 #' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param models uderlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
   classname = "NB_fixed_blocks_diagonal_sparse",
@@ -236,7 +236,7 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
                           min_ratio = 0.05, verbose=TRUE) {
       super$initialize(Y, X, C, penalties, n_penalties,
                        min_ratio, verbose)
-      # instantiates an NB_fixed_blocks_diagonal model for each Q in nb_blocks
+      # instantiates an NB_fixed_blocks_diagonal model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
@@ -305,7 +305,7 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
 #' @param penalties list of penalties to be tested
 #' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_fixed_Q models for each nb of blocks
+#' @param models uderlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_blocks_spherical_sparse <- R6::R6Class(
   classname = "NB_fixed_blocks_spherical_sparse",
@@ -328,7 +328,7 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
                           min_ratio = 0.05, verbose=TRUE) {
       super$initialize(Y, X, C, penalties, n_penalties,
                        min_ratio, verbose)
-      # instantiates an NB_fixed_blocks_spherical model for each Q in nb_blocks
+      # instantiates an NB_fixed_blocks_spherical model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- NB_fixed_blocks_spherical$new(self$Y, self$X,

@@ -41,7 +41,7 @@ normal_block <- function(Y, X, blocks,
   sparse_class <- ifelse(sparsity, "_sparse", "")
 
 ### FIX until all mdel have their spherical variante & their sparse variant
-  noise_cov <- ifelse(!zero_inflation & block_class == "fixed_blocks", paste0("_",noise_cov), "")
+  noise_cov <- ifelse(!zero_inflation & (block_class == "fixed_blocks" |sparsity), paste0("_",noise_cov), "")
   sparse_class <- ifelse(!zero_inflation & sparsity, sparse_class, "")
   ## Instantiating model
   myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class)))
