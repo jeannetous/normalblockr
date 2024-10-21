@@ -263,11 +263,6 @@ NB_fixed_Q_diagonal_sparse <- R6::R6Class(
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
         cat("+")
-        inception_ <- self$get_model(self$penalties[[1]])$clone()
-        inception_$update(
-          M     = inception_$var_par$M[subsample, ]
-        )
-
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
@@ -354,10 +349,6 @@ NB_fixed_Q_spherical_sparse <- R6::R6Class(
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
         cat("+")
-        inception_ <- self$get_model(self$penalties[[1]])$clone()
-        inception_$update(
-          mu     = inception_$posterior_par$mu[subsample, ]
-        )
 
 
         data <- list(

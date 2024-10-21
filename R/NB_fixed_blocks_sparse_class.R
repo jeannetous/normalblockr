@@ -262,11 +262,6 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
         cat("+")
-        inception_ <- self$get_model(self$penalties[[1]])$clone()
-        inception_$update(
-          mu     = inception_$posterior_par$mu[subsample, ]
-        )
-
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
@@ -354,15 +349,11 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
         cat("+")
-        inception_ <- self$get_model(self$penalties[[1]])$clone()
-        inception_$update(
-          mu     = inception_$posterior_par$mu[subsample, ]
-        )
 
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
-          X  = self$X [subsample, , drop = FALSE])
+          X  = self$X  [subsample, , drop = FALSE])
 
         myNB <- NB_fixed_blocks_spherical_sparse$new(data$Y, data$X, self$C, self$penalties)
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
