@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_unknown #######################################
+##  CLASS NB_fixed_blocks_sparse #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -7,9 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
+#' @param control structured list of parameters to handle sparsity control
 #' @param models uderlying NB_fixed_blocks models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_blocks_sparse <- R6::R6Class(
@@ -44,12 +42,10 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param C group matrix.
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
+    initialize = function(Y, X, C, control = NB_fixed_blocks_sparse_param(),
+                          verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -59,17 +55,18 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$C <- C
-      if(!is.null(penalties)){
-        self$n_penalties <- length(penalties)
-        self$penalties <- penalties[order(penalties)]
+      self$penalties   <- control$penalties
+      self$n_penalties <- control$n_penalties
+      self$min_ratio   <- control$min_ratio
+      if(!is.null(self$penalties)){
+        self$n_penalties <- length(self$penalties)
+        self$penalties <- self$penalties[order(self$penalties)]
       }else{
-        self$n_penalties <- n_penalties
-        self$min_ratio   <- min_ratio
         init_model <- normal_block(Y, X, C, verbose = FALSE)
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
-        penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
+        penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
         self$penalties <- penalties[order(penalties)]
         }
       self$verbose <- verbose
@@ -85,7 +82,7 @@ NB_fixed_blocks_sparse <- R6::R6Class(
 
       self$models <- furrr::future_map(seq_along(self$models), function(m) {
         model <- self$models[[m]]
-        if(self$verbose) cat("\t penalty =", self$models[[m]]$sparsity, "          \r")
+        if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         if(m < self$n_penalties){
@@ -127,9 +124,9 @@ NB_fixed_blocks_sparse <- R6::R6Class(
           stability <- max_stab
         }
         id_stars <- self$criteria %>%
-                    dplyr::select(sparsity, stability) %>% dplyr::rename(Stability = stability) %>%
+                    dplyr::select(penalty, stability) %>% dplyr::rename(Stability = stability) %>%
                     dplyr::filter(Stability >= stability) %>%
-                    dplyr::pull(sparsity) %>% min() %>% match(self$penalties)
+                    dplyr::pull(penalty) %>% min() %>% match(self$penalties)
         model <- self$models[[id_stars]]$clone()
       }else{
         stopifnot(!anyNA(self$criteria[[crit]]))
@@ -147,15 +144,15 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
     #' @return a [`ggplot`] graph
     plot = function(criteria = c("loglik", "BIC", "AIC", "ICL"), log.x = TRUE) {
-      vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$sparsity)
+      vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$penalty)
       stopifnot(!anyNA(self$criteria[criteria]))
 
       dplot <- self$criteria %>%
-        dplyr::select(dplyr::all_of(c("sparsity", criteria))) %>%
-        tidyr::gather(key = "criterion", value = "value", -sparsity) %>%
+        dplyr::select(dplyr::all_of(c("penalty", criteria))) %>%
+        tidyr::gather(key = "criterion", value = "value", -penalty) %>%
         dplyr::group_by(criterion)
       if("loglik" %in% criteria){dplot[dplot$criterion == "loglik",]$value <- - dplot[dplot$criterion == "loglik",]$value}
-      p <- ggplot2::ggplot(dplot, ggplot2::aes(x = sparsity, y = value, group = criterion, colour = criterion)) +
+      p <- ggplot2::ggplot(dplot, ggplot2::aes(x = penalty, y = value, group = criterion, colour = criterion)) +
            ggplot2::geom_line() + ggplot2::geom_point() +
            ggplot2::ggtitle(label    = "Model selection criteria",
                   subtitle = "Lower is better" ) +
@@ -228,20 +225,17 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param C group matrix.
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_fixed_blocks_diagonal_sparse`] object
-    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
-      super$initialize(Y, X, C, penalties, n_penalties,
-                       min_ratio, verbose)
+    initialize = function(Y, X, C, control = NB_fixed_blocks_diagonal_sparse_param(),
+                          verbose=TRUE) {
+      super$initialize(Y, X, C, control, verbose)
       # instantiates an NB_fixed_blocks_diagonal model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
                                                                  self$C,
-                                                                 sparsity = penalty)
+                                                                 penalty = penalty)
                          })
     },
 
@@ -261,20 +255,23 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
       cat("\nsubsampling: ")
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+      # stabs_out <- lapply(subsamples, function(subsample) {
         cat("+")
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
-          X  = self$X [subsample, , drop = FALSE])
+          X  = self$X  [subsample, , drop = FALSE])
 
-        myNB <- NB_fixed_blocks_diagonal_sparse$new(data$Y, data$X, self$C, self$penalties)
+        myNB <- NB_fixed_blocks_diagonal_sparse$new(data$Y, data$X, self$C,
+                                                    control = NB_fixed_blocks_sparse_param(penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
 
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
         }))
         nets
-      }, future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+      }
+      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       ## formatting/tyding
@@ -297,9 +294,7 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
+#' @param control structured list of more specific parameters
 #' @param models uderlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_blocks_spherical_sparse <- R6::R6Class(
@@ -315,14 +310,11 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param C group matrix.
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
-      super$initialize(Y, X, C, penalties, n_penalties,
-                       min_ratio, verbose)
+    initialize = function(Y, X, C, control = NB_fixed_blocks_spherical_sparse_param(),
+                          verbose=TRUE) {
+      super$initialize(Y, X, C, control, verbose)
       # instantiates an NB_fixed_blocks_spherical model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
@@ -355,7 +347,8 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
           Y  = self$Y  [subsample, , drop = FALSE],
           X  = self$X  [subsample, , drop = FALSE])
 
-        myNB <- NB_fixed_blocks_spherical_sparse$new(data$Y, data$X, self$C, self$penalties)
+        myNB <- NB_fixed_blocks_spherical_sparse$new(data$Y, data$X, self$C,
+                                                     control = NB_fixed_blocks_sparse_param(self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
@@ -379,3 +372,32 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
     }
   )
 )
+
+#' NB_fixed_blocks_sparse_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+NB_fixed_blocks_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                                  min_ratio = 0.05){
+  structure(list(penalties         = penalties        ,
+                 n_penalties       = n_penalties      ,
+                 min_ratio         = min_ratio        ))
+}
+
+
+#' NB_fixed_blocks_diagonal_sparse_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_diagonal_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                         min_ratio = 0.05){
+  NB_fixed_blocks_sparse_param(penalties, n_penalties, min_ratio)
+}
+
+#' NB_fixed_blocks_spherical_sparse_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_spherical_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                                  min_ratio = 0.05){
+  NB_fixed_blocks_sparse_param(penalties, n_penalties, min_ratio)
+}

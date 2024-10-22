@@ -5,12 +5,14 @@
 #' @param X covariates data, n observations of d covariates, dim n*d.
 #' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
 #'  or a p * Q matrix (for indicating block membership when its known)
-#' @param sparsity sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)
+#' @param sparsity boolean to say whether the model should be sparsified (several penalties tested)
+#' OR float to run model with a single penalty value
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param verbose telling if information should be printed during optimization
+#' @param control a list-like structure for detailed control on parameters
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
 #' data("example_data")
@@ -26,11 +28,11 @@
 #' }
 #' @export
 normal_block <- function(Y, X, blocks,
-                         sparsity = FALSE,
+                         sparsity = FALSE, penalties = NULL,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
-                         verbose=TRUE) {
+                         verbose=TRUE, control = NULL) {
 
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
@@ -38,14 +40,18 @@ normal_block <- function(Y, X, blocks,
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
   zi_class <- ifelse(zero_inflation, "_zi",  "")
+  # sparse_class <- ifelse(sparsity & length(penalties) != 1, "_sparse", "")
   sparse_class <- ifelse(sparsity, "_sparse", "")
 
-### FIX until all mdel have their spherical variante & their sparse variant
+### FIX until all models have their spherical variant & their sparse variant
   noise_cov <- ifelse(!zero_inflation & (block_class == "fixed_blocks" |sparsity), paste0("_",noise_cov), "")
-  sparse_class <- ifelse(!zero_inflation & sparsity, sparse_class, "")
+  sparse_class <- ifelse(!zero_inflation & typeof(sparsity) == "logical", sparse_class, "")
   ## Instantiating model
   myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class)))
-  model <- myClass$new(Y, X, blocks)
+  if(is.null(control)){control <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class, "_param()")))}
+
+  if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks,  control = control)
+  }else{model <- myClass$new(Y, X, blocks, sparsity, control = control)}
 
   ## Estimation/optimization
   if(verbose)

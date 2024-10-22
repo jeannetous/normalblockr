@@ -7,7 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 #' @param clustering_init to propose an initial clustering
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
@@ -22,9 +22,11 @@ NB_fixed_Q <- R6::R6Class(
 
     #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
+    #' @param control structured list of more specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
-      super$initialize(Y, X, Q, sparsity)
+    initialize = function(Y, X, Q, penalty = 0, control = NB_fixed_Q_param()) {
+      super$initialize(Y, X, Q, penalty)
+      clustering_init <- control$clustering_init
       if (!is.null(clustering_init)) {
         if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
         if (is.vector(clustering_init)) {
@@ -81,10 +83,10 @@ NB_fixed_Q <- R6::R6Class(
       J <- J + sum(tau %*% log(alpha))
       J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
 
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
         J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (crossprod(M) + self$n * diag(S, self$Q, self$Q))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
@@ -167,3 +169,11 @@ NB_fixed_Q <- R6::R6Class(
     fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)
     ),
 )
+
+
+#' NB_fixed_Q_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_Q_param <- function(clustering_init = NULL){
+  structure(list(clustering_init = clustering_init))}

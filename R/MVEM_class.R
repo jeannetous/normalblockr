@@ -21,9 +21,9 @@ MVEM <- R6::R6Class(
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param sparsity penalty on the network density
+    #' @param penalty penalty on the network density
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X,  sparsity = 0) {
+    initialize = function(Y, X,  penalty = 0) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }

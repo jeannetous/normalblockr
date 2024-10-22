@@ -22,8 +22,8 @@ NB_unknown_zi <- R6::R6Class(
     X = NULL,
     #' @field nb_blocks list of Q values to be tested for the number of blocks
     nb_blocks = NULL,
-    #' @field sparsity penalty on the network density
-    sparsity = NULL,
+    #' @field penalty penalty on the network density for sparsity
+    penalty = NULL,
     #' @field models list of NB_fixed_Q_zi models corresponding to each nb_block value
     models = NULL,
     #' @field verbose say whether information should be given about the optimization
@@ -32,10 +32,12 @@ NB_unknown_zi <- R6::R6Class(
     #' @description Create a new [`NB_unknown_zi`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param sparsity penalty on the network density
+    #' @param penalty penalty on the network density for sparsity
     #' @param threshold loglikelihood threshold under which optimization stops
+    #' @param control structured list of more specific parameters
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, nb_blocks, sparsity = 0, verbose = TRUE) {
+    initialize = function(Y, X, nb_blocks, penalty = 0, verbose = TRUE,
+                          control = NB_unknown_zi_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -47,18 +49,18 @@ NB_unknown_zi <- R6::R6Class(
       }
       self$Y <- Y
       self$X <- X
-      if (length(sparsity) == 1) sparsity <- rep(sparsity, length(nb_blocks))
-      stopifnot(all.equal(length(sparsity), length(nb_blocks)))
-      self$sparsity <- sparsity
+      if (length(penalty) == 1) penalty <- rep(penalty, length(nb_blocks))
+      stopifnot(all.equal(length(penalty), length(nb_blocks)))
+      self$penalty <- penalty
       self$nb_blocks <- nb_blocks
       self$verbose   <- verbose
 
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
-      self$models <- map2(order(self$nb_blocks), self$sparsity[order(self$nb_blocks)],
-                                 function(block_rank, sparsity_sorted ) {
+      self$models <- map2(order(self$nb_blocks), self$penalty[order(self$nb_blocks)],
+                                 function(block_rank, penalty_sorted ) {
                                    model <- NB_fixed_Q_zi$new(self$Y, self$X,
                                                            nb_blocks[[block_rank]],
-                                                           sparsity_sorted)
+                                                           penalty_sorted)
                                  })
     },
 
@@ -129,3 +131,9 @@ NB_unknown_zi <- R6::R6Class(
   )
 
 )
+
+#' NB_unknown_zi_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_unknown_zi_param <- function(){structure(list())}

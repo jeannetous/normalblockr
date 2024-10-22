@@ -7,7 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_zi <- R6::R6Class(
   classname = "NB_fixed_blocks_zi",
   inherit = NB,
@@ -21,11 +21,15 @@ NB_fixed_blocks_zi <- R6::R6Class(
     zeros = NULL,
 
     #' @description Create a new [`NB_fixed_blocks_zi`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
     #' @param C group matrix C_jq = 1 if species j belongs to group q
+    #' @param penalty penalty to apply to covariance matrix for sparsity.
+    #' @param control structures list of more specific parameters
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0) {
+    initialize = function(Y, X, C, penalty = 0, control = NB_fixed_blocks_zi_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y = Y, X = X, ncol(C), sparsity = sparsity)
+      super$initialize(Y = Y, X = X, ncol(C), penalty = penalty)
       self$C <- C
       self$zeros <- 1 * (Y == 0)
     },
@@ -77,10 +81,10 @@ NB_fixed_blocks_zi <- R6::R6Class(
       J <- J  + .5 * sum(log(S))
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
@@ -207,3 +211,12 @@ NB_fixed_blocks_zi <- R6::R6Class(
     fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
   )
 )
+
+
+
+#' NB_fixed_blocks_zi_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_zi_param <- function(){structure(list())}
+

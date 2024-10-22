@@ -6,7 +6,8 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @control structured list of specific parameters
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
   inherit = NB,
@@ -26,10 +27,10 @@ NB_fixed_blocks <- R6::R6Class(
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
       J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_omegaQ
       J <- J + .5 * self$n * log_det_gamma
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (self$n * gamma + t(mu) %*% mu)))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     }
@@ -44,9 +45,9 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0) {
+    initialize = function(Y, X, C, penalty = 0, control = NB_fixed_blocks_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y, X, ncol(C), sparsity)
+      super$initialize(Y, X, ncol(C), penalty)
       private$C     <- C
       private$mu    <- matrix(0, self$n, self$Q)
       private$gamma <- diag(1, self$Q, self$Q)
@@ -92,7 +93,7 @@ NB_fixed_blocks <- R6::R6Class(
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_diagonal <- R6::R6Class(
   classname = "NB_fixed_blocksdiagonal",
   inherit = NB_fixed_blocks,
@@ -135,7 +136,7 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_spherical <- R6::R6Class(
   classname = "NB_fixed_blocks_spherical",
   inherit = NB_fixed_blocks,
@@ -168,3 +169,23 @@ NB_fixed_blocks_spherical <- R6::R6Class(
     }
   )
 )
+
+
+
+#' NB_fixed_blocks_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_param <- function(){structure(list())}
+
+#' NB_fixed_blocks_diagonal_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_diagonal_param <- function(){structure(list())}
+
+#' NB_fixed_blocks_diagonal_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_blocks_spherical_param <- function(){structure(list())}

@@ -44,12 +44,10 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param Q number of blocks
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @param control structured list of specific parameters for sparsity
     #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, nb_blocks, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
+    initialize = function(Y, X, nb_blocks, control = NB_unknown_sparse_param(),
+                          verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -59,18 +57,15 @@ NB_unknown_sparse <- R6::R6Class(
       self$Y <- Y
       self$X <- X
       self$nb_blocks <- nb_blocks
+      penalties <- control$penalties
+      n_penalties <- control$n_penalties
+      min_ratio <- control$min_ratio
       if(!is.null(penalties)){
         self$n_penalties <- length(penalties)
-        self$penalties <- penalties[order(penalties)]
+        self$penalties   <- penalties[order(penalties)]
       }else{
         self$n_penalties <- n_penalties
         self$min_ratio   <- min_ratio
-        init_model <- normal_block(Y, X, nb_blocks, verbose = FALSE)
-        init_model$optimize(5)
-        sigmaQs   <- lapply(init_model$models, f <- function(model){solve(model$model_par$omegaQ)})
-        max_pen   <- max(unlist(lapply(sigmaQs, f <- function(sigmaQ){max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))})))
-        penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
-        self$penalties <- penalties[order(penalties)]
       }
       self$verbose <- verbose
     },
@@ -85,7 +80,7 @@ NB_unknown_sparse <- R6::R6Class(
 
       self$models <- furrr::future_map(seq_along(self$models), function(m) {
         model <- self$models[[m]]
-        if(self$verbose) cat("\t penalty =", self$models[[m]]$sparsity, "          \r")
+        if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         model
@@ -96,18 +91,22 @@ NB_unknown_sparse <- R6::R6Class(
     #' or one single model if Q is also given
     #' @param penalty penalty asked by user
     #' @return A NB_unknown_sparse object with given value penalty
-    get_model = function(penalty, Q = NA) {
-      if(!(penalty %in% self$penalties)) {
-        penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
-        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties \n"))
+    get_model = function(Q, penalty = NA) {
+      if(!(Q %in% self$nb_blocks)) {
+        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
       }
-      penalty_rank <- which(sort(self$penalties) == penalty)
-      if(is.na(Q)){
-        return(self$models[[penalty_rank]])
+      Q_rank <- which(sort(self$nb_blocks) == Q)
+      model  <- self$models[[Q_rank]]$clone()
+      if(is.na(penalty)){
+        return(model)
       }else{
-        return(self$models[[penalty_rank]]$get_model(Q))
+        if(!(penalty %in% model$penalties)) {
+          penalty <-  model$penalties[[which.min(abs(model$penalties - penalty))]]
+          cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties \n"))
+        }
+        penalty_rank <- which(sort(model$penalties) == penalty)
+        return(model$models[[penalty_rank]])
       }
-
     },
 
     #' @description Extract best model in the collection
@@ -121,10 +120,10 @@ NB_unknown_sparse <- R6::R6Class(
       id <- 1
       if (length(self$criteria[[crit]]) > 1) {
         id       <- which.min(self$criteria[[crit]])
-        best_pen <- self$criteria$sparsity[[id]]
+        best_pen <- self$criteria$penalty[[id]]
         best_Q   <- self$criteria$Q[[id]]
       }
-      model <- self$get_model(best_pen, best_Q)$clone()
+      model <- self$get_model(best_Q, best_pen)$clone()
       model
     }
   ),
@@ -166,21 +165,18 @@ NB_unknown_diagonal_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param C group matrix.
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @param control structured list of specific parameters for sparsity
     #' @return A new [`NB_unknown_diagonal_sparse`] object
-    initialize = function(Y, X, nb_blocks, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
-      super$initialize(Y, X, nb_blocks, penalties, n_penalties,
-                       min_ratio, verbose)
+    initialize = function(Y, X, nb_blocks, control = NB_unknown_diagonal_sparse_param(),
+                          verbose=TRUE) {
+      super$initialize(Y, X, nb_blocks, control, verbose)
       # instantiates an NB_unknown_diagonal model for each penalty
       # For now NB_unknown_spherical not defined --> it's all NB_unknown_diagonal
-      self$models <- map(self$penalties[order(self$penalties)],
-                         function(penalty) {
-                           model <- NB_unknown$new(self$Y, self$X,
-                                                   self$nb_blocks,
-                                                   sparsity = penalty)
+      self$models <- map(self$nb_blocks[order(self$nb_blocks)],
+                         function(Q) {
+                           model <- NB_fixed_Q_diagonal_sparse$new(self$Y, self$X,
+                                                                   Q, control,
+                                                                   verbose = F)
                          })
     }
   )
@@ -208,19 +204,50 @@ NB_unknown_spherical_sparse <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param nb_blocks list of number of blocks values to be tested.
-    #' @param penalties list of penalties on the network density
-    #' @param n_penalties number of penalty values
-    #' @param min_ratio ratio between min and max penalty to be tested
+    #' @param control structured list of specific parameters to handle sparsity
     #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, nb_blocks, penalties = NULL,  n_penalties = 30,
-                          min_ratio = 0.05, verbose=TRUE) {
-      super$initialize(Y, X, nb_blocks, penalties, n_penalties,
-                       min_ratio, verbose)
+    initialize = function(Y, X, nb_blocks, control, verbose=TRUE) {
+      super$initialize(Y, X, nb_blocks, control, verbose)
       # instantiates an NB_unknown_spherical model for each Q in nb_blocks
-      self$models <- map(self$penalties[order(self$penalties)],
-                         function(penalty) {
-                           model <- NB_unknown$new(self$Y, self$X, self$nb_blocks, penalty)
+      self$models <- map(self$nb_blocks[order(self$nb_blocks)],
+                         function(Q) {
+                           model <- NB_fixed_Q_spherical_sparse$new(self$Y, self$X,
+                                                                   Q, self$penalties,
+                                                                   self$n_penalties,
+                                                                   self$min_ratio,
+                                                                   verbose = F)
                          })
     }
   )
 )
+
+
+#' NB_unknown_sparse_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+NB_unknown_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                    min_ratio = 0.05){
+  structure(list(penalties         = penalties        ,
+                 n_penalties       = n_penalties      ,
+                 min_ratio         = min_ratio        ))
+}
+
+
+#' NB_unknown_diagonal_sparse_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_unknown_diagonal_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                             min_ratio = 0.05){
+  NB_unknown_sparse_param(penalties, n_penalties, min_ratio)
+}
+
+#' NB_unknown_diagonal_spherical_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_unknown_spherical_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                              min_ratio = 0.05){
+  NB_unknown_sparse_param(penalties, n_penalties, min_ratio)
+}
+

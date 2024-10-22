@@ -7,7 +7,7 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks in the model
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 #' @param verbose telling if information should be printed during optimization
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
@@ -23,10 +23,11 @@ NB_fixed_Q_zi <- R6::R6Class(
 
     #' @description Create a new [`NB_fixed_Q_zi`] object.
     #' @param C block matrix C_jq = 1 if species j belongs to block q
-    #' @param clustering_init model initial clustering
+    #' @param control structured list of more specific parameters
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
-      super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
+    initialize = function(Y, X, Q, penalty = 0, control = NB_fixed_Q_zi_param()) {
+      clustering_init <- control$clustering_init
+      super$initialize(Y = Y, X = X, Q, penalty = penalty)
       self$zeros <- 1 * (Y == 0)
       if (!is.null(clustering_init)) {
         if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
@@ -92,10 +93,10 @@ NB_fixed_Q_zi <- R6::R6Class(
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
@@ -241,3 +242,11 @@ NB_fixed_Q_zi <- R6::R6Class(
     fitted = function()(1 - private$rho) *(self$X %*% private$B + tcrossprod(private$M, private$tau))
   )
 )
+
+
+#' NB_fixed_Q_zi_param
+#'
+#' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @export
+NB_fixed_Q_zi_param <- function(clustering_init = NULL){
+  structure(list(clustering_init = clustering_init))}
