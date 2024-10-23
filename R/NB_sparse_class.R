@@ -1,17 +1,19 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_blocks_zi_sparse #######################################
+##  CLASS NB_sparse ##############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param blocks either group matrix C or number of blocks Q
+#' @param zero_inflation boolean to specify whether data is zero-inflated
+#' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control structured list of parameters to handle sparsity control
-#' @param models uderlying NB_fixed_blocks models for each nb of blocks
+#' @param models underlying models for each penalty
 #' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_zi_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_zi_sparse",
+NB_sparse <- R6::R6Class(
+  classname = "NB_sparse",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -21,8 +23,12 @@ NB_fixed_blocks_zi_sparse <- R6::R6Class(
     Y  = NULL,
     #' @field X the design matrix
     X = NULL,
-    #' @field C the group matrix
-    C = NULL,
+    #' @field blocks group matrix or number of blocks
+    blocks = NULL,
+    #' @field zero_inflation boolean stating whether model is zero_inflated
+    zero_inflation = NULL,
+    #' @field noise_cov character the type of covariance for the noise: either diagonal of spherical
+    noise_cov = NULL,
     #' @field penalties list of penalties values for omegaQ sparsity
     penalties = NULL,
     #' @field n_penalties number of penalty values
@@ -40,48 +46,55 @@ NB_fixed_blocks_zi_sparse <- R6::R6Class(
     #' @field latest_threshold latest threshold value used for optimization
     latest_threshold = NULL,
 
-    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
+    #' @description Create a new [`NB_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
+    #' @param blocks group matrix or number of blocks.
+    #' @param zero_inflation boolean to specify whether data is zero-inflated
+    #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_zi_sparse_param(),
+    initialize = function(Y, X, blocks, zero_inflation = "F",
+                          noise_cov = "diagonal", control = NB_sparse_param(),
                           verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
-        stop("Y, X and C must be matrices.")
+        stop("Y and X must be matrices.")
       }
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
       self$Y <- Y
       self$X <- X
-      self$C <- C
+      self$blocks <- blocks
+      self$zero_inflation   <- zero_inflation
       self$penalties        <- control$penalties
       self$n_penalties      <- control$n_penalties
       self$min_ratio        <- control$min_ratio
       self$sparsity_weights <- control$sparsity_weights
       if(!is.null(self$penalties)){
         self$n_penalties <- length(self$penalties)
-        self$penalties <- self$penalties[order(self$penalties)]
+        self$penalties   <- self$penalties[order(self$penalties)]
       }else{
-        init_model <- normal_block(Y, X, C, verbose = FALSE)
+        init_model <- normal_block(self$Y, self$X, self$blocks,
+                                   zero_inflation = self$zero_inflation,
+                                   noise_cov = self$noise_cov, verbose = FALSE)
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
         penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
         self$penalties <- penalties[order(penalties)]
       }
-      self$verbose <- verbose
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- normal_block(self$Y, self$X, self$blocks,
                                                  sparsity = penalty,
-                                                 zero_inflation = zero_inflation,
-                                                 noise_cov = noise_cov,
-                                                 control = control,
+                                                 zero_inflation = self$zero_inflation,
+                                                 noise_cov = self$noise_cov,
+                                                 verbose=FALSE,
+                                                 control = NB_param(sparsity_weights = self$sparsity_weights),
                                                  optimize = FALSE)
                          })
+      self$verbose <- verbose
     },
 
 
@@ -97,15 +110,14 @@ NB_fixed_blocks_zi_sparse <- R6::R6Class(
         if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
         model$optimize(niter, threshold)
-        if(m < self$n_penalties){
-          self$models[[m + 1]]$update(B      = model$model_par$B,
-                                      dm1    = model$model_par$dm1,
-                                      omegaQ = model$model_par$omegaQ,
-                                      kappa  = model$model_par$kappa,
-                                      M      = model$var_par$M,
-                                      S      = model$var_par$S,
-                                      rho    = model$var_par$rho    )
-        }
+        # A gérer pour l'adapter à chaque modèle
+        # if(m < self$n_penalties){
+        #   self$models[[m + 1]]$update(B      = model$model_par$B,
+        #                               dm1    = model$model_par$dm1,
+        #                               omegaQ = model$model_par$omegaQ,
+        #                               gamma  = model$posterior_par$gamma,
+        #                               mu     = model$posterior_par$mu)
+        # }
         model
       }, .options = furrr_options(seed=TRUE))
     },
@@ -173,6 +185,61 @@ NB_fixed_blocks_zi_sparse <- R6::R6Class(
         ggplot2::theme_bw() + ggplot2::geom_vline(xintercept = vlines, linetype = "dashed", alpha = 0.25)
       if (log.x) p <- p + ggplot2::coord_trans(x = "log10")
       p
+    },
+
+    ## Stability -------------------------
+    #' @description Compute the stability path by stability selection
+    #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
+    stability_selection = function(subsamples = NULL) {
+
+      ## select default subsamples according to Liu et al. (2010) recommendations.
+      if (is.null(subsamples)) {
+        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
+        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
+      }
+
+      ## got for stability selection
+      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
+      cat("\nsubsampling: ")
+
+      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+        # stabs_out <- lapply(subsamples, function(subsample) {
+        cat("+")
+
+        data <- list(
+          Y  = self$Y  [subsample, , drop = FALSE],
+          X  = self$X  [subsample, , drop = FALSE])
+
+        myNB <- normal_block(data$Y, data$X, self$blocks,
+                             sparsity = T,
+                             zero_inflation = self$zero_inflation,
+                             noise_cov = self$noise_cov,
+                             verbose=FALSE,
+                             control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                       penalties = self$penalties),
+                             optimize = FALSE)
+        myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
+
+        nets <- do.call(cbind, lapply(myNB$models, function(model) {
+          as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
+        }))
+        nets
+      }
+      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+
+      prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
+      ## formatting/tyding
+      node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
+      colnames(prob) <- self$penalties
+      private$stab_path <- prob %>%
+        as.data.frame() %>%
+        dplyr::mutate(Edge = 1:dplyr::n()) %>%
+        tidyr::gather(key = "Penalty", value = "Prob", -Edge) %>%
+        dplyr::mutate(Penalty = as.numeric(Penalty),
+                      Node1   = node_set[edge_to_node(Edge)$node1],
+                      Node2   = node_set[edge_to_node(Edge)$node2],
+                      Edge    = paste0(Node1, "|", Node2))
+      invisible(subsamples)
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -217,180 +284,7 @@ NB_fixed_blocks_zi_sparse <- R6::R6Class(
 )
 
 
-#' R6 generic class for normal-block models
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_fixed_Q models for each penalty
-#' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_zi_diagonal_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_zi_diagonal_sparse",
-  inherit = NB_fixed_blocks_zi_sparse,
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-
-    #' @description Create a new [`NB_fixed_blocks_diagonal_sparse`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
-    #' @param control structured list of parameters to handle sparsity control
-    #' @return A new [`NB_fixed_blocks_diagonal_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_zi_sparse_param(),
-                          verbose=TRUE) {
-      super$initialize(Y, X, C, control, verbose)
-      # instantiates an NB_fixed_blocks_diagonal model for each penalty in penalties
-      self$models <- map(self$penalties[order(self$penalties)],
-                         function(penalty) {
-                           model <- NB_fixed_blocks_zi$new(self$Y, self$X,
-                                                           self$C, penalty = penalty,
-                                                           control = control)
-                         })
-    },
-
-    ## Stability -------------------------
-    #' @description Compute the stability path by stability selection
-    #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
-    stability_selection = function(subsamples = NULL) {
-
-      ## select default subsamples according to Liu et al. (2010) recommendations.
-      if (is.null(subsamples)) {
-        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
-        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
-      }
-
-      ## got for stability selection
-      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
-      cat("\nsubsampling: ")
-
-      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
-        # stabs_out <- lapply(subsamples, function(subsample) {
-        cat("+")
-
-        data <- list(
-          Y  = self$Y  [subsample, , drop = FALSE],
-          X  = self$X  [subsample, , drop = FALSE])
-
-        myNB <- NB_fixed_blocks_zi_diagonal_sparse$new(data$Y, data$X, self$C,
-                                                    control = NB_fixed_blocks_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                                                           penalties = self$penalties))
-        myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
-
-        nets <- do.call(cbind, lapply(myNB$models, function(model) {
-          as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
-        }))
-        nets
-      }
-      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
-
-      prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
-      ## formatting/tyding
-      node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
-      colnames(prob) <- self$penalties
-      private$stab_path <- prob %>%
-        as.data.frame() %>%
-        dplyr::mutate(Edge = 1:dplyr::n()) %>%
-        tidyr::gather(key = "Penalty", value = "Prob", -Edge) %>%
-        dplyr::mutate(Penalty = as.numeric(Penalty),
-                      Node1   = node_set[edge_to_node(Edge)$node1],
-                      Node2   = node_set[edge_to_node(Edge)$node2],
-                      Edge    = paste0(Node1, "|", Node2))
-      invisible(subsamples)
-    }
-  )
-)
-
-#' R6 generic class for normal-block models
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param control structured list of more specific parameters
-#' @param models uderlying NB_fixed_Q models for each penalty
-#' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_zi_spherical_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_zi_spherical_sparse",
-  inherit = NB_fixed_blocks_zi_sparse,
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-
-    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
-    #' @control structured list of parameters to handle sparsity control
-    #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_zi_sparse_param(),
-                          verbose=TRUE) {
-      super$initialize(Y, X, C, control, verbose)
-      # instantiates an NB_fixed_blocks_spherical model for each penalty in penalties
-      self$models <- map(self$penalties[order(self$penalties)],
-                         function(penalty) {
-                           model <- NB_fixed_blocks_zi$new(self$Y, self$X,
-                                                           self$C, penalty,
-                                                           control = control)
-                         })
-    },
-
-
-    ## Stability -------------------------
-    #' @description Compute the stability path by stability selection
-    #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
-    stability_selection = function(subsamples = NULL) {
-
-      ## select default subsamples according to Liu et al. (2010) recommendations.
-      if (is.null(subsamples)) {
-        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
-        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
-      }
-
-      ## got for stability selection
-      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
-      cat("\nsubsampling: ")
-
-      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
-        cat("+")
-
-
-        data <- list(
-          Y  = self$Y  [subsample, , drop = FALSE],
-          X  = self$X  [subsample, , drop = FALSE])
-
-        myNB <- NB_fixed_blocks_zi_spherical_sparse$new(data$Y, data$X, self$C,
-                                                        control = NB_fixed_blocks_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                                                               penalties = self$penalties))
-        myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
-        nets <- do.call(cbind, lapply(myNB$models, function(model) {
-          as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
-        }))
-        nets
-      }, future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
-
-      prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
-      ## formatting/tyding
-      node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
-      colnames(prob) <- self$penalties
-      private$stab_path <- prob %>%
-        as.data.frame() %>%
-        dplyr::mutate(Edge = 1:dplyr::n()) %>%
-        tidyr::gather(key = "Penalty", value = "Prob", -Edge) %>%
-        dplyr::mutate(Penalty = as.numeric(Penalty),
-                      Node1   = node_set[edge_to_node(Edge)$node1],
-                      Node2   = node_set[edge_to_node(Edge)$node2],
-                      Edge    = paste0(Node1, "|", Node2))
-      invisible(subsamples)
-    }
-  )
-)
-
-#' NB_fixed_blocks_sparse_param
+#' NB_sparse_param
 #' @param sparsity_weights weights with which penalty should be applied in case
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
 #' penalized too (default is non-penalized diagonal)
@@ -399,9 +293,9 @@ NB_fixed_blocks_zi_spherical_sparse <- R6::R6Class(
 #' @param n_penalties number of penalties to test.
 #' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
 #' Generates control parameters for the NB_fixed_blocks_sparse class
-NB_fixed_blocks_zi_sparse_param <- function(sparsity_weights = NULL,
-                                            penalties = NULL, n_penalties = 30,
-                                            min_ratio = 0.05){
+NB_sparse_param <- function(sparsity_weights = NULL,
+                             penalties = NULL, n_penalties = 30,
+                             min_ratio = 0.05){
   structure(list(sparsity_weights  = sparsity_weights ,
                  penalties         = penalties        ,
                  n_penalties       = n_penalties      ,

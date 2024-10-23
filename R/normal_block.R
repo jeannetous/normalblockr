@@ -13,6 +13,7 @@
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param verbose telling if information should be printed during optimization
 #' @param control a list-like structure for detailed control on parameters
+#' @param optimize boolean stating whether the model should just be instantiated (F) or optimized too (T)
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
 #' data("example_data")
@@ -32,7 +33,8 @@ normal_block <- function(Y, X, blocks,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
-                         verbose=TRUE, control = NULL) {
+                         verbose=TRUE, control = NULL,
+                         optimize = TRUE) {
 
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
@@ -40,11 +42,11 @@ normal_block <- function(Y, X, blocks,
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
   zi_class <- ifelse(zero_inflation, "_zi",  "")
-  sparse_class <- ifelse(sparsity, "_sparse", "") # a enlever a terme
+  # sparse_class <- ifelse(sparsity, "_sparse", "") # a enlever a terme
 
 ### FIX until all models have their spherical variant & their sparse variant
-  noise_cov <- ifelse((!zero_inflation & block_class == "fixed_blocks") |sparsity, paste0("_",noise_cov), "")
-  sparse_class <- ifelse(typeof(sparsity) == "logical", sparse_class, "")
+  noise_cov <- ifelse((!zero_inflation & block_class == "fixed_blocks") |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
+  sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
   ## Instantiating model
   myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov, sparse_class)))
   if (!is.null(control)) {
@@ -55,13 +57,21 @@ normal_block <- function(Y, X, blocks,
   }
 
   ## Estimation/optimization
-  if(verbose)
-    cat("Fitting a", sub('.', '', noise_cov),
-        sub('.', '',sparse_class),
-        ifelse(zero_inflation, "zero-inflated",  ""),
-        "normal-block model with", block_class, "...\n")
-  model$optimize(niter, threshold)
-
+  if(optimize){
+    if(verbose)
+      cat("Fitting a", sub('.', '', noise_cov),
+          sub('.', '',sparse_class),
+          ifelse(zero_inflation, "zero-inflated",  ""),
+          "normal-block model with", block_class, "...\n")
+    model$optimize(niter, threshold)
+  }else{
+    if(verbose){
+      cat("Instantiating a", sub('.', '', noise_cov),
+          sub('.', '',sparse_class),
+          ifelse(zero_inflation, "zero-inflated",  ""),
+          "normal-block model with", block_class, "...\n")
+    }
+  }
   ## Finishing
   if(verbose) cat("\n DONE\n")
   model
