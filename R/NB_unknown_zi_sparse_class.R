@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_unknown_sparse #######################################
+##  CLASS NB_unknown_zi_sparse #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -12,8 +12,8 @@
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
 #' @param models underlying NB_unknown models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
-NB_unknown_sparse <- R6::R6Class(
-  classname = "NB_unknown_sparse",
+NB_unknown_zi_sparse <- R6::R6Class(
+  classname = "NB_unknown_zi_sparse",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -48,7 +48,7 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param Q number of blocks
     #' @param control structured list of specific parameters for sparsity
     #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, nb_blocks, control = NB_unknown_sparse_param(),
+    initialize = function(Y, X, nb_blocks, control = NB_unknown_zi_sparse_param(),
                           verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
@@ -153,9 +153,9 @@ NB_unknown_sparse <- R6::R6Class(
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
 #' @param models uderlying NB_unknown models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
-NB_unknown_diagonal_sparse <- R6::R6Class(
-  classname = "NB_unknown_diagonal_sparse",
-  inherit = NB_unknown_sparse,
+NB_unknown_zi_diagonal_sparse <- R6::R6Class(
+  classname = "NB_unknown_zi_diagonal_sparse",
+  inherit = NB_unknown_zi_sparse,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -175,9 +175,9 @@ NB_unknown_diagonal_sparse <- R6::R6Class(
       # For now NB_unknown_spherical not defined --> it's all NB_unknown_diagonal
       self$models <- map(self$nb_blocks[order(self$nb_blocks)],
                          function(Q) {
-                           model <- NB_fixed_Q_diagonal_sparse$new(self$Y, self$X,
-                                                                   Q, control,
-                                                                   verbose = F)
+                           model <- NB_fixed_Q_zi_diagonal_sparse$new(self$Y, self$X,
+                                                                      Q, control,
+                                                                      verbose = F)
                          })
     }
   )
@@ -192,9 +192,9 @@ NB_unknown_diagonal_sparse <- R6::R6Class(
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
 #' @param models uderlying NB_unknown models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
-NB_unknown_spherical_sparse <- R6::R6Class(
+NB_unknown_zi_spherical_sparse <- R6::R6Class(
   classname = "NB_unknown_spherical_sparse",
-  inherit = NB_unknown_sparse,
+  inherit = NB_unknown_zi_sparse,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -212,11 +212,11 @@ NB_unknown_spherical_sparse <- R6::R6Class(
       # instantiates an NB_unknown_spherical model for each Q in nb_blocks
       self$models <- map(self$nb_blocks[order(self$nb_blocks)],
                          function(Q) {
-                           model <- NB_fixed_Q_spherical_sparse$new(self$Y, self$X,
-                                                                   Q, self$penalties,
-                                                                   self$n_penalties,
-                                                                   self$min_ratio,
-                                                                   verbose = F)
+                           model <- NB_fixed_Q_zi_spherical_sparse$new(self$Y, self$X,
+                                                                    Q, self$penalties,
+                                                                    self$n_penalties,
+                                                                    self$min_ratio,
+                                                                    verbose = F)
                          })
     }
   )
@@ -233,7 +233,7 @@ NB_unknown_spherical_sparse <- R6::R6Class(
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
 #' penalized too (default is non-penalized diagonal)
 #' Generates control parameters for the NB_unknown_sparse_param class
-NB_unknown_sparse_param <- function(penalties = NULL, n_penalties = 30,
+NB_unknown_zi_sparse_param <- function(penalties = NULL, n_penalties = 30,
                                     min_ratio = 0.05, sparsity_weights = NULL){
   structure(list(penalties         = penalties        ,
                  n_penalties       = n_penalties      ,

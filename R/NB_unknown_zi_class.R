@@ -37,7 +37,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @param control structured list of more specific parameters
     #' @return A new [`nb_fixed`] object
     initialize = function(Y, X, nb_blocks, penalty = 0, verbose = TRUE,
-                          control = NB_unknown_zi_param()) {
+                          control = NB_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -60,7 +60,8 @@ NB_unknown_zi <- R6::R6Class(
                                  function(block_rank, penalty_sorted ) {
                                    model <- NB_fixed_Q_zi$new(self$Y, self$X,
                                                            nb_blocks[[block_rank]],
-                                                           penalty_sorted)
+                                                           penalty_sorted,
+                                                           control = control)
                                  })
     },
 
@@ -131,9 +132,3 @@ NB_unknown_zi <- R6::R6Class(
   )
 
 )
-
-#' NB_unknown_zi_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_unknown_zi_param <- function(){structure(list())}

@@ -28,7 +28,7 @@
 #' }
 #' @export
 normal_block <- function(Y, X, blocks,
-                         sparsity = FALSE, penalties = NULL,
+                         sparsity = FALSE,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
@@ -40,18 +40,19 @@ normal_block <- function(Y, X, blocks,
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
   zi_class <- ifelse(zero_inflation, "_zi",  "")
-  # sparse_class <- ifelse(sparsity & length(penalties) != 1, "_sparse", "")
-  sparse_class <- ifelse(sparsity, "_sparse", "")
+  sparse_class <- ifelse(sparsity, "_sparse", "") # a enlever a terme
 
 ### FIX until all models have their spherical variant & their sparse variant
-  noise_cov <- ifelse(!zero_inflation & (block_class == "fixed_blocks" |sparsity), paste0("_",noise_cov), "")
-  sparse_class <- ifelse(!zero_inflation & typeof(sparsity) == "logical", sparse_class, "")
+  noise_cov <- ifelse((!zero_inflation & block_class == "fixed_blocks") |sparsity, paste0("_",noise_cov), "")
+  sparse_class <- ifelse(typeof(sparsity) == "logical", sparse_class, "")
   ## Instantiating model
-  myClass <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class)))
-  if(is.null(control)){control <- eval(str2lang(paste0("NB_", block_class, noise_cov, zi_class, sparse_class, "_param()")))}
-
-  if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks,  control = control)
-  }else{model <- myClass$new(Y, X, blocks, sparsity, control = control)}
+  myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov, sparse_class)))
+  if (!is.null(control)) {
+    model <- myClass$new(Y, X, blocks, sparsity, control = control)
+  }else{
+    if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
+    }else{model <- myClass$new(Y, X, blocks, sparsity)}
+  }
 
   ## Estimation/optimization
   if(verbose)

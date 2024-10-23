@@ -7,7 +7,6 @@
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
-#' @control structured list of specific parameters
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
   inherit = NB,
@@ -45,9 +44,9 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, penalty = 0, control = NB_fixed_blocks_param()) {
+    initialize = function(Y, X, C, penalty = 0, control = NB_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y, X, ncol(C), penalty)
+      super$initialize(Y, X, ncol(C), penalty, control = control)
       private$C     <- C
       private$mu    <- matrix(0, self$n, self$Q)
       private$gamma <- diag(1, self$Q, self$Q)
@@ -169,23 +168,3 @@ NB_fixed_blocks_spherical <- R6::R6Class(
     }
   )
 )
-
-
-
-#' NB_fixed_blocks_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_blocks_param <- function(){structure(list())}
-
-#' NB_fixed_blocks_diagonal_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_blocks_diagonal_param <- function(){structure(list())}
-
-#' NB_fixed_blocks_diagonal_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_blocks_spherical_param <- function(){structure(list())}

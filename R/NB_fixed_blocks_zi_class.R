@@ -25,11 +25,10 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @param X design matrix (called X in the model).
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @param penalty penalty to apply to covariance matrix for sparsity.
-    #' @param control structures list of more specific parameters
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, penalty = 0, control = NB_fixed_blocks_zi_param()) {
+    initialize = function(Y, X, C, penalty = 0, control = NB_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y = Y, X = X, ncol(C), penalty = penalty)
+      super$initialize(Y = Y, X = X, ncol(C), penalty = penalty, control = control)
       self$C <- C
       self$zeros <- 1 * (Y == 0)
     },
@@ -211,12 +210,3 @@ NB_fixed_blocks_zi <- R6::R6Class(
     fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
   )
 )
-
-
-
-#' NB_fixed_blocks_zi_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_blocks_zi_param <- function(){structure(list())}
-

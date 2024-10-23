@@ -25,15 +25,19 @@ NB <- R6::R6Class(
     #' @param X design matrix (called X in the model).
     #' @param Q number of groups
     #' @param penalty penalty on the network density
+    #' @param control structured list of parameters, including sparsity_weights
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, Q, penalty = 0) {
+    initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
       super$initialize(Y, X)
       self$Q <- Q
       private$omegaQ <- diag(1, Q, Q)
       self$penalty <- penalty
       if (penalty > 0) {
-        sparsity_weights <- matrix(1, self$Q, self$Q)
-        diag(sparsity_weights) <- 0
+        sparsity_weights  <- control$sparsity_weights
+        if(is.null(sparsity_weights)){
+          sparsity_weights <- matrix(1, self$Q, self$Q)
+          diag(sparsity_weights) <- 0
+        }
         self$sparsity_weights  <- sparsity_weights
       }
     },
@@ -115,3 +119,16 @@ NB <- R6::R6Class(
     }
   )
 )
+
+
+#' NB_fixed_Q_sparse_param
+#' @param sparsity_weights weights with which penalty should be applied in case
+#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
+#' penalized too (default is non-penalized diagonal)
+#' Generates control parameters for NB models
+#' @export
+NB_param <- function(sparsity_weights = NULL){
+  structure(list(
+    sparsity_weights = sparsity_weights
+  ))
+}

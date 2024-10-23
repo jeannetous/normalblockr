@@ -29,6 +29,8 @@ NB_fixed_Q_sparse <- R6::R6Class(
     n_penalties = NULL,
     #' @field min_ratio ratio between min and max penalty to be tested
     min_ratio = NULL,
+    #' @field sparsity_weights weights with which penalty should be applied
+    sparsity_weights = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
     #' @field verbose say whether information should be given about the optimization
@@ -57,6 +59,7 @@ NB_fixed_Q_sparse <- R6::R6Class(
       self$penalties   <- control$penalties
       self$n_penalties <- control$n_penalties
       self$min_ratio   <- control$min_ratio
+      self$sparsity_weights <- control$sparsity_weights
       if(!is.null(self$penalties)){
         self$n_penalties <- length(self$penalties)
         self$penalties <- self$penalties[order(self$penalties)]
@@ -226,15 +229,15 @@ NB_fixed_Q_diagonal_sparse <- R6::R6Class(
     #' @param C group matrix.
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_fixed_Q_diagonal_sparse`] object
-    initialize = function(Y, X, Q, control = NB_fixed_Q_diagonal_sparse_param(), verbose=TRUE) {
+    initialize = function(Y, X, Q, control = NB_fixed_Q_sparse_param(), verbose=TRUE) {
       super$initialize(Y, X, Q, control, verbose)
       # instantiates an NB_fixed_Q_diagonal model for each Q in nb_blocks
       # For now NB_fixed_Q_spherical not defined --> it's all NB_fixed_Q_diagonal
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
                            model <- NB_fixed_Q$new(self$Y, self$X,
-                                                            self$Q,
-                                                            penalty = penalty)
+                                                   self$Q, penalty = penalty,
+                                                   control = control)
                          })
     },
 
@@ -261,7 +264,8 @@ NB_fixed_Q_diagonal_sparse <- R6::R6Class(
           X  = self$X  [subsample, , drop = FALSE])
 
         myNB <- NB_fixed_Q_diagonal_sparse$new(data$Y, data$X, self$Q,
-                                               control = NB_fixed_Q_diagonal_sparse_param(penalties = self$penalties))
+                                               control = NB_fixed_Q_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                                                 penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
 
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
@@ -309,7 +313,7 @@ NB_fixed_Q_spherical_sparse <- R6::R6Class(
     #' @param Q number of blocks.
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, Q, control = NB_fixed_Q_spherical_sparse_param(), verbose=TRUE) {
+    initialize = function(Y, X, Q, control = NB_fixed_Q_sparse_param(), verbose=TRUE) {
       super$initialize(Y, X, Q, control, verbose)
       # instantiates an NB_fixed_Q_spherical model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
@@ -343,7 +347,8 @@ NB_fixed_Q_spherical_sparse <- R6::R6Class(
           X  = self$X [subsample, , drop = FALSE])
 
         myNB <- NB_fixed_Q_spherical_sparse$new(data$Y, data$X, self$Q,
-                                                control = NB_fixed_Q_spherical_sparse_param(penalties = self$penalties))
+                                                control = NB_fixed_Q_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                                                  penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
@@ -371,30 +376,22 @@ NB_fixed_Q_spherical_sparse <- R6::R6Class(
 
 
 #' NB_fixed_Q_sparse_param
-#'
+#' @param sparsity_weights weights with which penalty should be applied in case
+#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
+#' penalized too (default is non-penalized diagonal)
+#' @param penalties list of penalties the user wants to test, other parameters
+#' are only used if penalties is not specified
+#' @param n_penalties number of penalties to test.
+#' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
+#' @param clustering_init initial clustering proposal
 #' Generates control parameters for the NB_fixed_blocks_sparse class
-NB_fixed_Q_sparse_param <- function(penalties = NULL, n_penalties = 30,
-                                         min_ratio = 0.05){
-  structure(list(penalties         = penalties        ,
+NB_fixed_Q_sparse_param <- function(sparsity_weights = NULL,
+                                    penalties = NULL, n_penalties = 30,
+                                    min_ratio = 0.05,
+                                    clustering_init = NULL){
+  structure(list(sparsity_weights = sparsity_weights ,
+                 penalties         = penalties        ,
                  n_penalties       = n_penalties      ,
-                 min_ratio         = min_ratio        ))
-}
-
-
-#' NB_fixed_Q_diagonal_sparse_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_Q_diagonal_sparse_param <- function(penalties = NULL, n_penalties = 30,
-                                                  min_ratio = 0.05){
-  NB_fixed_Q_sparse_param(penalties, n_penalties, min_ratio)
-}
-
-#' NB_fixed_Q_spherical_sparse_param
-#'
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @export
-NB_fixed_Q_spherical_sparse_param <- function(penalties = NULL, n_penalties = 30,
-                                              min_ratio = 0.05){
-  NB_fixed_Q_sparse_param(penalties, n_penalties, min_ratio)
+                 min_ratio         = min_ratio        ,
+                 clustering_init   = clustering_init))
 }

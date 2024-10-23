@@ -1,17 +1,17 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_blocks_sparse #######################################
+##  CLASS NB_fixed_Q_zi_sparse #######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param Q number of blocks
 #' @param control structured list of parameters to handle sparsity control
-#' @param models uderlying NB_fixed_blocks models for each nb of blocks
+#' @param models underlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_sparse",
+NB_fixed_Q_zi_sparse <- R6::R6Class(
+  classname = "NB_fixed_Q_zi_sparse",
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -21,8 +21,8 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     Y  = NULL,
     #' @field X the design matrix
     X = NULL,
-    #' @field C the group matrix
-    C = NULL,
+    #' @field Q number of blocks
+    Q = NULL,
     #' @field penalties list of penalties values for omegaQ sparsity
     penalties = NULL,
     #' @field n_penalties number of penalty values
@@ -40,14 +40,13 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     #' @field latest_threshold latest threshold value used for optimization
     latest_threshold = NULL,
 
-    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
+    #' @description Create a new [`NB_fixed_Q_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
+    #' @param Q number of blocks
     #' @param control structured list of parameters to handle sparsity control
-    #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_sparse_param(),
-                          verbose=TRUE) {
+    #' @return A new [`nb_fixed_Q_sparse`] object
+    initialize = function(Y, X, Q, control = NB_fixed_Q_zi_sparse_param(), verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -56,22 +55,22 @@ NB_fixed_blocks_sparse <- R6::R6Class(
       }
       self$Y <- Y
       self$X <- X
-      self$C <- C
-      self$penalties        <- control$penalties
-      self$n_penalties      <- control$n_penalties
-      self$min_ratio        <- control$min_ratio
+      self$Q <- Q
+      self$penalties   <- control$penalties
+      self$n_penalties <- control$n_penalties
+      self$min_ratio   <- control$min_ratio
       self$sparsity_weights <- control$sparsity_weights
       if(!is.null(self$penalties)){
         self$n_penalties <- length(self$penalties)
-        self$penalties   <- self$penalties[order(self$penalties)]
+        self$penalties <- self$penalties[order(self$penalties)]
       }else{
-        init_model <- normal_block(Y, X, C, verbose = FALSE)
+        init_model <- normal_block(Y, X, Q, verbose = FALSE)
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
-        penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
+        penalties <- 10^seq(log10(max_pen), log10(max_pen* self$min_ratio), len = self$n_penalties)
         self$penalties <- penalties[order(penalties)]
-        }
+      }
       self$verbose <- verbose
     },
 
@@ -92,16 +91,18 @@ NB_fixed_blocks_sparse <- R6::R6Class(
           self$models[[m + 1]]$update(B      = model$model_par$B,
                                       dm1    = model$model_par$dm1,
                                       omegaQ = model$model_par$omegaQ,
-                                      gamma  = model$posterior_par$gamma,
-                                      mu     = model$posterior_par$mu)
+                                      alpha  = model$model_par$alpha,
+                                      M      = model$var_par$M,
+                                      S      = model$var_par$S,
+                                      tau    = model$var_par$tau)
         }
         model
       }, .options = furrr_options(seed=TRUE))
     },
 
-    #' @description returns the NB_fixed_block model corresponding to given penalty
+    #' @description returns the NB_fixed_Q model corresponding to given penalty
     #' @param penalty penalty asked by user
-    #' @return A NB_fixed_blocks_sparse object with given value penalty
+    #' @return A NB_fixed_Q_sparse object with given value penalty
     get_model = function(penalty) {
       if(!(penalty %in% self$penalties)) {
         penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
@@ -127,9 +128,9 @@ NB_fixed_blocks_sparse <- R6::R6Class(
           stability <- max_stab
         }
         id_stars <- self$criteria %>%
-                    dplyr::select(penalty, stability) %>% dplyr::rename(Stability = stability) %>%
-                    dplyr::filter(Stability >= stability) %>%
-                    dplyr::pull(penalty) %>% min() %>% match(self$penalties)
+          dplyr::select(penalty, stability) %>% dplyr::rename(Stability = stability) %>%
+          dplyr::filter(Stability >= stability) %>%
+          dplyr::pull(penalty) %>% min() %>% match(self$penalties)
         model <- self$models[[id_stars]]$clone()
       }else{
         stopifnot(!anyNA(self$criteria[[crit]]))
@@ -156,10 +157,10 @@ NB_fixed_blocks_sparse <- R6::R6Class(
         dplyr::group_by(criterion)
       if("loglik" %in% criteria){dplot[dplot$criterion == "loglik",]$value <- - dplot[dplot$criterion == "loglik",]$value}
       p <- ggplot2::ggplot(dplot, ggplot2::aes(x = penalty, y = value, group = criterion, colour = criterion)) +
-           ggplot2::geom_line() + ggplot2::geom_point() +
-           ggplot2::ggtitle(label    = "Model selection criteria",
-                  subtitle = "Lower is better" ) +
-            ggplot2::theme_bw() + ggplot2::geom_vline(xintercept = vlines, linetype = "dashed", alpha = 0.25)
+        ggplot2::geom_line() + ggplot2::geom_point() +
+        ggplot2::ggtitle(label    = "Model selection criteria",
+                         subtitle = "Lower is better" ) +
+        ggplot2::theme_bw() + ggplot2::geom_vline(xintercept = vlines, linetype = "dashed", alpha = 0.25)
       if (log.x) p <- p + ggplot2::coord_trans(x = "log10")
       p
     }
@@ -180,8 +181,6 @@ NB_fixed_blocks_sparse <- R6::R6Class(
     p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
-    #' @field Q number of blocks
-    Q = function() ncol(self$C),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
@@ -205,41 +204,43 @@ NB_fixed_blocks_sparse <- R6::R6Class(
   )
 )
 
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS NB_fixed_Q_zi_diagonal_sparse #######################################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param Q number of blocks
 #' @param penalties list of penalties to be tested
 #' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
 #' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
 #' @param models uderlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_diagonal_sparse",
-  inherit = NB_fixed_blocks_sparse,
+NB_fixed_Q_zi_diagonal_sparse <- R6::R6Class(
+  classname = "NB_fixed_Q_zi_diagonal_sparse",
+  inherit = NB_fixed_Q_zi_sparse,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
 
-    #' @description Create a new [`NB_fixed_blocks_diagonal_sparse`] object.
+    #' @description Create a new [`NB_fixed_Q_diagonal_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param C group matrix.
     #' @param control structured list of parameters to handle sparsity control
-    #' @return A new [`NB_fixed_blocks_diagonal_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_sparse_param(),
-                          verbose=TRUE) {
-      super$initialize(Y, X, C, control, verbose)
-      # instantiates an NB_fixed_blocks_diagonal model for each penalty in penalties
+    #' @return A new [`NB_fixed_Q_diagonal_sparse`] object
+    initialize = function(Y, X, Q, control = NB_fixed_Q_zi_sparse_param(), verbose=TRUE) {
+      super$initialize(Y, X, Q, control, verbose)
+      # instantiates an NB_fixed_Q_diagonal model for each Q in nb_blocks
+      # For now NB_fixed_Q_spherical not defined --> it's all NB_fixed_Q_diagonal
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
-                           model <- NB_fixed_blocks_diagonal$new(self$Y, self$X,
-                                                                 self$C,
-                                                                 penalty = penalty,
-                                                                 control = control)
+                           model <- NB_fixed_Q_zi$new(self$Y, self$X,
+                                                      self$Q, penalty = penalty,
+                                                      control = NB_fixed_Q_zi_param(clustering_init = control$clustering_init))
                          })
     },
 
@@ -255,28 +256,26 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
       }
 
       ## got for stability selection
-      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
+      cat("\nStability Selection for NB_fixed_Q_sparse: ")
       cat("\nsubsampling: ")
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
-      # stabs_out <- lapply(subsamples, function(subsample) {
         cat("+")
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
           X  = self$X  [subsample, , drop = FALSE])
 
-        myNB <- NB_fixed_blocks_diagonal_sparse$new(data$Y, data$X, self$C,
-                                                    control = NB_fixed_blocks_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                                                           penalties = self$penalties))
+        myNB <- NB_fixed_Q_zi_diagonal_sparse$new(data$Y, data$X, self$Q,
+                                               control = NB_fixed_Q_zi_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                                                    penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
 
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
         }))
         nets
-      }
-      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+      }, future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       ## formatting/tyding
@@ -295,37 +294,41 @@ NB_fixed_blocks_diagonal_sparse <- R6::R6Class(
   )
 )
 
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS NB_fixed_Q_zi_spherical_sparse #######################################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param control structured list of more specific parameters
+#' @param Q number of blocks
+#' @param control structured list of parameters to handle sparsity control
 #' @param models uderlying NB_fixed_Q models for each penalty
 #' @param verbose telling if information should be printed during optimization
-NB_fixed_blocks_spherical_sparse <- R6::R6Class(
-  classname = "NB_fixed_blocks_spherical_sparse",
-  inherit = NB_fixed_blocks_sparse,
+NB_fixed_Q_zi_spherical_sparse <- R6::R6Class(
+  classname = "NB_fixed_Q_zi_spherical_sparse",
+  inherit = NB_fixed_Q_zi_sparse,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
 
-    #' @description Create a new [`NB_fixed_blocks_sparse`] object.
+    #' @description Create a new [`NB_fixed_Q_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
-    #' @control structured list of parameters to handle sparsity control
-    #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, C, control = NB_fixed_blocks_sparse_param(),
-                          verbose=TRUE) {
-      super$initialize(Y, X, C, control, verbose)
-      # instantiates an NB_fixed_blocks_spherical model for each penalty in penalties
+    #' @param Q number of blocks.
+    #' @param control structured list of parameters to handle sparsity control
+    #' @return A new [`nb_fixed_Q_sparse`] object
+    initialize = function(Y, X, Q, control = NB_fixed_Q_zi_sparse_param(), verbose=TRUE) {
+      super$initialize(Y, X, Q, control, verbose)
+      # instantiates an NB_fixed_Q_spherical model for each penalty in penalties
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
-                           model <- NB_fixed_blocks_spherical$new(self$Y, self$X,
-                                                                 self$C, penalty,
-                                                                 control = control)
+                           model <- NB_fixed_Q_zi$new(self$Y, self$X, self$Q,
+                                                      penalty,
+                                                      control = NB_fixed_Q_zi_param(clustering_init = control$clustering_init))
                          })
     },
 
@@ -342,7 +345,7 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
       }
 
       ## got for stability selection
-      cat("\nStability Selection for NB_fixed_blocks_sparse: ")
+      cat("\nStability Selection for NB_fixed_Q_sparse: ")
       cat("\nsubsampling: ")
 
       stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
@@ -351,11 +354,11 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
 
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
-          X  = self$X  [subsample, , drop = FALSE])
+          X  = self$X [subsample, , drop = FALSE])
 
-        myNB <- NB_fixed_blocks_spherical_sparse$new(data$Y, data$X, self$C,
-                                                     control = NB_fixed_blocks_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                                                            penalties        = self$penalties))
+        myNB <- NB_fixed_Q_zi_spherical_sparse$new(data$Y, data$X, self$Q,
+                                                control = NB_fixed_Q_spherical_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                                                            penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
@@ -380,20 +383,20 @@ NB_fixed_blocks_spherical_sparse <- R6::R6Class(
   )
 )
 
-#' NB_fixed_blocks_sparse_param
-#' @param sparsity_weights weights with which penalty should be applied in case
-#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal)
+
+
+#' NB_fixed_Q_sparse_param
 #' @param penalties list of penalties the user wants to test, other parameters
 #' are only used if penalties is not specified
 #' @param n_penalties number of penalties to test.
 #' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
+#' @param clustering_init initial clustering proposal
 #' Generates control parameters for the NB_fixed_blocks_sparse class
-NB_fixed_blocks_sparse_param <- function(sparsity_weights = NULL,
-                                         penalties = NULL, n_penalties = 30,
-                                         min_ratio = 0.05){
-  structure(list(sparsity_weights  = sparsity_weights ,
-                 penalties         = penalties        ,
+#' @export
+NB_fixed_Q_zi_sparse_param <- function(penalties = NULL, n_penalties = 30,
+                                      min_ratio = 0.05, clustering_init = NULL){
+  structure(list(penalties         = penalties        ,
                  n_penalties       = n_penalties      ,
-                 min_ratio         = min_ratio        ))
+                 min_ratio         = min_ratio        ,
+                 clustering_init   = clustering_init))
 }

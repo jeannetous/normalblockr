@@ -9,6 +9,7 @@
 #' @param Q number of blocks in the model
 #' @param penalty to add on blocks precision matrix for sparsity
 #' @param verbose telling if information should be printed during optimization
+#' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
   inherit = NB,
@@ -27,7 +28,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, Q, penalty = 0, control = NB_fixed_Q_zi_param()) {
       clustering_init <- control$clustering_init
-      super$initialize(Y = Y, X = X, Q, penalty = penalty)
+      super$initialize(Y = Y, X = X, Q, penalty = penalty, control = control)
       self$zeros <- 1 * (Y == 0)
       if (!is.null(clustering_init)) {
         if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
@@ -245,8 +246,12 @@ NB_fixed_Q_zi <- R6::R6Class(
 
 
 #' NB_fixed_Q_zi_param
-#'
+#' @param sparsity_weights weights with which penalty should be applied in case
+#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
+#' penalized too (default is non-penalized diagonal)
 #' Generates control parameters for the NB_fixed_blocks_sparse class
+#' @param clustering_init proposal for initial clustering
 #' @export
-NB_fixed_Q_zi_param <- function(clustering_init = NULL){
-  structure(list(clustering_init = clustering_init))}
+NB_fixed_Q_zi_param <- function(sparsity_weights = NULL, clustering_init = NULL){
+  structure(list(sparsity_weights = sparsity_weights,
+                 clustering_init  = clustering_init))}

@@ -23,7 +23,7 @@ test_that("NB_fixed_Q: check dimensions, optimization and field access", {
 })
 
 test_that("NB_fixed_Q: sparsity works", {
-  expect_true(inherits(model_sparse <- NB_fixed_Q$new(Y, X, Q, sparsity = 0.05), "NB_fixed_Q"))
+  expect_true(inherits(model_sparse <- NB_fixed_Q$new(Y, X, Q, penalty = 0.05), "NB_fixed_Q"))
   expect_silent(model_sparse$optimize(niter = 60))
 })
 
