@@ -23,7 +23,8 @@ Imports:
     pdfCluster,
     purrr,
     furrr,
-    R6
+    R6,
+    ggplot2
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0)
