@@ -1,16 +1,16 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_unknown_sparse #######################################
+##  CLASS NB_unknown_sparse ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
-#' @param nb_blocks list of number of blocks values to be tested
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models underlying NB_unknown models for each nb of blocks
+#' @param blocks either group matrix C or number of blocks Q
+#' @param zero_inflation boolean to specify whether data is zero-inflated
+#' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
+#' @param control structured list of parameters to handle sparsity control
+#' @param models underlying models for each penalty
 #' @param verbose telling if information should be printed during optimization
 NB_unknown_sparse <- R6::R6Class(
   classname = "NB_unknown_sparse",
@@ -23,17 +23,19 @@ NB_unknown_sparse <- R6::R6Class(
     Y  = NULL,
     #' @field X the design matrix
     X = NULL,
-    #' @field nb_blocks list of number of blocks values to be tested
-    nb_blocks = NULL,
-    #' @field penalties list of penalties values for omegaQ sparsity
-    penalties = NULL,
+    #' @field blocks list of number of blocks values to be tested.
+    blocks = NULL,
+    #' @field zero_inflation boolean stating whether model is zero_inflated
+    zero_inflation = NULL,
+    #' @field noise_cov character the type of covariance for the noise: either diagonal of spherical
+    noise_cov = NULL,
     #' @field n_penalties number of penalty values
     n_penalties = NULL,
     #' @field min_ratio ratio between min and max penalty to be tested
     min_ratio = NULL,
     #' @field sparsity_weights weights with which penalty should be applied
     sparsity_weights = NULL,
-    #' @field models list of NB_unknown models corresponding to each nb_block value
+    #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
     #' @field verbose say whether information should be given about the optimization
     verbose = NULL,
@@ -45,43 +47,51 @@ NB_unknown_sparse <- R6::R6Class(
     #' @description Create a new [`NB_unknown_sparse`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param Q number of blocks
-    #' @param control structured list of specific parameters for sparsity
-    #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, nb_blocks, control = NB_unknown_sparse_param(),
+    #' @param blocks group matrix or number of blocks.
+    #' @param zero_inflation boolean to specify whether data is zero-inflated
+    #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
+    #' @param control structured list of parameters to handle sparsity control
+    #' @return A new [`nb_fixed_blocks_sparse`] object
+    initialize = function(Y, X, blocks, zero_inflation = F,
+                          noise_cov = "diagonal", control = NB_sparse_param(),
                           verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
-        stop("Y, X and C must be matrices.")
+        stop("Y and X must be matrices.")
       }
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
-      self$Y <- Y
-      self$X <- X
-      self$nb_blocks <- nb_blocks
-      self$penalties   <- control$penalties
+      self$Y      <- Y
+      self$X      <- X
+      self$blocks <- blocks
+
+      self$zero_inflation   <- zero_inflation
+      self$noise_cov        <- noise_cov
+      self$n_penalties      <- control$n_penalties
+      self$min_ratio        <- control$min_ratio
       self$sparsity_weights <- control$sparsity_weights
-      if(!is.null(self$penalties)){
-        self$n_penalties <- length(self$penalties)
-        self$penalties   <- penalties[order(self$penalties)]
-      }else{
-        self$n_penalties <- control$n_penalties
-        self$min_ratio   <- control$min_ratio
-      }
       self$verbose <- verbose
+      self$models <- map(self$blocks[order(self$blocks)],
+                         function(Q) {
+                           model <- NB_sparse$new(self$Y, self$X, Q,
+                                                  zero_inflation = self$zero_inflation,
+                                                  noise_cov = self$noise_cov,
+                                                  control = control, verbose = F)
+                         })
     },
 
 
-    #' @description optimizes an NB_unknown object for each value of Q
+    #' @description optimizes an NB_fixed_Q object for each value of Q
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
+
       self$latest_niter     <- niter
       self$latest_threshold <- threshold
 
       self$models <- furrr::future_map(seq_along(self$models), function(m) {
         model <- self$models[[m]]
-        if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
+        if(self$verbose) cat("\t Q =", self$models[[m]]$Q, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         model
@@ -110,6 +120,7 @@ NB_unknown_sparse <- R6::R6Class(
       }
     },
 
+
     #' @description Extract best model in the collection
     #' @param crit a character for the criterion used to performed the selection.
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
@@ -129,6 +140,12 @@ NB_unknown_sparse <- R6::R6Class(
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ------
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
+    stab_path = NULL # a field to store the stability path,
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
@@ -138,106 +155,18 @@ NB_unknown_sparse <- R6::R6Class(
     p = function() ncol(self$Y),
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
+    #' @field Q number of blocks
+    nb_blocks = function() self$blocks,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function() crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
-  )
-)
-
-
-#' R6 generic class for normal-block models
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
-#' @param nb_blocks number of blocks
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_unknown models for each nb of blocks
-#' @param verbose telling if information should be printed during optimization
-NB_unknown_diagonal_sparse <- R6::R6Class(
-  classname = "NB_unknown_diagonal_sparse",
-  inherit = NB_unknown_sparse,
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-
-    #' @description Create a new [`NB_unknown_diagonal_sparse`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
-    #' @param C group matrix.
-    #' @param control structured list of specific parameters for sparsity
-    #' @return A new [`NB_unknown_diagonal_sparse`] object
-    initialize = function(Y, X, nb_blocks, control = NB_unknown_sparse_param(),
-                          verbose=TRUE) {
-      super$initialize(Y, X, nb_blocks, control, verbose)
-      # instantiates an NB_unknown_diagonal model for each penalty
-      # For now NB_unknown_spherical not defined --> it's all NB_unknown_diagonal
-      self$models <- map(self$nb_blocks[order(self$nb_blocks)],
-                         function(Q) {
-                           model <- NB_fixed_Q_diagonal_sparse$new(self$Y, self$X,
-                                                                   Q, control,
-                                                                   verbose = F)
-                         })
+    criteria = function(){
+      crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
+      crit},
+    #' @field penalties list of penalties used for each Q
+    penalties = function(){
+      self$criteria %>%
+        dplyr::group_by(Q) %>%
+        dplyr::summarize(penalties = paste(round(penalty, 2), collapse = ", "))
     }
+
   )
 )
-
-#' R6 generic class for normal-block models
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
-#' @param list of number of blocks values to be tested
-#' @param penalties list of penalties to be tested
-#' @param n_penalties number of penalty values to be tested (if penalties not provided, default is 30)
-#' @param min_ratio ratio between min and max penalty to be tested  (if penalties not provided, default is 0.05)
-#' @param models uderlying NB_unknown models for each nb of blocks
-#' @param verbose telling if information should be printed during optimization
-NB_unknown_spherical_sparse <- R6::R6Class(
-  classname = "NB_unknown_spherical_sparse",
-  inherit = NB_unknown_sparse,
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  public = list(
-
-    #' @description Create a new [`NB_unknown_sparse`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
-    #' @param nb_blocks list of number of blocks values to be tested.
-    #' @param control structured list of specific parameters to handle sparsity
-    #' @return A new [`nb_fixed_Q_sparse`] object
-    initialize = function(Y, X, nb_blocks, control, verbose=TRUE) {
-      super$initialize(Y, X, nb_blocks, control, verbose)
-      # instantiates an NB_unknown_spherical model for each Q in nb_blocks
-      self$models <- map(self$nb_blocks[order(self$nb_blocks)],
-                         function(Q) {
-                           model <- NB_fixed_Q_spherical_sparse$new(self$Y, self$X,
-                                                                   Q, self$penalties,
-                                                                   self$n_penalties,
-                                                                   self$min_ratio,
-                                                                   verbose = F)
-                         })
-    }
-  )
-)
-
-
-#' NB_unknown_sparse_param
-#' @param penalties list of penalties the user wants to test, other parameters
-#' are only used if penalties is not specified
-#' @param n_penalties number of penalties to test.
-#' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
-#' @param clustering_init initial clustering proposal
-#' @param sparsity_weights weights with which penalty should be applied in case
-#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal)
-#' Generates control parameters for the NB_unknown_sparse_param class
-NB_unknown_sparse_param <- function(penalties = NULL, n_penalties = 30,
-                                    min_ratio = 0.05, sparsity_weights = NULL){
-  structure(list(penalties         = penalties        ,
-                 n_penalties       = n_penalties      ,
-                 min_ratio         = min_ratio        ))
-}
-
-

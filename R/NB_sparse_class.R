@@ -54,7 +54,7 @@ NB_sparse <- R6::R6Class(
     #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
-    initialize = function(Y, X, blocks, zero_inflation = "F",
+    initialize = function(Y, X, blocks, zero_inflation = F,
                           noise_cov = "diagonal", control = NB_sparse_param(),
                           verbose=TRUE) {
       if (!is.matrix(Y) || !is.matrix(X)) {
@@ -63,10 +63,12 @@ NB_sparse <- R6::R6Class(
       if (nrow(Y) != nrow(X)) {
         stop("Y and X must have the same number of rows")
       }
-      self$Y <- Y
-      self$X <- X
+      self$Y      <- Y
+      self$X      <- X
       self$blocks <- blocks
+
       self$zero_inflation   <- zero_inflation
+      self$noise_cov        <- noise_cov
       self$penalties        <- control$penalties
       self$n_penalties      <- control$n_penalties
       self$min_ratio        <- control$min_ratio
@@ -110,16 +112,15 @@ NB_sparse <- R6::R6Class(
         if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
         model$optimize(niter, threshold)
-        # A gérer pour l'adapter à chaque modèle
-        # if(m < self$n_penalties){
-        #   self$models[[m + 1]]$update(B      = model$model_par$B,
-        #                               dm1    = model$model_par$dm1,
-        #                               omegaQ = model$model_par$omegaQ,
-        #                               gamma  = model$posterior_par$gamma,
-        #                               mu     = model$posterior_par$mu)
-        # }
+        if(m < self$n_penalties){
+          arg_names    <- names(formals(self$models[[m + 1]]$update))
+          params       <- c(model$model_par, model$var_par, model$posterior_par)
+          matched_args <- params[names(params) %in% arg_names]
+          do.call( self$models[[m + 1]]$update, matched_args)
+        }
         model
-      }, .options = furrr_options(seed=TRUE))
+      }
+      , .options = furrr_options(seed=TRUE))
     },
 
     #' @description returns the NB_fixed_block model corresponding to given penalty
@@ -259,7 +260,9 @@ NB_sparse <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field Q number of blocks
-    Q = function() ncol(self$C),
+    Q = function(){
+      ifelse(is.matrix(self$blocks), ncol(self$blocks), self$blocks)
+    } ,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)

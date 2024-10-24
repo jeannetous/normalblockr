@@ -35,7 +35,6 @@ normal_block <- function(Y, X, blocks,
                          niter = 100, threshold = 1e-4,
                          verbose=TRUE, control = NULL,
                          optimize = TRUE) {
-
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   noise_cov <- match.arg(noise_cov)
@@ -48,13 +47,22 @@ normal_block <- function(Y, X, blocks,
   noise_cov <- ifelse((!zero_inflation & block_class == "fixed_blocks") |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
   sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
   ## Instantiating model
-  myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov, sparse_class)))
-  if (!is.null(control)) {
-    model <- myClass$new(Y, X, blocks, sparsity, control = control)
+  if(sparse_class != "_sparse"){
+    myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov, sparse_class)))
+    if (!is.null(control)) {
+      model <- myClass$new(Y, X, blocks, sparsity, control = control)
+    }else{
+      if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
+      }else{model <- myClass$new(Y, X, blocks, sparsity)}
+    }
   }else{
-    if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
-    }else{model <- myClass$new(Y, X, blocks, sparsity)}
+    myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
+    if(is.null(control)){control <- NB_sparse_param()}
+    model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
+                           noise_cov = sub('.', '', noise_cov),
+                           control = control, verbose=TRUE)
   }
+
 
   ## Estimation/optimization
   if(optimize){
