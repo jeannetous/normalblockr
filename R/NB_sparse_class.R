@@ -82,7 +82,9 @@ NB_sparse <- R6::R6Class(
                                    noise_cov = self$noise_cov, verbose = FALSE)
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
-        max_pen   <- max(abs(sigmaQ[upper.tri(sigmaQ, diag = FALSE)]))
+        diag_pen  <- max(diag(self$sparsity_weights)) > 0
+        weights   <- self$sparsity_weights ; weights[weights == 0] <- 1
+        max_pen   <- max(abs((sigmaQ / weights)[upper.tri(sigmaQ, diag = diag_pen)]))
         penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
         self$penalties <- penalties[order(penalties)]
       }
@@ -137,6 +139,7 @@ NB_sparse <- R6::R6Class(
 
     #' @description Extract best model in the collection
     #' @param crit a character for the criterion used to performed the selection.
+    #' @param stability if criterion = "StARS" gives level of stability required.
     #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
     #' "loglik" is the default criterion
     #' @return a [`NB_fixed_Q`] object
@@ -268,6 +271,7 @@ NB_sparse <- R6::R6Class(
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
       crit$stability <- self$stability
       crit},
+    #' @field stability_path measure of edges stability based on StARS method
     stability_path = function() private$stab_path,
     #' @field stability mean edge stability along the penalty path
     stability = function() {

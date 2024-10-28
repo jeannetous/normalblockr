@@ -17,7 +17,7 @@ R6 generic class for normal-block models
 
 \item{\code{nb_blocks}}{list of Q values to be tested for the number of blocks}
 
-\item{\code{sparsity}}{penalty on the network density}
+\item{\code{penalty}}{penalty on the network density}
 
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
@@ -45,7 +45,7 @@ R6 generic class for normal-block models
 \item \href{#method-NB_unknown-optimize}{\code{NB_unknown$optimize()}}
 \item \href{#method-NB_unknown-get_model}{\code{NB_unknown$get_model()}}
 \item \href{#method-NB_unknown-get_best_model}{\code{NB_unknown$get_best_model()}}
-\item \href{#method-NB_unknown-plot_criterion}{\code{NB_unknown$plot_criterion()}}
+\item \href{#method-NB_unknown-plot}{\code{NB_unknown$plot()}}
 \item \href{#method-NB_unknown-clone}{\code{NB_unknown$clone()}}
 }
 }
@@ -55,7 +55,14 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB_unknown`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$new(Y, X, nb_blocks, sparsity = 0, verbose = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$new(
+  Y,
+  X,
+  nb_blocks,
+  penalty = 0,
+  verbose = TRUE,
+  control = NB_param()
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -65,16 +72,18 @@ Create a new [`NB_unknown`] object.
 
 \item{\code{X}}{design matrix (called X in the model).}
 
-\item{\code{nb_blocks}}{list of number of blocks values to be tested}
+\item{\code{nb_blocks}}{list of Q values to be tested for the number of blocks}
 
-\item{\code{sparsity}}{penalty on the network density}
+\item{\code{penalty}}{on the network density for sparsity}
 
 \item{\code{verbose}}{telling if information should be printed during optimization}
+
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_param()}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new [`nb_fixed`] object
+A new [`nb_unknown] object
 }
 }
 \if{html}{\out{<hr>}}
@@ -139,31 +148,23 @@ a [`NB_fixed_Q`] object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_unknown-plot_criterion"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_unknown-plot_criterion}{}}}
-\subsection{Method \code{plot_criterion()}}{
-plots given criterion as a function of Q
+\if{html}{\out{<a id="method-NB_unknown-plot"></a>}}
+\if{latex}{\out{\hypertarget{method-NB_unknown-plot}{}}}
+\subsection{Method \code{plot()}}{
+Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$plot_criterion(
-  criterion = "loglik",
-  type = "b",
-  log = "",
-  neg = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown$plot(criteria = c("loglik", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criterion}}{criterion to plot}
-
-\item{\code{type}}{char for line type (see plot.default)}
-
-\item{\code{log}}{char for logarithmic axes (see plot.default)}
-
-\item{\code{neg}}{boolean plot negative criterion (useful when log="y")}
+\item{\code{criteria}}{vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+a [`ggplot`] graph
 }
 }
 \if{html}{\out{<hr>}}

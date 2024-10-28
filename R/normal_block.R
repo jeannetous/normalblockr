@@ -12,7 +12,8 @@
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param verbose telling if information should be printed during optimization
-#' @param control a list-like structure for detailed control on parameters
+#' @param control a list-like structure for detailed control on parameters should be
+#' generated with either NB_param() or NB_sparse_param() for collections of sparse models
 #' @param optimize boolean stating whether the model should just be instantiated (F) or optimized too (T)
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
@@ -37,6 +38,7 @@ normal_block <- function(Y, X, blocks,
                          optimize = TRUE) {
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
+  stopifnot(is.null(control) | is.matrix(control$sparsity_weights) & isSymmetric(control$sparsity_weights))
   noise_cov <- match.arg(noise_cov)
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))

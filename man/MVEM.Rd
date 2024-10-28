@@ -32,7 +32,7 @@ R6 generic class for Multivariate Model inferred with EM
 
 \item{\code{loglik}}{(or its variational lower bound)}
 
-\item{\code{penalty}}{(for cases when a penalty is placed on the precision matrix)}
+\item{\code{penalty_term}}{(for cases when a penalty is placed on the precision matrix)}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
@@ -66,7 +66,7 @@ R6 generic class for Multivariate Model inferred with EM
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{MVEM$new(Y, X, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{MVEM$new(Y, X, penalty = 0)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -76,7 +76,7 @@ Create a new [`NB`] object.
 
 \item{\code{X}}{design matrix (called X in the model).}
 
-\item{\code{sparsity}}{penalty on the network density}
+\item{\code{penalty}}{penalty on the network density}
 }
 \if{html}{\out{</div>}}
 }

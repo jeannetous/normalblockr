@@ -14,9 +14,9 @@ R6 generic class for normal-block models
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{sparsity}}{penalty on the network density}
+\item{\code{penalty}}{penalty on the network density}
 
-\item{\code{sparsity_weights}}{distribution of sparsity on the lement of the network}
+\item{\code{sparsity_weights}}{distribution of sparsity on the elements of the network}
 
 \item{\code{Q}}{number of blocks}
 }
@@ -31,7 +31,7 @@ R6 generic class for normal-block models
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
 
-\item{\code{penalty}}{(penalty on log-likelihood due to sparsity)}
+\item{\code{penalty_term}}{(penalty term in log-likelihood due to sparsity)}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 }
@@ -42,6 +42,7 @@ R6 generic class for normal-block models
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-update}{\code{NB$update()}}
+\item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
@@ -59,7 +60,7 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -71,7 +72,9 @@ Create a new [`NB`] object.
 
 \item{\code{Q}}{number of groups}
 
-\item{\code{sparsity}}{penalty on the network density}
+\item{\code{penalty}}{penalty on the network density}
+
+\item{\code{control}}{structured list of parameters, including sparsity_weights}
 }
 \if{html}{\out{</div>}}
 }
@@ -103,6 +106,26 @@ Update a [`NB`] object
 }
 \subsection{Returns}{
 Update the current [`NB`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-latent_network"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-latent_network}{}}}
+\subsection{Method \code{latent_network()}}{
+Extract interaction network in the latent space
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$latent_network(type = c("partial_cor", "support", "precision"))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{edge value in the network. Can be "support" (binary edges), "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species)}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+a square matrix of size `NB_fixed_blocks_class$Q`
 }
 }
 \if{html}{\out{<hr>}}

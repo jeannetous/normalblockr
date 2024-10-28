@@ -8,12 +8,14 @@ normal_block(
   Y,
   X,
   blocks,
-  sparsity = 0,
+  sparsity = FALSE,
   zero_inflation = FALSE,
   noise_cov = c("diagonal", "spherical"),
   niter = 100,
   threshold = 1e-04,
-  verbose = TRUE
+  verbose = TRUE,
+  control = NULL,
+  optimize = TRUE
 )
 }
 \arguments{
@@ -24,7 +26,8 @@ normal_block(
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
 
-\item{sparsity}{sparsity factor to apply to blocks covariance matrix (or possibly list of such values with same length as nb_blocks)}
+\item{sparsity}{boolean to say whether the model should be sparsified (several penalties tested)
+OR float to run model with a single penalty value}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
 
@@ -35,6 +38,11 @@ or a p * Q matrix (for indicating block membership when its known)}
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
 
 \item{verbose}{telling if information should be printed during optimization}
+
+\item{control}{a list-like structure for detailed control on parameters should be
+generated with either NB_param() or NB_sparse_param() for collections of sparse models}
+
+\item{optimize}{boolean stating whether the model should just be instantiated (F) or optimized too (T)}
 }
 \value{
 an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]

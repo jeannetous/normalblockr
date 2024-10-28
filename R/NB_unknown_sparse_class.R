@@ -98,8 +98,9 @@ NB_unknown_sparse <- R6::R6Class(
       }, .options = furrr_options(seed=TRUE))
     },
 
-    #' @description returns a collection of NB_unknown models corresponding to given penalty
-    #' or one single model if Q is also given
+    #' @description returns a collection of NB_unknown models corresponding to given Q
+    #' or one single model if penalty is also given
+    #' @param Q number of blocks asked by user.
     #' @param penalty penalty asked by user
     #' @return A NB_unknown_sparse object with given value penalty
     get_model = function(Q, penalty = NA) {
@@ -156,7 +157,7 @@ NB_unknown_sparse <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field Q number of blocks
-    nb_blocks = function() self$blocks,
+    Q = function() self$blocks,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)

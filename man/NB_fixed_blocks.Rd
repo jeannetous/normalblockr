@@ -37,6 +37,7 @@ R6 class for normal-block model with fixed groups
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -46,7 +47,7 @@ R6 class for normal-block model with fixed groups
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(Y, X, C, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(Y, X, C, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -58,7 +59,9 @@ Create a new [`NB_fixed_blocks`] object.
 
 \item{\code{C}}{group matrix C_jq = 1 if species j belongs to group q}
 
-\item{\code{sparsity}}{to add on blocks precision matrix}
+\item{\code{penalty}}{to add on blocks precision matrix for sparsity}
+
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_param()}
 }
 \if{html}{\out{</div>}}
 }

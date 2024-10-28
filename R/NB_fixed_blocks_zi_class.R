@@ -8,6 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with NB_param()
 NB_fixed_blocks_zi <- R6::R6Class(
   classname = "NB_fixed_blocks_zi",
   inherit = NB,
