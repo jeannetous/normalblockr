@@ -72,6 +72,10 @@ NB_sparse <- R6::R6Class(
       self$penalties        <- control$penalties
       self$n_penalties      <- control$n_penalties
       self$min_ratio        <- control$min_ratio
+      if(is.null(control$sparsity_weights)){
+        control$sparsity_weights       <- matrix(rep(1, self$Q *self$Q), nrow = self$Q)
+        diag(control$sparsity_weights) <- 0
+      }
       self$sparsity_weights <- control$sparsity_weights
       if(!is.null(self$penalties)){
         self$n_penalties <- length(self$penalties)
@@ -294,15 +298,15 @@ NB_sparse <- R6::R6Class(
 #' NB_sparse_param
 #' @param sparsity_weights weights with which penalty should be applied in case
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal)
+#' penalized too (default is non-penalized diagonal and 1s off-diagonal)
 #' @param penalties list of penalties the user wants to test, other parameters
 #' are only used if penalties is not specified
 #' @param n_penalties number of penalties to test.
 #' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
 #' Generates control parameters for the NB_fixed_blocks_sparse class
 NB_sparse_param <- function(sparsity_weights = NULL,
-                             penalties = NULL, n_penalties = 30,
-                             min_ratio = 0.05){
+                            penalties = NULL, n_penalties = 30,
+                            min_ratio = 0.05){
   structure(list(sparsity_weights  = sparsity_weights ,
                  penalties         = penalties        ,
                  n_penalties       = n_penalties      ,

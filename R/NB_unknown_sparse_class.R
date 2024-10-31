@@ -104,10 +104,10 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param penalty penalty asked by user
     #' @return A NB_unknown_sparse object with given value penalty
     get_model = function(Q, penalty = NA) {
-      if(!(Q %in% self$nb_blocks)) {
+      if(!(Q %in% self$Q)) {
         stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
       }
-      Q_rank <- which(sort(self$nb_blocks) == Q)
+      Q_rank <- which(sort(self$Q) == Q)
       model  <- self$models[[Q_rank]]$clone()
       if(is.na(penalty)){
         return(model)

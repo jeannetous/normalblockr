@@ -1,7 +1,7 @@
 ###############################################################################
 ###############################################################################
 ## Use pre-save testdata (seed are hard to handle in testhat)
-testdata <- readRDS("testdata/testdata_ZInormal.RDS")
+testdata <- readRDS("testdata/testdata_sparse_ZInormal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$C

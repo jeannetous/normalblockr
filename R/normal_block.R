@@ -38,7 +38,8 @@ normal_block <- function(Y, X, blocks,
                          optimize = TRUE) {
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
-  stopifnot(is.null(control) | is.matrix(control$sparsity_weights) & isSymmetric(control$sparsity_weights))
+  stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
+  if(!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
   noise_cov <- match.arg(noise_cov)
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
@@ -58,6 +59,7 @@ normal_block <- function(Y, X, blocks,
       }else{model <- myClass$new(Y, X, blocks, sparsity)}
     }
   }else{
+
     myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
     if(is.null(control)){control <- NB_sparse_param()}
     model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
