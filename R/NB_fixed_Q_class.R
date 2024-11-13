@@ -24,7 +24,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, penalty = 0, control = NB_fixed_Q_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
       super$initialize(Y, X, Q, penalty, control)
       clustering_init <- control$clustering_init
       if (!is.null(clustering_init)) {
@@ -89,7 +89,48 @@ NB_fixed_Q <- R6::R6Class(
         J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
+    }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
+    model_par  = function() {
+      parameters       <- super$model_par
+      parameters$alpha <- private$alpha
+      parameters},
+    #' @field nb_param number of parameters in the model
+    nb_param = function() {as.integer(super$nb_param + self$Q - 1)},
+    #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
+    var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
+    #' @field clustering a list of labels giving the clustering obtained in the model
+    clustering = function() get_clusters(private$tau),
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {
+      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+      ent <- ent - sum(xlogx(private$tau))
+      ent
     },
+    #' @field fitted Y values predicted by the model
+    fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)
+    ),
+)
+
+#' R6 class for normal-block model with fixed groups and diagonal residual covariance
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param Q number of blocks
+#' @param penalty to add on blocks precision matrix for sparsity
+NB_fixed_Q_diagonal <- R6::R6Class(
+  classname = "NB_fixed_Q_diagonal",
+  inherit = NB_fixed_Q,
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
 
     EM_initialize = function() {
       if(any(sapply(self$model_par, function(x) any(is.na(x)))) | any(sapply(self$var_par, function(x) any(is.na(x))))){
@@ -106,7 +147,8 @@ NB_fixed_Q <- R6::R6Class(
         alpha   <- colMeans(tau)
         S       <- rep(0.1, self$Q)
         M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
-        dm1     <- as.vector(rep(1, self$p))
+        # dm1     <- as.vector(rep(1, self$p))
+        dm1     <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
         omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
       }else{
         B <- private$B ; dm1 <- private$dm1 ; omegaQ <- private$omegaQ
@@ -142,42 +184,76 @@ NB_fixed_Q <- R6::R6Class(
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }
-  ),
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ##  ACTIVE BINDINGS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  active = list(
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
-    model_par  = function() {
-      parameters       <- super$model_par
-      parameters$alpha <- private$alpha
-      parameters},
-    #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(super$nb_param + self$Q - 1)},
-    #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
-    var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
-    #' @field clustering a list of labels giving the clustering obtained in the model
-    clustering = function() get_clusters(private$tau),
-    #' @field entropy Entropy of the variational distribution when applicable
-    entropy    = function() {
-      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
-      ent <- ent - sum(xlogx(private$tau))
-      ent
-    },
-    #' @field fitted Y values predicted by the model
-    fitted = function() self$X %*% private$B + tcrossprod(private$M, private$tau)
-    ),
+  )
 )
 
+#' R6 class for normal-block model with fixed groups and spherical residual covariance
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param Q number of blocks
+#' @param penalty to add on blocks precision matrix for sparsity
+NB_fixed_Q_spherical <- R6::R6Class(
+  classname = "NB_fixed_Q_spherical",
+  inherit = NB_fixed_Q,
 
-#' NB_fixed_Q_param
-#' @param sparsity_weights weights with which penalty should be applied in case
-#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal)
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-#' @param clustering_init proposal for initial clustering
-#' @export
-NB_fixed_Q_param <- function(sparsity_weights = NULL, clustering_init = NULL){
-  structure(list(sparsity_weights = sparsity_weights,
-                 clustering_init  = clustering_init))}
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ## PRIVATE MEMBERS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  private = list(
+
+    EM_initialize = function() {
+      if(any(sapply(self$model_par, function(x) any(is.na(x)))) | any(sapply(self$var_par, function(x) any(is.na(x))))){
+        B       <- private$XtXm1 %*% t(self$X) %*% self$Y
+        R       <- self$Y - self$X %*% B
+        if(is.null(self$clustering_init)){
+          tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+        }else{
+          if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+          }else{ tau <- self$clustering_init}
+        }
+        self$clustering_init <- get_clusters(tau)
+        tau     <- check_one_boundary(check_zero_boundary(tau))
+        alpha   <- colMeans(tau)
+        S       <- rep(0.1, self$Q)
+        M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
+        dm1     <- rep(1/mean((self$Y - self$X %*% B)^2), self$p)
+        omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
+      }else{
+        B <- private$B ; dm1 <- private$dm1 ; omegaQ <- private$omegaQ
+        alpha <- private$alpha
+        tau <- private$tau ; M <- private$M ; S <- private$S
+      }
+
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
+    },
+
+
+    EM_step = function(B, dm1, omegaQ, alpha, tau, M, S) {
+
+      ## Auxiliary variables
+      R     <- self$Y - self$X %*% B
+      Gamma <- solve(omegaQ + diag(colSums(dm1 * tau), self$Q, self$Q))
+
+      # E step
+      M <- R %*% (dm1 * tau) %*% Gamma
+      S <- diag(Gamma)
+
+      if (self$Q > 1) {
+        eta <- dm1 * (t(R) %*% M) - .5 * outer(dm1,  colSums(M^2) + self$n * S)
+        eta <- eta + outer(rep(1, self$p), log(alpha)) - 1
+        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      }
+
+      # M step
+      MtauT <- M %*% t(tau)
+      B     <- private$XtXm1 %*% t(self$X) %*% (self$Y - MtauT)
+      dm1_diag   <- 1/colMeans(R^2 - 2 * R * MtauT + (M^2 + outer(rep(1, self$n), S)) %*% t(tau))
+      dm1   <- rep(mean(dm1_diag), self$p)
+      alpha <- colMeans(tau)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
+    }
+  )
+)
+

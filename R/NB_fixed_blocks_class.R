@@ -95,7 +95,7 @@ NB_fixed_blocks <- R6::R6Class(
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_diagonal <- R6::R6Class(
-  classname = "NB_fixed_blocksdiagonal",
+  classname = "NB_fixed_blocks_diagonal",
   inherit = NB_fixed_blocks,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
