@@ -123,12 +123,14 @@ NB <- R6::R6Class(
 
 #' NB_fixed_Q_sparse_param
 #' @param sparsity_weights weights with which penalty should be applied in case
+#' @param clustering_init proposal of initial clustering, for when blocks are unknown
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
 #' penalized too (default is non-penalized diagonal)
 #' Generates control parameters for NB models
 #' @export
-NB_param <- function(sparsity_weights = NULL){
+NB_param <- function(sparsity_weights = NULL, clustering_init = NULL){
   structure(list(
-    sparsity_weights = sparsity_weights
+    sparsity_weights = sparsity_weights,
+    clustering_init  = clustering_init
   ))
 }

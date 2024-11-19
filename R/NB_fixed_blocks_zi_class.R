@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  NB_fixed_blocks_zi #######################################
+##  NB_fixed_blocks_zi #################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -89,23 +89,6 @@ NB_fixed_blocks_zi <- R6::R6Class(
       J
     },
 
-    EM_initialize = function() {
-      init_model <- normal_zi$new(self$Y, self$X)
-      init_model$optimize()
-      B          <- init_model$model_par$B
-      dm1        <- init_model$model_par$dm1
-      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
-      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
-      R          <- self$Y - self$X %*% B
-      M          <- R %*% (dm1 * self$C) %*% G
-
-      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
-           S = S)
-    },
-
     zi_nb_fixed_blocks_obj_grad_M = function(M_vec, dm1_1mrho, omegaQ, R) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       RmMC <- R - M %*% t(self$C)
@@ -160,28 +143,6 @@ NB_fixed_blocks_zi <- R6::R6Class(
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
-    },
-
-    EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
-      R   <- self$Y - self$X %*% B
-      ones <- as.vector(rep(1, self$n))
-
-      # E step
-      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
-      S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
-      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
-
-      # M step
-      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
-      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
-      kappa <- colMeans(rho)
-      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
-
-      list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
-           S = S)
     }
   ),
 
@@ -211,3 +172,116 @@ NB_fixed_blocks_zi <- R6::R6Class(
     fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
   )
 )
+
+
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_blocks_zi_diagonal ########################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for normal-block model with fixed groups, D diagonal
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with NB_param()
+NB_fixed_blocks_zi_diagonal <- R6::R6Class(
+  classname = "NB_fixed_blocks_zi_diagonal",
+  inherit = NB_fixed_blocks_zi,
+
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- init_model$model_par$dm1
+      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
+      R          <- self$Y - self$X %*% B
+      M          <- R %*% (dm1 * self$C) %*% G
+
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
+           S = S)
+    },
+
+
+    EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
+      R   <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
+
+      # E step
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
+      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+
+      # M step
+      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
+      kappa <- colMeans(rho)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
+           S = S)
+    }
+  ))
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_blocks_zi_spherical #######################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for normal-block model with fixed groups, D spherical
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with NB_param()
+NB_fixed_blocks_zi_spherical <- R6::R6Class(
+  classname = "NB_fixed_blocks_zi_spherical",
+  inherit = NB_fixed_blocks_zi,
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- rep(mean(init_model$model_par$dm1), self$p)
+      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
+      R          <- self$Y - self$X %*% B
+      M          <- R %*% (dm1 * self$C) %*% G
+
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
+           S = S)
+    },
+
+
+    EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
+      R   <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
+
+      # E step
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
+      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+
+      # M step
+      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
+      dm1   <- rep(mean(colSums(1 - rho) / colSums((1 - rho) * A)), self$p)
+      kappa <- colMeans(rho)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
+           S = S)
+    }
+  ))

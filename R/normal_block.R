@@ -46,7 +46,8 @@ normal_block <- function(Y, X, blocks,
   zi_class <- ifelse(zero_inflation, "_zi",  "")
 
 ### FIX until all models have their spherical variant & their sparse variant
-  noise_cov <- ifelse((!zero_inflation & (block_class == "fixed_blocks" | block_class == "fixed_Q")) |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
+  # noise_cov <- ifelse((!zero_inflation & (block_class == "fixed_blocks" | block_class == "fixed_Q")) |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
+  noise_cov <- paste0("_",noise_cov)
   sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
   ## Instantiating model
   if(sparse_class != "_sparse"){

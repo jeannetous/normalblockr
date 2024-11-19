@@ -10,7 +10,7 @@
 #' @param models uderlying NB_fixed_Q models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
 #' @param noise_cov "diagonal" or "spherical" - tells if the individual variance
-#' should be just diagonal or spherical
+#' should be diagonal or spherical
 #' @param control structured list of more specific parameters, to generate with NB_param()
 NB_unknown <- R6::R6Class(
   classname = "NB_unknown",

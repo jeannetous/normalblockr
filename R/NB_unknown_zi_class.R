@@ -9,6 +9,8 @@
 #' @param nb_blocks list of number of blocks values to be tested
 #' @param models uderlying NB_fixed_Q_zi models for each nb of blocks
 #' @param verbose telling if information should be printed during optimization
+#' @param noise_cov "diagonal" or "spherical" - tells if the individual variance
+#' should be diagonal or spherical
 NB_unknown_zi <- R6::R6Class(
   classname = "NB_unknown_zi",
 
@@ -37,7 +39,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @param control structured list of more specific parameters
     #' @return A new [`nb_fixed`] object
     initialize = function(Y, X, nb_blocks, penalty = 0, verbose = TRUE,
-                          control = NB_param()) {
+                          noise_cov = "diagonal", control = NB_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -58,10 +60,16 @@ NB_unknown_zi <- R6::R6Class(
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$penalty[order(self$nb_blocks)],
                                  function(block_rank, penalty_sorted ) {
-                                   model <- NB_fixed_Q_zi$new(self$Y, self$X,
-                                                           nb_blocks[[block_rank]],
-                                                           penalty_sorted,
-                                                           control = control)
+                                   # model <- NB_fixed_Q_zi$new(self$Y, self$X,
+                                   #                         nb_blocks[[block_rank]],
+                                   #                         penalty_sorted,
+                                   #                         control = control)
+                                   model <- normal_block(self$Y, self$X,
+                                                         nb_blocks[[block_rank]],
+                                                         sparsity = penalty_sorted,
+                                                         zero_inflation = TRUE,
+                                                         noise_cov = noise_cov,
+                                                         control = control)
                                  })
     },
 

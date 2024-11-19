@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_Q #######################################
+##  CLASS NB_fixed_Q ###################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -118,6 +118,10 @@ NB_fixed_Q <- R6::R6Class(
     ),
 )
 
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS NB_fixed_Q_diagonal ##########################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #' R6 class for normal-block model with fixed groups and diagonal residual covariance
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
@@ -186,6 +190,10 @@ NB_fixed_Q_diagonal <- R6::R6Class(
     }
   )
 )
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  CLASS NB_fixed_Q_spherical #########################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for normal-block model with fixed groups and spherical residual covariance
 #' @param Y the matrix of responses (called Y in the model).
