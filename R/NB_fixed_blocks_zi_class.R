@@ -249,7 +249,7 @@ NB_fixed_blocks_zi_spherical <- R6::R6Class(
       init_model <- normal_zi$new(self$Y, self$X)
       init_model$optimize()
       B          <- init_model$model_par$B
-      dm1        <- rep(mean(init_model$model_par$dm1), self$p)
+      dm1        <- rep(1/mean(1/init_model$model_par$dm1), self$p)
       omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
       kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
       rho        <- init_model$model_par$rho
@@ -277,7 +277,8 @@ NB_fixed_blocks_zi_spherical <- R6::R6Class(
 
       # M step
       B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
-      dm1   <- rep(mean(colSums(1 - rho) / colSums((1 - rho) * A)), self$p)
+      xi  <- (1/sum(1 - rho)) * sum((1 - rho) * A)
+      dm1   <- rep(1/xi, self$p)
       kappa <- colMeans(rho)
       omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 

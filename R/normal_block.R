@@ -47,11 +47,11 @@ normal_block <- function(Y, X, blocks,
 
 ### FIX until all models have their spherical variant & their sparse variant
   # noise_cov <- ifelse((!zero_inflation & (block_class == "fixed_blocks" | block_class == "fixed_Q")) |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
-  noise_cov <- paste0("_",noise_cov)
+  noise_cov_class <- ifelse((block_class == "fixed_blocks" | block_class == "fixed_Q"), paste0("_",noise_cov), "")
   sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
   ## Instantiating model
   if(sparse_class != "_sparse"){
-    myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov, sparse_class)))
+    myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov_class, sparse_class)))
     if (!is.null(control)) {
       model <- myClass$new(Y, X, blocks, sparsity, control = control)
     }else{
@@ -63,7 +63,7 @@ normal_block <- function(Y, X, blocks,
     myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
     if(is.null(control)){control <- NB_sparse_param()}
     model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
-                           noise_cov = sub('.', '', noise_cov),
+                           noise_cov = noise_cov,
                            control = control, verbose=TRUE)
   }
 
@@ -71,17 +71,19 @@ normal_block <- function(Y, X, blocks,
   ## Estimation/optimization
   if(optimize){
     if(verbose)
-      cat("Fitting a", sub('.', '', noise_cov),
+      cat("Fitting a", noise_cov,
           sub('.', '',sparse_class),
           ifelse(zero_inflation, "zero-inflated",  ""),
-          "normal-block model with", block_class, "...\n")
+          "normal-block model with", block_class,
+          ifelse(block_class == "unknown", " blocks", ""), "...\n")
     model$optimize(niter, threshold)
   }else{
     if(verbose){
-      cat("Instantiating a", sub('.', '', noise_cov),
+      cat("Instantiating a", noise_cov,
           sub('.', '',sparse_class),
           ifelse(zero_inflation, "zero-inflated",  ""),
-          "normal-block model with", block_class, "...\n")
+          "normal-block model with", block_class,
+          ifelse(block_class == "unknown", " blocks", ""), "...\n")
     }
   }
   ## Finishing
