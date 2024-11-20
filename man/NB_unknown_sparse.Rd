@@ -75,7 +75,7 @@ Create a new [`NB_unknown_sparse`] object.
   X,
   blocks,
   zero_inflation = F,
-  noise_cov = "diagonal",
+  noise_cov = c("diagonal", "spherical"),
   control = NB_sparse_param(),
   verbose = TRUE
 )}\if{html}{\out{</div>}}

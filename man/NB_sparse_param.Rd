@@ -14,7 +14,7 @@ NB_sparse_param(
 \arguments{
 \item{sparsity_weights}{weights with which penalty should be applied in case
 sparsity is required, non-0 values on the diagonal mean diagonal shall be
-penalized too (default is non-penalized diagonal)}
+penalized too (default is non-penalized diagonal and 1s off-diagonal)}
 
 \item{penalties}{list of penalties the user wants to test, other parameters
 are only used if penalties is not specified}

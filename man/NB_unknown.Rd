@@ -61,6 +61,7 @@ Create a new [`NB_unknown`] object.
   nb_blocks,
   penalty = 0,
   verbose = TRUE,
+  noise_cov = "diagonal",
   control = NB_param()
 )}\if{html}{\out{</div>}}
 }
@@ -77,6 +78,9 @@ Create a new [`NB_unknown`] object.
 \item{\code{penalty}}{on the network density for sparsity}
 
 \item{\code{verbose}}{telling if information should be printed during optimization}
+
+\item{\code{noise_cov}}{"diagonal" or "spherical" - tells if the individual variance
+should be diagonal or spherical}
 
 \item{\code{control}}{structured list of more specific parameters, to generate with NB_param()}
 }

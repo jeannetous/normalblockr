@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_fixed_Q_zi_class.R
 \name{NB_fixed_Q_zi}
 \alias{NB_fixed_Q_zi}
-\title{R6 class for normal-block model with fixed blocks}
+\title{R6 class for zero-inflated normal-block model with fixed Q}
 \description{
-R6 class for normal-block model with fixed blocks
+R6 class for zero-inflated normal-block model with fixed Q
 
-R6 class for normal-block model with fixed blocks
+R6 class for zero-inflated normal-block model with fixed Q
 }
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q_zi}
@@ -60,7 +60,7 @@ R6 class for normal-block model with fixed blocks
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, penalty = 0, control = NB_fixed_Q_zi_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -81,7 +81,7 @@ Create a new [`NB_fixed_Q_zi`] object.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new [`NB_fixed_blocks`] object
+A new [`NB_fixed_Q`] object
 }
 }
 \if{html}{\out{<hr>}}
