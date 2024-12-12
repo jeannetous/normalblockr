@@ -14,8 +14,7 @@ normal_block(
   niter = 100,
   threshold = 1e-04,
   verbose = TRUE,
-  control = NULL,
-  optimize = TRUE
+  control = NULL
 )
 }
 \arguments{
