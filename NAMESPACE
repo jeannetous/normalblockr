@@ -2,8 +2,6 @@
 
 export(MVEM)
 export(NB)
-export(NB_fixed_Q_param)
-export(NB_fixed_Q_zi_param)
 export(NB_param)
 export(normal_block)
 import(MASS)
