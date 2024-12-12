@@ -90,6 +90,7 @@ NB_sparse <- R6::R6Class(
         weights   <- self$sparsity_weights ; weights[weights == 0] <- 1
         max_pen   <- max(abs((sigmaQ / weights)[upper.tri(sigmaQ, diag = diag_pen)]))
         penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
+        penalties <- c(0, penalties)
         self$penalties <- penalties[order(penalties)]
       }
       self$models <- map(self$penalties[order(self$penalties)],
@@ -202,7 +203,7 @@ NB_sparse <- R6::R6Class(
 
       ## select default subsamples according to Liu et al. (2010) recommendations.
       if (is.null(subsamples)) {
-        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*private$n))
+        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*self$n))
         subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
       }
 
