@@ -1,3 +1,47 @@
+#' Creates appropriate new normal block model depending on the parametrization
+#' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
+#'  or a p * Q matrix (for indicating block membership when its known)
+#' @param sparsity boolean to say whether the model should be sparsified (several penalties tested)
+#' OR float to run model with a single penalty value
+#' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
+#' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
+#' @param control a list-like structure for detailed control on parameters should be
+#' generated with either NB_param() or NB_sparse_param() for collections of sparse models
+#' #' @examples
+#' myClass <- get_class(blocks = 2)
+#' @export
+get_model <- function(Y, X, blocks, sparsity = FALSE,
+                      zero_inflation = FALSE,
+                      noise_cov = c("diagonal","spherical"),
+                      control){
+
+  noise_cov <- match.arg(noise_cov)
+  block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
+                        ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
+  zi_class <- ifelse(zero_inflation, "_zi",  "")
+  noise_cov_class <- ifelse((block_class == "fixed_blocks" | block_class == "fixed_Q"), paste0("_",noise_cov), "")
+  sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
+  ## Instantiating model
+  if(sparse_class != "_sparse"){
+    myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov_class, sparse_class)))
+    if (!is.null(control)) {
+      model <- myClass$new(Y, X, blocks, sparsity, control = control)
+    }else{
+      if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
+      }else{model <- myClass$new(Y, X, blocks, sparsity)}
+    }
+  }else{
+    myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
+    if(is.null(control)){control <- NB_sparse_param()}
+    model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
+                           noise_cov = noise_cov,
+                           control = control, verbose=TRUE)
+  }
+  return(model)
+}
+
+
+
 #' Normal-block model
 #'
 #' Fit a normal-block model with a variational algorithm
@@ -44,30 +88,33 @@ normal_block <- function(Y, X, blocks,
   block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
                         ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
   zi_class <- ifelse(zero_inflation, "_zi",  "")
-
-### FIX until all models have their spherical variant & their sparse variant
-  # noise_cov <- ifelse((!zero_inflation & (block_class == "fixed_blocks" | block_class == "fixed_Q")) |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
-  noise_cov_class <- ifelse((block_class == "fixed_blocks" | block_class == "fixed_Q"), paste0("_",noise_cov), "")
   sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
-  ## Instantiating model
-  if(sparse_class != "_sparse"){
-    myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov_class, sparse_class)))
-    if (!is.null(control)) {
-      model <- myClass$new(Y, X, blocks, sparsity, control = control)
-    }else{
-      if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
-      }else{model <- myClass$new(Y, X, blocks, sparsity)}
-    }
-  }else{
 
-    myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
-    if(is.null(control)){control <- NB_sparse_param()}
-    model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
-                           noise_cov = noise_cov,
-                           control = control, verbose=TRUE)
-  }
+# ### FIX until all models have their spherical variant & their sparse variant
+#   # noise_cov <- ifelse((!zero_inflation & (block_class == "fixed_blocks" | block_class == "fixed_Q")) |(typeof(sparsity) == "logical" & sparsity), paste0("_",noise_cov), "")
+#   noise_cov_class <- ifelse((block_class == "fixed_blocks" | block_class == "fixed_Q"), paste0("_",noise_cov), "")
+#   sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
+#   ## Instantiating model
+#   if(sparse_class != "_sparse"){
+#     myClass <- eval(str2lang(paste0("NB_", block_class, zi_class, noise_cov_class, sparse_class)))
+#     if (!is.null(control)) {
+#       model <- myClass$new(Y, X, blocks, sparsity, control = control)
+#     }else{
+#       if(typeof(sparsity) == "logical"){model <- myClass$new(Y, X, blocks)
+#       }else{model <- myClass$new(Y, X, blocks, sparsity)}
+#     }
+#   }else{
+#     myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
+#     if(is.null(control)){control <- NB_sparse_param()}
+#     model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
+#                            noise_cov = noise_cov,
+#                            control = control, verbose=TRUE)
+#   }
 
-
+  model <- get_model(Y, X, blocks, sparsity = sparsity,
+                    zero_inflation = zero_inflation,
+                    noise_cov = noise_cov,
+                    control = control)
   ## Estimation/optimization
   if(optimize){
     if(verbose)
