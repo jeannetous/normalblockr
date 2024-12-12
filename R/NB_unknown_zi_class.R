@@ -60,16 +60,12 @@ NB_unknown_zi <- R6::R6Class(
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$penalty[order(self$nb_blocks)],
                                  function(block_rank, penalty_sorted ) {
-                                   # model <- NB_fixed_Q_zi$new(self$Y, self$X,
-                                   #                         nb_blocks[[block_rank]],
-                                   #                         penalty_sorted,
-                                   #                         control = control)
-                                   model <- normal_block(self$Y, self$X,
-                                                         nb_blocks[[block_rank]],
-                                                         sparsity = penalty_sorted,
-                                                         zero_inflation = TRUE,
-                                                         noise_cov = noise_cov,
-                                                         control = control)
+                                   model <- get_model(self$Y, self$X,
+                                                      nb_blocks[[block_rank]],
+                                                      sparsity = penalty_sorted,
+                                                      zero_inflation = TRUE,
+                                                      noise_cov = noise_cov,
+                                                      control = control)
                                  })
     },
 

@@ -81,9 +81,9 @@ NB_sparse <- R6::R6Class(
         self$n_penalties <- length(self$penalties)
         self$penalties   <- self$penalties[order(self$penalties)]
       }else{
-        init_model <- normal_block(self$Y, self$X, self$blocks,
-                                   zero_inflation = self$zero_inflation,
-                                   noise_cov = self$noise_cov, verbose = FALSE)
+        init_model <- get_model(self$Y, self$X, self$blocks,
+                           zero_inflation = self$zero_inflation,
+                           noise_cov = self$noise_cov)
         init_model$optimize(5)
         sigmaQ    <- solve(init_model$model_par$omegaQ)
         diag_pen  <- max(diag(self$sparsity_weights)) > 0
@@ -95,13 +95,11 @@ NB_sparse <- R6::R6Class(
       }
       self$models <- map(self$penalties[order(self$penalties)],
                          function(penalty) {
-                           model <- normal_block(self$Y, self$X, self$blocks,
-                                                 sparsity = penalty,
-                                                 zero_inflation = self$zero_inflation,
-                                                 noise_cov = self$noise_cov,
-                                                 verbose=FALSE,
-                                                 control = NB_param(sparsity_weights = self$sparsity_weights),
-                                                 optimize = FALSE)
+                           model <- get_model(self$Y, self$X, self$blocks,
+                                              sparsity = penalty,
+                                              zero_inflation = self$zero_inflation,
+                                              noise_cov = self$noise_cov,
+                                              control = NB_param(sparsity_weights = self$sparsity_weights))
                          })
       self$verbose <- verbose
     },
@@ -219,14 +217,12 @@ NB_sparse <- R6::R6Class(
           Y  = self$Y  [subsample, , drop = FALSE],
           X  = self$X  [subsample, , drop = FALSE])
 
-        myNB <- normal_block(data$Y, data$X, self$blocks,
-                             sparsity = T,
-                             zero_inflation = self$zero_inflation,
-                             noise_cov = self$noise_cov,
-                             verbose=FALSE,
-                             control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                       penalties = self$penalties),
-                             optimize = FALSE)
+        myNB <- get_model(data$Y, data$X, self$blocks,
+                          sparsity = T,
+                          zero_inflation = self$zero_inflation,
+                          noise_cov = self$noise_cov,
+                          control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
+                                                    penalties = self$penalties))
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
 
         nets <- do.call(cbind, lapply(myNB$models, function(model) {

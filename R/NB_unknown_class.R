@@ -60,9 +60,9 @@ NB_unknown <- R6::R6Class(
       # instantiates an NB_fixed_Q model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$penalty[order(self$nb_blocks)],
                                  function(block_rank, penalty_sorted) {
-        model <- normal_block(self$Y, self$X, nb_blocks[[block_rank]],
-                              sparsity = penalty_sorted, noise_cov = noise_cov,
-                              control = control)
+        model <- get_model(self$Y, self$X, nb_blocks[[block_rank]],
+                           sparsity = penalty_sorted, noise_cov = noise_cov,
+                           control = control)
       })
     },
 
