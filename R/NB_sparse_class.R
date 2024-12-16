@@ -150,6 +150,7 @@ NB_sparse <- R6::R6Class(
                               stability = 0.9) {
       crit <- match.arg(crit)
       if (crit == "StARS") {
+        "Penalty 0 is excluded from stability selection"
         if (is.null(private$stab_path)) self$stability_selection()
         max_stab <- max(self$criteria$stability)
         if(max_stab < stability){
@@ -217,12 +218,22 @@ NB_sparse <- R6::R6Class(
           Y  = self$Y  [subsample, , drop = FALSE],
           X  = self$X  [subsample, , drop = FALSE])
 
-        myNB <- get_model(data$Y, data$X, self$blocks,
+        if(is.matrix(self$blocks)){
+          blocks <- self$blocks
+        }else{
+          blocks <- as_indicator(self$get_model(min(self$penalties))$clustering)
+        }
+
+        myNB <- get_model(data$Y, data$X, blocks = blocks,
                           sparsity = T,
                           zero_inflation = self$zero_inflation,
                           noise_cov = self$noise_cov,
                           control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                    penalties = self$penalties))
+                                                    penalties = self$penalties[self$penalties > 0]))
+        if(is.null(self$latest_niter)){
+          stop("The model must be optimized before running a stability selection.")
+        }
+
         myNB$optimize(niter = self$latest_niter, threshold = self$latest_threshold)
 
         nets <- do.call(cbind, lapply(myNB$models, function(model) {
@@ -233,6 +244,7 @@ NB_sparse <- R6::R6Class(
       , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
+      prob <- cbind(rep(0, nrow(prob)), prob)
       ## formatting/tyding
       node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
       colnames(prob) <- self$penalties
