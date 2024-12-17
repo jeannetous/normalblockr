@@ -132,7 +132,11 @@ NB_unknown_zi <- R6::R6Class(
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$X),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
+    criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      return(paste0("sparse zero-inflated", self$noise_cov,
+                    " normal-block model with unknown Q... \n"))}
   )
 
 )

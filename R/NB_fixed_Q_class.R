@@ -188,7 +188,15 @@ NB_fixed_Q_diagonal <- R6::R6Class(
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }
-  )
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      cat("diagonal normal-block model with fixed Q (unknown blocks)... \n")
+    })
 )
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -262,6 +270,14 @@ NB_fixed_Q_spherical <- R6::R6Class(
 
       list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
     }
-  )
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      cat("spherical normal-block model with fixed Q (unknown blocks)... \n")
+    })
 )
 

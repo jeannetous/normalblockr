@@ -55,6 +55,8 @@ R6 generic class for normal-block models
 \item{\code{stability_path}}{measure of edges stability based on StARS method}
 
 \item{\code{stability}}{mean edge stability along the penalty path}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }

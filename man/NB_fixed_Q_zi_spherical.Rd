@@ -11,6 +11,13 @@ R6 class for zero-inflated normal-block model with fixed Q, D spherical
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{\link[normalblockr:NB_fixed_Q_zi]{normalblockr::NB_fixed_Q_zi}} -> \code{NB_fixed_Q_zi_spherical}
 }
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{who_am_I}}{a method to print what model is being fitted}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

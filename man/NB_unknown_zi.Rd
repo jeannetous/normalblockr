@@ -35,6 +35,8 @@ R6 generic class for normal-block models
 \item{\code{d}}{number of variables (dimensions in X)}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }

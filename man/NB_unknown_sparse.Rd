@@ -51,6 +51,8 @@ R6 generic class for normal-block models
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
 \item{\code{penalties}}{list of penalties used for each Q}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }

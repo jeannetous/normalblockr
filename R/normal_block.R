@@ -83,12 +83,7 @@ normal_block <- function(Y, X, blocks,
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
   if(!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
-
   noise_cov <- match.arg(noise_cov)
-  block_class <- ifelse(is.matrix(blocks), "fixed_blocks",
-                        ifelse(length(blocks) > 1, "unknown", "fixed_Q"))
-  sparse_class <- ifelse(typeof(sparsity) == "logical" & sparsity, "_sparse", "")
-
 
   model <- get_model(Y, X, blocks, sparsity = sparsity,
                     zero_inflation = zero_inflation,
@@ -96,12 +91,10 @@ normal_block <- function(Y, X, blocks,
                     control = control)
   ## Estimation/optimization
   if(verbose){
-    cat("Fitting a", noise_cov,
-        sub('.', '',sparse_class),
-        ifelse(zero_inflation, "zero-inflated",  ""),
-        "normal-block model with", block_class,
-        ifelse(block_class == "unknown", " blocks", ""), "...\n")
+    cat("Fitting a ")
+    cat(model$who_am_I)
   }
+
   model$optimize(niter, threshold)
 
   ## Finishing

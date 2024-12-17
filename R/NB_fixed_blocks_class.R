@@ -129,6 +129,16 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
       omegaQ <- private$get_omegaQ(crossprod(mu)/self$n + gamma)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      return("diagonal normal-block model with fixed blocks... \n")
+    }
   )
 )
 
@@ -166,6 +176,16 @@ NB_fixed_blocks_spherical <- R6::R6Class(
       omegaQ <- private$get_omegaQ(crossprod(mu)/self$n + gamma)
 
       list(B = B, dm1 = rep(1/sigma2, self$p), omegaQ = omegaQ, gamma = gamma, mu = mu)
+    }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      return("spherical normal-block model with fixed blocks... \n")
     }
   )
 )

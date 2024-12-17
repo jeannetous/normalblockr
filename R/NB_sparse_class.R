@@ -299,6 +299,13 @@ NB_sparse <- R6::R6Class(
         stability <- rep(NA, length(self$penalties))
       }
       stability
+    },
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(){
+      block_class <- ifelse(is.matrix(self$blocks), "fixed blocks",
+                            "fixed Q (unknown blocks)")
+      return(paste0("sparse ", ifelse(self$zero_inflation, " zero-inflated ",  ""),
+            self$noise_cov, " normal-block model with ", block_class, "... \n"))
     }
   )
 )

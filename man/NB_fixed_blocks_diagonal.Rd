@@ -11,6 +11,13 @@ R6 class for normal-block model with fixed groups and diagonal residual covarian
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{\link[normalblockr:NB_fixed_blocks]{normalblockr::NB_fixed_blocks}} -> \code{NB_fixed_blocks_diagonal}
 }
+\section{Active bindings}{
+\if{html}{\out{<div class="r6-active-bindings">}}
+\describe{
+\item{\code{who_am_I}}{a method to print what model is being fitted}
+}
+\if{html}{\out{</div>}}
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
