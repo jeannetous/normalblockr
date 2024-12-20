@@ -140,7 +140,7 @@ NB_unknown <- R6::R6Class(
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      return(paste0("sparse ", self$noise_cov, " normal-block model with unknown Q... \n"))
+      return(paste0("sparse ", self$noise_cov, " normal-block model with unknown Q"))
     }
   )
 )

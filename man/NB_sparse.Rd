@@ -116,7 +116,7 @@ A new [`nb_fixed_blocks_sparse`] object
 \if{html}{\out{<a id="method-NB_sparse-optimize"></a>}}
 \if{latex}{\out{\hypertarget{method-NB_sparse-optimize}{}}}
 \subsection{Method \code{optimize()}}{
-optimizes an NB_fixed_Q object for each value of Q
+optimizes a model for each penalty
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_sparse$optimize(niter = 100, threshold = 1e-04)}\if{html}{\out{</div>}}
 }

@@ -304,6 +304,6 @@ NB_fixed_blocks_zi_spherical <- R6::R6Class(
   active = list(
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      return(paste0("zero-inflated spherical normal-block model with fixed blocks... \n"))
+      return(paste0("zero-inflated spherical normal-block model with fixed blocks"))
     }
   ))

@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_blocks #######################################
+##  CLASS NB_fixed_blocks ##############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for normal-block model with fixed groups
@@ -185,7 +185,7 @@ NB_fixed_blocks_spherical <- R6::R6Class(
   active = list(
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      return("spherical normal-block model with fixed blocks... \n")
+      return("spherical normal-block model with fixed blocks")
     }
   )
 )

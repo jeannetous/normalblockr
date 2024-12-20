@@ -90,10 +90,7 @@ normal_block <- function(Y, X, blocks,
                     noise_cov = noise_cov,
                     control = control)
   ## Estimation/optimization
-  if(verbose){
-    cat("Fitting a ")
-    cat(model$who_am_I)
-  }
+  if(verbose) cat("Fitting a", model$who_am_I, "\n")
 
   model$optimize(niter, threshold)
 

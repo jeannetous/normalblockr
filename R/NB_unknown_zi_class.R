@@ -136,7 +136,7 @@ NB_unknown_zi <- R6::R6Class(
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
       return(paste0("sparse zero-inflated", self$noise_cov,
-                    " normal-block model with unknown Q... \n"))}
+                    " normal-block model with unknown Q"))}
   )
 
 )

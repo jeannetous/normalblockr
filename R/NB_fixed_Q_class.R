@@ -277,7 +277,7 @@ NB_fixed_Q_spherical <- R6::R6Class(
   active = list(
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      cat("spherical normal-block model with fixed Q (unknown blocks)... \n")
+      cat("spherical normal-block model with fixed Q (unknown blocks)")
     })
 )
 
