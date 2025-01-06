@@ -158,6 +158,8 @@ NB_unknown_sparse <- R6::R6Class(
     d = function() ncol(self$X),
     #' @field Q number of blocks
     Q = function() self$blocks,
+    #' @field nb_blocks number of blocks
+    nb_blocks = function() self$blocks,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
