@@ -216,11 +216,8 @@ NB_sparse <- R6::R6Class(
         cat("\nsubsampling: ")
       }
 
-      ##########################################################################
-      # browser()
-      ##########################################################################
-      # stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
-      stabs_out <- lapply(subsamples, function(subsample) {
+      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+      # stabs_out <- lapply(subsamples, function(subsample) {
         cat("+")
 
         data <- list(
@@ -249,8 +246,8 @@ NB_sparse <- R6::R6Class(
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
         }))
         nets
-      })
-      # , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+      }
+      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       # prob <- cbind(rep(0, nrow(prob)), prob)

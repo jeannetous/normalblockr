@@ -143,7 +143,6 @@ NB_fixed_Q_diagonal <- R6::R6Class(
         R       <- self$Y - self$X %*% B
         if(is.null(self$clustering_init)){
           clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-          browser()
           if(length(unique(clustering)) < self$Q){
             clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
           }
