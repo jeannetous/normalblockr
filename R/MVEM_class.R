@@ -78,9 +78,6 @@ MVEM <- R6::R6Class(
 
     EM_optimize = function(niter, threshold) {
       parameters <- do.call(private$EM_initialize, list())
-      ############################################################
-      # browser()
-      ############################################################
       ll_list    <- do.call(private$compute_loglik, parameters)
       for (h in 2:niter) {
         parameters <- do.call(private$EM_step, parameters)

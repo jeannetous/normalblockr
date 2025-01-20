@@ -35,11 +35,15 @@ NB_fixed_Q <- R6::R6Class(
             stop("Cluster labels must be between 1 and Q")
           if (length(clustering_init) != ncol(Y))
             stop("Cluster labels must match the number of Y's columns")
+          if (length(unique(clustering_init)) != Q)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
         } else {
           if (nrow(clustering_init) != ncol(Y))
             stop("Cluster-indicating matrix must have as many rows as Y has columns")
           if (ncol(clustering_init) != Q)
             stop("Cluster-indicating matrix must have Q columns")
+          if (min(colSums(clustering_init)) < 1)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
         }
       }
       self$clustering_init <- clustering_init
@@ -141,32 +145,46 @@ NB_fixed_Q_diagonal <- R6::R6Class(
       if(any(sapply(self$model_par, function(x) any(is.na(x)))) | any(sapply(self$var_par, function(x) any(is.na(x))))){
         B       <- private$XtXm1 %*% t(self$X) %*% self$Y
         R       <- self$Y - self$X %*% B
-        if(is.null(self$clustering_init)){
-          clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-          if(length(unique(clustering)) < self$Q){
+        empty_cluster <- TRUE ; clustering_attempt <- 0
+        while(empty_cluster & clustering_attempt < 1){
+          if(is.null(self$clustering_init)){
+            clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+            if(length(unique(clustering)) < self$Q){
+              clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
+            }
+            tau     <- as_indicator(clustering)
+          }else{
+            if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+            }else{ tau <- self$clustering_init}
+            clustering_attempt <- 10
+          }
+          if (min(colSums(tau)) < 1) break
+
+          tau     <- check_one_boundary(check_zero_boundary(tau))
+          alpha   <- colMeans(tau)
+          S       <- rep(0.1, self$Q)
+          M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
+          # dm1     <- as.vector(rep(1, self$p))
+          dm1     <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
+          omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
+          parameters <- list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
+          for(h in 1:5){
+            parameters <- do.call(private$EM_step, parameters)
+          }
+          empty_cluster <- (min(colSums(parameters$tau)) < 0.5) ; clustering_attempt <- clustering_attempt + 1
+          if(empty_cluster & clustering_attempt == 10){
             clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
           }
-          tau     <- as_indicator(clustering)
-          # tau     <- as_indicator(maotai::kmeanspp(t(R), self$Q))
-        }else{
-          if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
-          }else{ tau <- self$clustering_init}
         }
-        self$clustering_init <- get_clusters(tau)
-        tau     <- check_one_boundary(check_zero_boundary(tau))
-        alpha   <- colMeans(tau)
-        S       <- rep(0.1, self$Q)
-        M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
-        # dm1     <- as.vector(rep(1, self$p))
-        dm1     <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
-        omegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
       }else{
         B <- private$B ; dm1 <- private$dm1 ; omegaQ <- private$omegaQ
         alpha <- private$alpha
         tau <- private$tau ; M <- private$M ; S <- private$S
+        parameters <-list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
       }
-
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, tau = tau, M = M, S = S)
+      print("empty_cluster = ") ; print(empty_cluster)
+      self$clustering_init <- get_clusters(tau)
+      parameters
     },
 
     EM_step = function(B, dm1, omegaQ, alpha, tau, M, S) {
