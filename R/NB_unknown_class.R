@@ -49,6 +49,12 @@ NB_unknown <- R6::R6Class(
       if (length(nb_blocks) != length(unique(nb_blocks))) {
         stop("each nb_blocks value can only be present once in nb_blocks")
       }
+      if (length(nb_blocks) != length(unique(nb_blocks))) {
+        stop("each nb_blocks value can only be present once in nb_blocks")
+      }
+      if (max(nb_blocks) > ncol(Y)) {
+        stop("There cannot be more blocks than there are entities to cluster.")
+      }
       self$Y <- Y
       self$X <- X
       if (length(penalty) == 1) penalty <- rep(penalty, length(nb_blocks))

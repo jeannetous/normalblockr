@@ -47,6 +47,7 @@ NB_fixed_blocks <- R6::R6Class(
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, C, penalty = 0, control = NB_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
+      if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(Y, X, ncol(C), penalty, control = control)
       private$C     <- C
       private$mu    <- matrix(0, self$n, self$Q)
@@ -116,7 +117,6 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
     },
 
     EM_step = function(B, dm1, omegaQ, gamma, mu) {
-
       ## E step
       gamma <- solve(omegaQ + diag(colSums(dm1 * private$C), self$Q, self$Q))
       mu    <- (self$Y - self$X %*% B) %*% (dm1 * private$C) %*% gamma

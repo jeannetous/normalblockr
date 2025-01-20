@@ -25,6 +25,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
+      if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       super$initialize(Y, X, Q, penalty, control)
       clustering_init <- control$clustering_init
       if (!is.null(clustering_init)) {
@@ -141,7 +142,13 @@ NB_fixed_Q_diagonal <- R6::R6Class(
         B       <- private$XtXm1 %*% t(self$X) %*% self$Y
         R       <- self$Y - self$X %*% B
         if(is.null(self$clustering_init)){
-          tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
+          clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+          browser()
+          if(length(unique(clustering)) < self$Q){
+            clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
+          }
+          tau     <- as_indicator(clustering)
+          # tau     <- as_indicator(maotai::kmeanspp(t(R), self$Q))
         }else{
           if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
           }else{ tau <- self$clustering_init}

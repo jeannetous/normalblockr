@@ -27,6 +27,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
+      if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       clustering_init <- control$clustering_init
       super$initialize(Y = Y, X = X, Q, penalty = penalty, control = control)
       self$zeros <- 1 * (Y == 0)

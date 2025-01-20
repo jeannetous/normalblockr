@@ -29,6 +29,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @return A new [`NB_fixed_blocks`] object
     initialize = function(Y, X, C, penalty = 0, control = NB_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
+      if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(Y = Y, X = X, ncol(C), penalty = penalty, control = control)
       self$C <- C
       self$zeros <- 1 * (Y == 0)
