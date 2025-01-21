@@ -6,6 +6,7 @@
 #' R6 class for zero-inflated normal model
 #' @param Y the matrix of responses (called Y in the model
 #' @param X design matrix (called X in the model).
+#' @export
 normal_zi <- R6::R6Class(
   classname = "normal_zi",
   inherit = MVEM,
