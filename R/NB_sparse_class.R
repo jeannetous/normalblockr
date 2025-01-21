@@ -102,7 +102,9 @@ NB_sparse <- R6::R6Class(
                                               sparsity = penalty,
                                               zero_inflation = self$zero_inflation,
                                               noise_cov = self$noise_cov,
-                                              control = NB_param(sparsity_weights = self$sparsity_weights))
+                                              control = NB_param(sparsity_weights = self$sparsity_weights,
+                                                                 fixed_tau        = control$fixed_tau,
+                                                                 clustering_init  = control$clustering_init))
                          })
       self$verbose <- verbose
     },
@@ -216,8 +218,8 @@ NB_sparse <- R6::R6Class(
         cat("\nsubsampling: ")
       }
 
-      stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
-      # stabs_out <- lapply(subsamples, function(subsample) {
+      # stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
+      stabs_out <- lapply(subsamples, function(subsample) {
         cat("+")
 
         data <- list(
@@ -225,9 +227,11 @@ NB_sparse <- R6::R6Class(
           X  = self$X  [subsample, , drop = FALSE])
 
         if(is.matrix(self$blocks)){
-          blocks <- self$blocks
+          blocks          <- self$blocks
+          clustering_init <- NULL
         }else{
-          blocks <- as_indicator(self$get_model(min(self$penalties))$clustering)
+          blocks          <- self$Q
+          clustering_init <- self$get_model(min(self$penalties))$var_par$tau
         }
 
         myNB <- get_model(data$Y, data$X, blocks = blocks,
@@ -235,7 +239,9 @@ NB_sparse <- R6::R6Class(
                           zero_inflation = self$zero_inflation,
                           noise_cov = self$noise_cov,
                           control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
-                                                    penalties = self$penalties))
+                                                    penalties = self$penalties,
+                                                    fixed_tau = TRUE,
+                                                    clustering_init = clustering_init))
         if(is.null(self$latest_niter)){
           stop("The model must be optimized before running a stability selection.")
         }
@@ -246,8 +252,8 @@ NB_sparse <- R6::R6Class(
           as.matrix(model$latent_network("support"))[upper.tri(diag(self$Q))]
         }))
         nets
-      }
-      , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
+      })
+      # , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       # prob <- cbind(rep(0, nrow(prob)), prob)
@@ -325,12 +331,18 @@ NB_sparse <- R6::R6Class(
 #' are only used if penalties is not specified
 #' @param n_penalties number of penalties to test.
 #' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
+#' @param fixed_tau whether tau should be fixed at clustering_init during optimization
+#' @param clustering_init proposal of initial value for tau , for when fixed_tau = TRUE
+#' useful for calls to fixed_Q models in stability_selection
 #' Generates control parameters for the NB_fixed_blocks_sparse class
 NB_sparse_param <- function(sparsity_weights = NULL,
                             penalties = NULL, n_penalties = 30,
-                            min_ratio = 0.05){
+                            min_ratio = 0.05, fixed_tau = FALSE,
+                            clustering_init = NULL){
   structure(list(sparsity_weights  = sparsity_weights ,
                  penalties         = penalties        ,
                  n_penalties       = n_penalties      ,
-                 min_ratio         = min_ratio        ))
+                 min_ratio         = min_ratio        ,
+                 fixed_tau         = fixed_tau        ,
+                 clustering_init  = clustering_init   ))
 }

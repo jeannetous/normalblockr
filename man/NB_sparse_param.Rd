@@ -8,7 +8,9 @@ NB_sparse_param(
   sparsity_weights = NULL,
   penalties = NULL,
   n_penalties = 30,
-  min_ratio = 0.05
+  min_ratio = 0.05,
+  fixed_tau = FALSE,
+  clustering_init = NULL
 )
 }
 \arguments{
@@ -21,7 +23,12 @@ are only used if penalties is not specified}
 
 \item{n_penalties}{number of penalties to test.}
 
-\item{min_ratio}{ratio between max penalty (0 edge penalty) and min penalty to test
+\item{min_ratio}{ratio between max penalty (0 edge penalty) and min penalty to test}
+
+\item{fixed_tau}{whether tau should be fixed at clustering_init during optimization}
+
+\item{clustering_init}{proposal of initial value for tau , for when fixed_tau = TRUE
+useful for calls to fixed_Q models in stability_selection
 Generates control parameters for the NB_fixed_blocks_sparse class}
 }
 \description{

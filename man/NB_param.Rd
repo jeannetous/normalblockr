@@ -4,14 +4,16 @@
 \alias{NB_param}
 \title{NB_fixed_Q_sparse_param}
 \usage{
-NB_param(sparsity_weights = NULL, clustering_init = NULL)
+NB_param(sparsity_weights = NULL, clustering_init = NULL, fixed_tau = FALSE)
 }
 \arguments{
-\item{sparsity_weights}{weights with which penalty should be applied in case}
-
-\item{clustering_init}{proposal of initial clustering, for when blocks are unknown
+\item{sparsity_weights}{weights with which penalty should be applied in case
 sparsity is required, non-0 values on the diagonal mean diagonal shall be
-penalized too (default is non-penalized diagonal)
+penalized too (default is non-penalized diagonal)}
+
+\item{clustering_init}{proposal of initial clustering, for when blocks are unknown}
+
+\item{fixed_tau}{whether tau should be fixed at clustering_init during optimization, useful for fixed_Q models
 Generates control parameters for NB models}
 }
 \description{

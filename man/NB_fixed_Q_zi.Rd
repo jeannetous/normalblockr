@@ -17,6 +17,8 @@ R6 class for zero-inflated normal-block model with fixed Q
 \item{\code{zeros}}{indicator matrix of zeros in Y}
 
 \item{\code{clustering_init}}{model initial clustering}
+
+\item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
 }
 \if{html}{\out{</div>}}
 }
