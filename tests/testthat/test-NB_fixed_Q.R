@@ -12,7 +12,7 @@ Q <- ncol(C)
 ###############################################################################
 
 test_that("NB_fixed_Q: check dimensions, optimization and field access", {
-  expect_true(inherits(model <- NB_fixed_Q$new(Y, X, Q), "NB_fixed_Q"))
+  expect_true(inherits(model <- normal_block(Y, X, Q), "NB_fixed_Q"))
   expect_silent(model$optimize(niter = 60))
   params <- model$model_par
   expect_equal(model$n, nrow(Y))
@@ -23,11 +23,17 @@ test_that("NB_fixed_Q: check dimensions, optimization and field access", {
 })
 
 test_that("NB_fixed_Q: sparsity works", {
-  expect_true(inherits(model_sparse <- NB_fixed_Q$new(Y, X, Q, sparsity = 0.05), "NB_fixed_Q"))
+  expect_true(inherits(model_sparse <- normal_block(Y, X, Q, sparsity = 0.05), "NB_fixed_Q"))
   expect_silent(model_sparse$optimize(niter = 60))
 })
 
 test_that("NB_fixed_Q: works with Q=1", {
-  expect_true(inherits(model <- NB_fixed_Q$new(Y, X, 1), "NB_fixed_Q"))
+  expect_true(inherits(model <- normal_block(Y, X, 1), "NB_fixed_Q"))
   expect_silent(model$optimize(niter = 60))
+})
+
+test_that("NB_fixed_Q: works with spherical cov", {
+  expect_true(inherits(model <- normal_block(Y, X, Q, noise_cov = "spherical"), "NB_fixed_Q"))
+  expect_silent(model$optimize(niter = 60))
+  expect_equal(length(unique(model$model_par$dm1)), 1)
 })

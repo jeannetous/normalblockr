@@ -15,6 +15,8 @@ R6 class for normal-block model with fixed Q (number of groups)
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{clustering_init}}{model initial clustering}
+
+\item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
 }
 \if{html}{\out{</div>}}
 }
@@ -48,6 +50,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -57,7 +60,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, sparsity = 0, clustering_init = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -69,9 +72,9 @@ Create a new [`NB_fixed_Q`] object.
 
 \item{\code{Q}}{required number of groups}
 
-\item{\code{sparsity}}{to add on blocks precision matrix}
+\item{\code{penalty}}{to add on blocks precision matrix for sparsity}
 
-\item{\code{clustering_init}}{to propose an initial clustering}
+\item{\code{control}}{structured list for specific parameters}
 }
 \if{html}{\out{</div>}}
 }

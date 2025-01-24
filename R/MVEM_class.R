@@ -21,9 +21,9 @@ MVEM <- R6::R6Class(
     #' @description Create a new [`NB`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
-    #' @param sparsity penalty on the network density
+    #' @param penalty penalty on the network density
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X,  sparsity = 0) {
+    initialize = function(Y, X,  penalty = 0) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -108,9 +108,9 @@ MVEM <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance)
     model_par  = function() list(B = private$B, dm1 = private$dm1),
     #' @field loglik (or its variational lower bound)
-    loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty,
-    #' @field penalty (for cases when a penalty is placed on the precision matrix)
-    penalty = function() 0,
+    loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty_term,
+    #' @field penalty_term (for cases when a penalty is placed on the precision matrix)
+    penalty_term = function() 0,
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() 0,
     #' @field deviance (or its variational lower bound)

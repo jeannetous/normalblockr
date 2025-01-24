@@ -50,6 +50,7 @@ R6 class for normal-block model with fixed groups
 <details open><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -59,7 +60,7 @@ R6 class for normal-block model with fixed groups
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_zi$new(Y, X, C, sparsity = 0)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_zi$new(Y, X, C, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -71,7 +72,9 @@ Create a new [`NB_fixed_blocks_zi`] object.
 
 \item{\code{C}}{group matrix C_jq = 1 if species j belongs to group q}
 
-\item{\code{sparsity}}{to add on blocks precision matrix}
+\item{\code{penalty}}{penalty to apply to covariance matrix for sparsity.}
+
+\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_param()}
 }
 \if{html}{\out{</div>}}
 }

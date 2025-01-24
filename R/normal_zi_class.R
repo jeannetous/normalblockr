@@ -6,6 +6,7 @@
 #' R6 class for zero-inflated normal model
 #' @param Y the matrix of responses (called Y in the model
 #' @param X design matrix (called X in the model).
+#' @export
 normal_zi <- R6::R6Class(
   classname = "normal_zi",
   inherit = MVEM,
@@ -122,6 +123,8 @@ normal_zi <- R6::R6Class(
       par
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function() (1 - private$rho) * (self$X %*% private$B)),
-
+    fitted = function() (1 - private$rho) * (self$X %*% private$B),
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(value){"zero-inflated diagonal normal model"}
+  )
 )

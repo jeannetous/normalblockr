@@ -52,3 +52,14 @@ matching_group_scores <- function(groups1, groups2) {
 get_clusters <- function(tau) {
   return(apply(tau, 1, which.max))
 }
+
+# for a list of edges, give corresponding (node1, node2) list.
+edge_to_node <- function(x, n = max(x)) {
+  x <- x - 1 ## easier for arithmetic to number edges starting from 0
+  n.node <- round((1 + sqrt(1 + 8*n)) / 2) ## n.node * (n.node -1) / 2 = n (if integer)
+  j.grid <- cumsum(0:n.node)
+  j <- findInterval(x, vec = j.grid)
+  i <- x - j.grid[j]
+  ## Renumber i and j starting from 1 to stick with R convention
+  return(data.frame(node1 = i + 1, node2 = j + 1))
+}

@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  NB_fixed_blocks_zi #######################################
+##  NB_fixed_blocks_zi #################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -7,7 +7,8 @@
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with normal_block_param()
 NB_fixed_blocks_zi <- R6::R6Class(
   classname = "NB_fixed_blocks_zi",
   inherit = NB,
@@ -21,11 +22,15 @@ NB_fixed_blocks_zi <- R6::R6Class(
     zeros = NULL,
 
     #' @description Create a new [`NB_fixed_blocks_zi`] object.
+    #' @param Y the matrix of responses (called Y in the model).
+    #' @param X design matrix (called X in the model).
     #' @param C group matrix C_jq = 1 if species j belongs to group q
+    #' @param penalty penalty to apply to covariance matrix for sparsity.
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0) {
+    initialize = function(Y, X, C, penalty = 0, control = normal_block_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y = Y, X = X, ncol(C), sparsity = sparsity)
+      if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
+      super$initialize(Y = Y, X = X, ncol(C), penalty = penalty, control = control)
       self$C <- C
       self$zeros <- 1 * (Y == 0)
     },
@@ -77,29 +82,12 @@ NB_fixed_blocks_zi <- R6::R6Class(
       J <- J  + .5 * sum(log(S))
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
-    },
-
-    EM_initialize = function() {
-      init_model <- normal_zi$new(self$Y, self$X)
-      init_model$optimize()
-      B          <- init_model$model_par$B
-      dm1        <- init_model$model_par$dm1
-      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
-      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
-      R          <- self$Y - self$X %*% B
-      M          <- R %*% (dm1 * self$C) %*% G
-
-      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
-           S = S)
     },
 
     zi_nb_fixed_blocks_obj_grad_M = function(M_vec, dm1_1mrho, omegaQ, R) {
@@ -156,7 +144,70 @@ NB_fixed_blocks_zi <- R6::R6Class(
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
+    }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field var_par a list with variational parameters
+    var_par  = function() list(M = private$M, S = private$S, rho = private$rho),
+    #' @field nb_param number of parameters in the model
+    nb_param = function() as.integer(super$nb_param + self$p),
+    #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix), kappa (zero-inflation probabilities)
+    model_par  = function() {
+      par       <- super$model_par
+      par$kappa <- private$kappa
+      par
     },
+    #' @field clustering given as a list of labels
+    clustering = function() get_clusters(self$C),
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() {
+      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
+      ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
+      ent
+    },
+    #' @field fitted Y values predicted by the model Y values predicted by the model
+    fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
+  )
+)
+
+
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_blocks_zi_diagonal ########################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for normal-block model with fixed groups, D diagonal
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with normal_block_param()
+NB_fixed_blocks_zi_diagonal <- R6::R6Class(
+  classname = "NB_fixed_blocks_zi_diagonal",
+  inherit = NB_fixed_blocks_zi,
+
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- init_model$model_par$dm1
+      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
+      R          <- self$Y - self$X %*% B
+      M          <- R %*% (dm1 * self$C) %*% G
+
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
+           S = S)
+    },
+
 
     EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
       R   <- self$Y - self$X %*% B
@@ -185,25 +236,72 @@ NB_fixed_blocks_zi <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field var_par a list with variational parameters
-    var_par  = function() list(M = private$M, S = private$S, rho = private$rho),
-    #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + self$p),
-    #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix), kappa (zero-inflation probabilities)
-    model_par  = function() {
-      par       <- super$model_par
-      par$kappa <- private$kappa
-      par
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I = function(value){"zero-inflated diagonal normal-block model with fixed blocks"}
+  )
+)
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_blocks_zi_spherical #######################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for normal-block model with fixed groups, D spherical
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param C group matrix C_jq = 1 if species j belongs to group q
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with normal_block_param()
+NB_fixed_blocks_zi_spherical <- R6::R6Class(
+  classname = "NB_fixed_blocks_zi_spherical",
+  inherit = NB_fixed_blocks_zi,
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- rep(1/mean(1/init_model$model_par$dm1), self$p)
+      omegaQ     <- t(self$C) %*% diag(dm1) %*% self$C
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * self$C), self$Q, self$Q) + omegaQ)
+      R          <- self$Y - self$X %*% B
+      M          <- R %*% (dm1 * self$C) %*% G
+
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, kappa = kappa, rho = rho, M = M,
+           S = S)
     },
-    #' @field clustering given as a list of labels
-    clustering = function() get_clusters(self$C),
-    #' @field entropy Entropy of the variational distribution when applicable
-    entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
-      ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
-      ent
-    },
-    #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function()(1 - private$rho) * (self$X %*% private$B + private$M %*% t(self$C))
+
+
+    EM_step = function(B, dm1, omegaQ, kappa, M, S, rho) {
+      R   <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
+
+      # E step
+      M <- private$zi_nb_fixed_blocks_nlopt_optim_M(M, dm1, omegaQ, B, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * self$C), 2, diag(omegaQ), "+")
+      A <- (R - tcrossprod(M, self$C))^2 + tcrossprod(S, self$C)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+
+      # M step
+      B <- private$zi_nb_fixed_blocks_nlopt_optim_B(B, dm1, omegaQ, M, rho)
+      xi  <- (1/sum(1 - rho)) * sum((1 - rho) * A)
+      dm1   <- rep(1/xi, self$p)
+      kappa <- colMeans(rho)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, omegaQ = omegaQ,  kappa = kappa, rho = rho, M = M,
+           S = S)
+    }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I = function(value){"zero-inflated spherical normal-block model with fixed blocks"}
   )
 )

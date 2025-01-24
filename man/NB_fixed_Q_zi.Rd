@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_fixed_Q_zi_class.R
 \name{NB_fixed_Q_zi}
 \alias{NB_fixed_Q_zi}
-\title{R6 class for normal-block model with fixed blocks}
+\title{R6 class for zero-inflated normal-block model with fixed Q}
 \description{
-R6 class for normal-block model with fixed blocks
+R6 class for zero-inflated normal-block model with fixed Q
 
-R6 class for normal-block model with fixed blocks
+R6 class for zero-inflated normal-block model with fixed Q
 }
 \section{Super classes}{
 \code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q_zi}
@@ -17,6 +17,8 @@ R6 class for normal-block model with fixed blocks
 \item{\code{zeros}}{indicator matrix of zeros in Y}
 
 \item{\code{clustering_init}}{model initial clustering}
+
+\item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
 }
 \if{html}{\out{</div>}}
 }
@@ -50,6 +52,7 @@ R6 class for normal-block model with fixed blocks
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -59,7 +62,7 @@ R6 class for normal-block model with fixed blocks
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0, clustering_init = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -71,16 +74,16 @@ Create a new [`NB_fixed_Q_zi`] object.
 
 \item{\code{Q}}{number of blocks in the model}
 
-\item{\code{sparsity}}{to add on blocks precision matrix}
+\item{\code{penalty}}{to add on blocks precision matrix for sparsity}
 
-\item{\code{clustering_init}}{model initial clustering}
+\item{\code{control}}{structured list of more specific parameters}
 
 \item{\code{C}}{block matrix C_jq = 1 if species j belongs to block q}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new [`NB_fixed_blocks`] object
+A new [`NB_fixed_Q`] object
 }
 }
 \if{html}{\out{<hr>}}

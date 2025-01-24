@@ -1,12 +1,13 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_blocks #######################################
+##  CLASS NB_fixed_blocks ##############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for normal-block model with fixed groups
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list of more specific parameters, to generate with NB_param()
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
   inherit = NB,
@@ -26,10 +27,10 @@ NB_fixed_blocks <- R6::R6Class(
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
       J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_omegaQ
       J <- J + .5 * self$n * log_det_gamma
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + self$n *self$Q / 2 - .5 * sum(diag(omegaQ %*% (self$n * gamma + t(mu) %*% mu)))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     }
@@ -44,9 +45,10 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, sparsity = 0) {
+    initialize = function(Y, X, C, penalty = 0, control = normal_block_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
-      super$initialize(Y, X, ncol(C), sparsity)
+      if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
+      super$initialize(Y, X, ncol(C), penalty, control = control)
       private$C     <- C
       private$mu    <- matrix(0, self$n, self$Q)
       private$gamma <- diag(1, self$Q, self$Q)
@@ -92,9 +94,9 @@ NB_fixed_blocks <- R6::R6Class(
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_diagonal <- R6::R6Class(
-  classname = "NB_fixed_blocksdiagonal",
+  classname = "NB_fixed_blocks_diagonal",
   inherit = NB_fixed_blocks,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -103,14 +105,18 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
   private = list(
 
     EM_initialize = function() {
-      B      <- private$XtXm1 %*% t(self$X) %*% self$Y
-      dm1    <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
-      omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+      if(any(sapply(self$model_par, function(x) any(is.na(x))))){
+        B      <- private$XtXm1 %*% t(self$X) %*% self$Y
+        dm1    <- as.vector(1/colMeans((self$Y - self$X %*% B)^2))
+        omegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
+        list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = private$gamma, mu = private$mu)
+      }else{
+        list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ,
+             gamma = private$gamma, mu = private$mu)
+      }
     },
 
     EM_step = function(B, dm1, omegaQ, gamma, mu) {
-
       ## E step
       gamma <- solve(omegaQ + diag(colSums(dm1 * private$C), self$Q, self$Q))
       mu    <- (self$Y - self$X %*% B) %*% (dm1 * private$C) %*% gamma
@@ -123,6 +129,14 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
       omegaQ <- private$get_omegaQ(crossprod(mu)/self$n + gamma)
       list(B = B, dm1 = dm1, omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I = function(value) {"diagonal normal-block model with fixed blocks"}
   )
 )
 
@@ -130,7 +144,7 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 NB_fixed_blocks_spherical <- R6::R6Class(
   classname = "NB_fixed_blocks_spherical",
   inherit = NB_fixed_blocks,
@@ -161,5 +175,13 @@ NB_fixed_blocks_spherical <- R6::R6Class(
 
       list(B = B, dm1 = rep(1/sigma2, self$p), omegaQ = omegaQ, gamma = gamma, mu = mu)
     }
+  ),
+
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I = function(value) {"spherical normal-block model with fixed blocks"}
   )
 )

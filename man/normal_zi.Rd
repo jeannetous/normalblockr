@@ -28,6 +28,8 @@ B (regression coefficients), dm1 (species variance),
 kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
 
 \item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }

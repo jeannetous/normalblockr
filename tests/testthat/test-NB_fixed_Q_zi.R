@@ -10,7 +10,7 @@ Q <- ncol(C)
 ###############################################################################
 
 test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
-  expect_true(inherits(model <- NB_fixed_Q_zi$new(Y, X, Q), "NB_fixed_Q_zi"))
+  expect_true(inherits(model <- NB_fixed_Q_zi_diagonal$new(Y, X, Q), "NB_fixed_Q_zi"))
   expect_silent(model$optimize())
   params <- model$model_par
   expect_equal(model$n, nrow(Y))
@@ -21,12 +21,11 @@ test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
 })
 
 test_that("NB_fixed_Q_zi: sparsity works", {
-  expect_true(inherits(model_sparse <- NB_fixed_Q_zi$new(Y, X, Q, sparsity = 0.05), "NB_fixed_Q_zi"))
+  expect_true(inherits(model_sparse <- NB_fixed_Q_zi_diagonal$new(Y, X, Q, penalty = 0.05), "NB_fixed_Q_zi"))
   expect_silent(model_sparse$optimize(niter = 60))
 })
 
 test_that("NB_fixed_Q_zi: works with Q=1", {
-  expect_true(inherits(model <- NB_fixed_Q_zi$new(Y, X, 1), "NB_fixed_Q_zi"))
+  expect_true(inherits(model <- NB_fixed_Q_zi_spherical$new(Y, X, 1), "NB_fixed_Q_zi"))
   expect_silent(model$optimize(niter = 60))
 })
-

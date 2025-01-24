@@ -1,14 +1,14 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  NB_fixed_Q_zi #######################################
+##  NB_fixed_Q_zi ######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-#' R6 class for normal-block model with fixed blocks
+#' R6 class for zero-inflated normal-block model with fixed Q
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param Q number of blocks in the model
-#' @param sparsity to add on blocks precision matrix
+#' @param penalty to add on blocks precision matrix for sparsity
 #' @param verbose telling if information should be printed during optimization
+#' @param control structured list for specific parameters
 NB_fixed_Q_zi <- R6::R6Class(
   classname = "NB_fixed_Q_zi",
   inherit = NB,
@@ -20,13 +20,18 @@ NB_fixed_Q_zi <- R6::R6Class(
     zeros = NULL,
     #' @field clustering_init model initial clustering
     clustering_init = NULL,
+    #' @field fixed_tau whether tau should be fixed at clustering_init during optimization, useful for stability selection
+    fixed_tau = NULL,
 
     #' @description Create a new [`NB_fixed_Q_zi`] object.
     #' @param C block matrix C_jq = 1 if species j belongs to block q
-    #' @param clustering_init model initial clustering
-    #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, Q, sparsity = 0, clustering_init = NULL) {
-      super$initialize(Y = Y, X = X, Q, sparsity = sparsity)
+    #' @param control structured list of more specific parameters
+    #' @return A new [`NB_fixed_Q`] object
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
+      if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
+      self$fixed_tau <- control$fixed_tau
+      clustering_init <- control$clustering_init
+      super$initialize(Y = Y, X = X, Q, penalty = penalty, control = control)
       self$zeros <- 1 * (Y == 0)
       if (!is.null(clustering_init)) {
         if(!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
@@ -35,11 +40,15 @@ NB_fixed_Q_zi <- R6::R6Class(
             stop("Cluster labels must be between 1 and Q")
           if (length(clustering_init) != ncol(Y))
             stop("Cluster labels must match the number of Y's columns")
+          if (length(unique(clustering_init)) != Q)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
         } else {
           if (nrow(clustering_init) != ncol(Y))
             stop("Cluster-indicating matrix must have as many rows as Y has columns")
           if (ncol(clustering_init) != Q)
             stop("Cluster-indicating matrix must have Q columns")
+          if ((min(colSums(clustering_init)) < 1) & !self$fixed_tau)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
         }
       }
       self$clustering_init <- clustering_init
@@ -92,41 +101,13 @@ NB_fixed_Q_zi <- R6::R6Class(
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
-      if (self$sparsity > 0) {
+      if (self$penalty > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(omegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$sparsity * sum(abs(self$sparsity_weights * omegaQ))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * omegaQ))
       }
       J
     },
-
-    EM_initialize = function() {
-      init_model <- normal_zi$new(self$Y, self$X)
-      init_model$optimize()
-      B          <- init_model$model_par$B
-      dm1        <- init_model$model_par$dm1
-      R          <- self$Y - self$X %*% B
-      R[self$Y == 0]  <- 0 # improve final value of objective
-      # cl         <- kmeans(t(R), self$Q, nstart = 30)$cluster
-      # tau        <- check_one_boundary(check_zero_boundary(as_indicator(cl)))
-      if(is.null(self$clustering_init)){
-        tau     <- as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster)
-      }else{
-        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
-        }else{ tau <- self$clustering_init}
-      }
-      tau     <- check_one_boundary(check_zero_boundary(tau))
-      alpha      <- colMeans(tau)
-      omegaQ     <- t(tau) %*% diag(dm1) %*% tau
-      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * tau), self$Q, self$Q) + omegaQ)
-      M          <- R %*% (dm1 * tau) %*% G
-      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
-      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
-           M = M, S = S, tau = tau, rho = rho)
-    },
-
     zi_nb_fixed_Q_obj_grad_M = function(M_vec, R, dm1T, omegaQ, rho) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       MO   <- M %*% omegaQ
@@ -181,34 +162,6 @@ NB_fixed_Q_zi <- R6::R6Class(
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
-    },
-
-    EM_step = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
-      R <- self$Y - self$X %*% B
-      ones <- as.vector(rep(1, self$n))
-
-      # E step
-      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, tau, rho)
-      S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
-      if (self$Q > 1) {
-        eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
-        eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
-        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
-      }
-      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
-
-      # M step
-      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, M, tau, rho)
-      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
-      alpha <- colMeans(tau)
-      kappa <- colMeans(rho)
-      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
-
-      list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
-           M = M, S = S, tau = tau, rho = rho)
     }
   ),
 
@@ -239,5 +192,178 @@ NB_fixed_Q_zi <- R6::R6Class(
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function()(1 - private$rho) *(self$X %*% private$B + tcrossprod(private$M, private$tau))
+  )
+)
+
+
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_Q_zi_diagonal ########################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for zero-inflated normal-block model with fixed Q, D diagonal
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param Q number of blocks in the model
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param verbose telling if information should be printed during optimization
+#' @param control structured list for specific parameters
+NB_fixed_Q_zi_diagonal <- R6::R6Class(
+  classname = "NB_fixed_Q_zi_diagonal",
+  inherit = NB_fixed_Q_zi,
+
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- init_model$model_par$dm1
+      R          <- self$Y - self$X %*% B
+      R[self$Y == 0]  <- 0 # improve final value of objective
+      if(is.null(self$clustering_init)){
+        clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+        if(length(unique(clustering)) < self$Q){
+          # We try to ensure the optimization does not start with an empty cluster
+          clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
+        }
+        tau     <- as_indicator(clustering)
+        if(min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
+      }else{
+        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+        }else{ tau <- self$clustering_init}
+      }
+      tau     <- check_one_boundary(check_zero_boundary(tau))
+      alpha      <- colMeans(tau)
+      omegaQ     <- t(tau) %*% diag(dm1) %*% tau
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * tau), self$Q, self$Q) + omegaQ)
+      M          <- R %*% (dm1 * tau) %*% G
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
+           M = M, S = S, tau = tau, rho = rho)
+    },
+
+
+    EM_step = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
+      R <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
+
+      # E step
+      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, tau, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
+      if (self$Q > 1 & !self$fixed_tau) {
+        eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
+        eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
+        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      }
+      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+
+      # M step
+      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, M, tau, rho)
+      dm1   <- colSums(1 - rho) / colSums((1 - rho) * A)
+      alpha <- colMeans(tau)
+      kappa <- colMeans(rho)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
+           M = M, S = S, tau = tau, rho = rho)
+    }
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(value){
+      paste("zero-inflated diagonal normal-block model with", self$Q, "(unknown) blocks")
+    }
+  )
+)
+
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+##  NB_fixed_Q_zi_spherical ############################
+## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#' R6 class for zero-inflated normal-block model with fixed Q, D spherical
+#' @param Y the matrix of responses (called Y in the model).
+#' @param X design matrix (called X in the model).
+#' @param Q number of blocks in the model
+#' @param penalty to add on blocks precision matrix for sparsity
+#' @param verbose telling if information should be printed during optimization
+#' @param control structured list for specific parameters
+NB_fixed_Q_zi_spherical <- R6::R6Class(
+  classname = "NB_fixed_Q_zi_spherical",
+  inherit = NB_fixed_Q_zi,
+  private = list(
+    EM_initialize = function() {
+      init_model <- normal_zi$new(self$Y, self$X)
+      init_model$optimize()
+      B          <- init_model$model_par$B
+      dm1        <- rep(1/mean(1/init_model$model_par$dm1), self$p)
+      R          <- self$Y - self$X %*% B
+      R[self$Y == 0]  <- 0 # improve final value of objective
+      if(is.null(self$clustering_init)){
+        clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+        if(length(unique(clustering)) < self$Q){
+          # We try to ensure the optimization does not start with an empty cluster
+          clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
+        }
+        tau     <- as_indicator(clustering)
+        if(min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
+      }else{
+        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+        }else{ tau <- self$clustering_init}
+      }
+      tau     <- check_one_boundary(check_zero_boundary(tau))
+      alpha      <- colMeans(tau)
+      omegaQ     <- t(tau) %*% diag(dm1) %*% tau
+      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho        <- init_model$model_par$rho
+      G          <- solve(diag(colSums(dm1 * tau), self$Q, self$Q) + omegaQ)
+      M          <- R %*% (dm1 * tau) %*% G
+      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      list(B = B, dm1 = dm1, omegaQ = omegaQ, alpha = alpha, kappa = kappa,
+           M = M, S = S, tau = tau, rho = rho)
+    },
+
+    EM_step = function(B, dm1, omegaQ, alpha, kappa, M, S, tau, rho) {
+      R <- self$Y - self$X %*% B
+      ones <- as.vector(rep(1, self$n))
+
+      # E step
+      M <- private$zi_nb_fixed_Q_nlopt_optim_M(M, B, dm1, omegaQ, tau, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(omegaQ), "+")
+      if (self$Q > 1 & !self$fixed_tau) {
+        eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
+        eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
+        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+      }
+      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+
+      # M step
+      B   <- private$zi_nb_fixed_Q_nlopt_optim_B(B, dm1, omegaQ, M, tau, rho)
+      xi  <- (1/sum(1 - rho)) * sum((1 - rho) * A)
+      dm1   <- rep(1/xi, self$p)
+      alpha <- colMeans(tau)
+      kappa <- colMeans(rho)
+      omegaQ <- private$get_omegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+
+      list(B = B, dm1 = dm1, alpha = alpha, omegaQ = omegaQ, kappa = kappa,
+           M = M, S = S, tau = tau, rho = rho)
+    }
+  ),
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  ##  ACTIVE BINDINGS ----
+  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  active = list(
+    #' @field who_am_I a method to print what model is being fitted
+    who_am_I  = function(value){
+      "zero-inflated spherical normal-block model with fixed Q (unknown blocks)"
+    }
   )
 )
