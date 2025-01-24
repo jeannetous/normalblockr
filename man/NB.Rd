@@ -60,7 +60,7 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

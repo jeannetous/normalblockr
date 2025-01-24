@@ -6,7 +6,7 @@
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control a list-like structure for detailed control on parameters should be
-#' generated with either NB_param() or NB_sparse_param() for collections of sparse models
+#' generated with normal_block_param() for collections of sparse models
 #' #' @examples
 #' myModel <- get_model(blocks = 2)
 #' @export
@@ -32,12 +32,13 @@ get_model <- function(Y, X, blocks, sparsity = FALSE,
     }
   }else{
     myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
-    if(is.null(control)){control <- NB_sparse_param()}
-    model   <- myClass$new(Y, X, blocks = blocks, zero_inflation = zero_inflation,
+    if(is.null(control)){control <- normal_block_param()}
+    model   <- myClass$new(Y, X, blocks = blocks,
+                           zero_inflation = zero_inflation,
                            noise_cov = noise_cov,
-                           control = control, verbose=TRUE)
+                           control = control)
   }
-  return(model)
+  model
 }
 
 
@@ -55,9 +56,8 @@ get_model <- function(Y, X, blocks, sparsity = FALSE,
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
-#' @param verbose telling if information should be printed during optimization
 #' @param control a list-like structure for detailed control on parameters should be
-#' generated with either NB_param() or NB_sparse_param() for collections of sparse models
+#' generated with normal_block_param() for collections of sparse models
 #' @param optimize boolean stating whether the model should just be instantiated (F) or optimized too (T)
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
@@ -78,7 +78,7 @@ normal_block <- function(Y, X, blocks,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
-                         verbose=TRUE, control = NULL) {
+                         control = normal_block_param()) {
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
@@ -90,11 +90,44 @@ normal_block <- function(Y, X, blocks,
                     noise_cov = noise_cov,
                     control = control)
   ## Estimation/optimization
-  if(verbose) cat("Fitting a", model$who_am_I, "\n")
+  if(control$verbose) cat("Fitting a", model$who_am_I, "\n")
 
   model$optimize(niter, threshold)
 
   ## Finishing
-  if(verbose) cat("\n DONE\n")
+  if(control$verbose) cat("\nDONE\n")
+
   model
+}
+
+#' normal_block_param
+#'
+#' @param sparsity_weights weights with which penalty should be applied in case
+#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
+#' penalized too (default is non-penalized diagonal and 1s off-diagonal)
+#' @param penalties list of penalties the user wants to test, other parameters
+#' are only used if penalties is not specified
+#' @param n_penalties number of penalties to test.
+#' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
+#' @param fixed_tau whether tau should be fixed at clustering_init during optimization
+#' @param verbose telling if information should be printed during optimization
+#' @param clustering_init proposal of initial value for tau , for when fixed_tau = TRUE
+#' useful for calls to fixed_Q models in stability_selection
+#' Generates control parameters for NB sparse models
+#' @export
+normal_block_param <- function(
+    sparsity_weights = NULL,
+    penalties        = NULL,
+    n_penalties      = 30,
+    min_ratio        = 0.05,
+    fixed_tau        = FALSE,
+    clustering_init  = NULL,
+    verbose          = TRUE) {
+  structure(list(sparsity_weights  = sparsity_weights ,
+                 penalties         = penalties        ,
+                 n_penalties       = n_penalties      ,
+                 min_ratio         = min_ratio        ,
+                 fixed_tau         = fixed_tau        ,
+                 clustering_init   = clustering_init   ,
+                 verbose           = verbose))
 }

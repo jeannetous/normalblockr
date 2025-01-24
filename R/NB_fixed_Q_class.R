@@ -26,7 +26,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
       if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       super$initialize(Y, X, Q, penalty, control)
       self$fixed_tau <- control$fixed_tau
@@ -209,9 +209,8 @@ NB_fixed_Q_diagonal <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      cat("diagonal normal-block model with fixed Q (unknown blocks)... \n")
-    })
+    who_am_I  = function(value){paste("diagonal normal-block model with", self$Q, "unknown blocks")}
+  )
 )
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -297,8 +296,7 @@ NB_fixed_Q_spherical <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      cat("spherical normal-block model with fixed Q (unknown blocks)")
-    })
+    who_am_I  = function(value){paste("spherical normal-block model with", self$Q, "unknown blocks")}
+  )
 )
 

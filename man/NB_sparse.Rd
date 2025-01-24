@@ -27,11 +27,11 @@ R6 generic class for normal-block models
 
 \item{\code{min_ratio}}{ratio between min and max penalty to be tested}
 
+\item{\code{verbose}}{say whether information should be given about the optimization}
+
 \item{\code{sparsity_weights}}{weights with which penalty should be applied}
 
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
-
-\item{\code{verbose}}{say whether information should be given about the optimization}
 
 \item{\code{latest_niter}}{latest niter value used for optimization}
 
@@ -84,8 +84,7 @@ Create a new [`NB_sparse`] object.
   blocks,
   zero_inflation = F,
   noise_cov = "diagonal",
-  control = NB_sparse_param(),
-  verbose = TRUE
+  control = NB_sparse_param()
 )}\if{html}{\out{</div>}}
 }
 
@@ -103,8 +102,6 @@ Create a new [`NB_sparse`] object.
 \item{\code{noise_cov}}{character the type of covariance for the noise: either diagonal of spherical}
 
 \item{\code{control}}{structured list of parameters to handle sparsity control}
-
-\item{\code{verbose}}{telling if information should be printed during optimization}
 }
 \if{html}{\out{</div>}}
 }
@@ -206,7 +203,7 @@ a [`ggplot`] graph
 \subsection{Method \code{stability_selection()}}{
 Compute the stability path by stability selection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_sparse$stability_selection(subsamples = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_sparse$stability_selection(subsamples = NULL, n_subsamples = 10)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

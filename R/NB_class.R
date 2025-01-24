@@ -27,7 +27,7 @@ NB <- R6::R6Class(
     #' @param penalty penalty on the network density
     #' @param control structured list of parameters, including sparsity_weights
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
       super$initialize(Y, X)
       self$Q <- Q
       private$omegaQ <- diag(1, Q, Q)
@@ -120,20 +120,3 @@ NB <- R6::R6Class(
   )
 )
 
-
-#' NB_fixed_Q_sparse_param
-#' @param sparsity_weights weights with which penalty should be applied in case
-#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal)
-#' @param clustering_init proposal of initial clustering, for when blocks are unknown
-#' @param fixed_tau whether tau should be fixed at clustering_init during optimization, useful for fixed_Q models
-#' Generates control parameters for NB models
-#' @export
-NB_param <- function(sparsity_weights = NULL, clustering_init = NULL,
-                     fixed_tau = FALSE){
-  structure(list(
-    sparsity_weights = sparsity_weights,
-    clustering_init  = clustering_init,
-    fixed_tau = fixed_tau
-  ))
-}

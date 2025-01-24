@@ -2,12 +2,13 @@
 ##  CLASS NB_sparse ##############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 #' R6 generic class for normal-block models
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @param blocks either group matrix C or number of blocks Q
 #' @param zero_inflation boolean to specify whether data is zero-inflated
+#' @param penalties list of penalties values for sparsity
+#' @param n_penalties number of penalties for sparsity
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control structured list of parameters to handle sparsity control
 #' @param models underlying models for each penalty
@@ -35,12 +36,12 @@ NB_sparse <- R6::R6Class(
     n_penalties = NULL,
     #' @field min_ratio ratio between min and max penalty to be tested
     min_ratio = NULL,
+    #' @field verbose say whether information should be given about the optimization
+    verbose = NULL,
     #' @field sparsity_weights weights with which penalty should be applied
     sparsity_weights = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
-    #' @field verbose say whether information should be given about the optimization
-    verbose = NULL,
     #' @field latest_niter latest niter value used for optimization
     latest_niter = NULL,
     #' @field latest_threshold latest threshold value used for optimization
@@ -55,8 +56,7 @@ NB_sparse <- R6::R6Class(
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
     initialize = function(Y, X, blocks, zero_inflation = F,
-                          noise_cov = "diagonal", control = NB_sparse_param(),
-                          verbose=TRUE) {
+                          noise_cov = "diagonal", control = NB_sparse_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y and X must be matrices.")
       }
@@ -102,11 +102,12 @@ NB_sparse <- R6::R6Class(
                                               sparsity = penalty,
                                               zero_inflation = self$zero_inflation,
                                               noise_cov = self$noise_cov,
-                                              control = NB_param(sparsity_weights = self$sparsity_weights,
-                                                                 fixed_tau        = control$fixed_tau,
-                                                                 clustering_init  = control$clustering_init))
+                                              control = normal_block_param(
+                                                sparsity_weights = self$sparsity_weights,
+                                                fixed_tau        = control$fixed_tau,
+                                                clustering_init  = control$clustering_init))
                          })
-      self$verbose <- verbose
+      self$verbose <- control$verbose
     },
 
 
@@ -117,8 +118,7 @@ NB_sparse <- R6::R6Class(
       self$latest_niter     <- niter
       self$latest_threshold <- threshold
 
-      self$models <- furrr::future_map(seq_along(self$models), function(m) {
-      # self$models <- lapply(seq_along(self$models), function(m) {
+      self$models <- lapply(seq_along(self$models), function(m) {
 
         model <- self$models[[m]]
         if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
@@ -131,8 +131,7 @@ NB_sparse <- R6::R6Class(
           do.call( self$models[[m + 1]]$update, matched_args)
         }
         model
-      }
-      , .options = furrr_options(seed=TRUE))
+      })
     },
 
     #' @description returns the NB_fixed_block model corresponding to given penalty
@@ -204,12 +203,12 @@ NB_sparse <- R6::R6Class(
     ## Stability -------------------------
     #' @description Compute the stability path by stability selection
     #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
-    stability_selection = function(subsamples = NULL) {
+    stability_selection = function(subsamples = NULL, n_subsamples = 10) {
 
       ## select default subsamples according to Liu et al. (2010) recommendations.
       if (is.null(subsamples)) {
         subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*self$n))
-        subsamples <- replicate(20, sample.int(self$n, subsample.size), simplify = FALSE)
+        subsamples <- replicate(n_subsamples, sample.int(self$n, subsample.size), simplify = FALSE)
       }
 
       ## got for stability selection
@@ -218,10 +217,7 @@ NB_sparse <- R6::R6Class(
         cat("\nsubsampling: ")
       }
 
-      # stabs_out <- future.apply::future_lapply(subsamples, function(subsample) {
       stabs_out <- lapply(subsamples, function(subsample) {
-        cat("+")
-
         data <- list(
           Y  = self$Y  [subsample, , drop = FALSE],
           X  = self$X  [subsample, , drop = FALSE])
@@ -238,10 +234,11 @@ NB_sparse <- R6::R6Class(
                           sparsity = T,
                           zero_inflation = self$zero_inflation,
                           noise_cov = self$noise_cov,
-                          control = NB_sparse_param(sparsity_weights = self$sparsity_weights,
+                          control = normal_block_param(sparsity_weights = self$sparsity_weights,
                                                     penalties = self$penalties,
                                                     fixed_tau = TRUE,
-                                                    clustering_init = clustering_init))
+                                                    clustering_init = clustering_init,
+                                                    verbose = FALSE))
         if(is.null(self$latest_niter)){
           stop("The model must be optimized before running a stability selection.")
         }
@@ -253,7 +250,6 @@ NB_sparse <- R6::R6Class(
         }))
         nets
       })
-      # , future.seed = TRUE, future.scheduling = structure(TRUE, ordering = "random"))
 
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       # prob <- cbind(rep(0, nrow(prob)), prob)
@@ -313,7 +309,7 @@ NB_sparse <- R6::R6Class(
       stability
     },
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
+    who_am_I  = function(value){
       block_class <- ifelse(is.matrix(self$blocks), "fixed blocks",
                             "fixed Q (unknown blocks)")
       return(paste0("sparse ", ifelse(self$zero_inflation, " zero-inflated ",  ""),
@@ -322,27 +318,3 @@ NB_sparse <- R6::R6Class(
   )
 )
 
-
-#' NB_sparse_param
-#' @param sparsity_weights weights with which penalty should be applied in case
-#' sparsity is required, non-0 values on the diagonal mean diagonal shall be
-#' penalized too (default is non-penalized diagonal and 1s off-diagonal)
-#' @param penalties list of penalties the user wants to test, other parameters
-#' are only used if penalties is not specified
-#' @param n_penalties number of penalties to test.
-#' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
-#' @param fixed_tau whether tau should be fixed at clustering_init during optimization
-#' @param clustering_init proposal of initial value for tau , for when fixed_tau = TRUE
-#' useful for calls to fixed_Q models in stability_selection
-#' Generates control parameters for the NB_fixed_blocks_sparse class
-NB_sparse_param <- function(sparsity_weights = NULL,
-                            penalties = NULL, n_penalties = 30,
-                            min_ratio = 0.05, fixed_tau = FALSE,
-                            clustering_init = NULL){
-  structure(list(sparsity_weights  = sparsity_weights ,
-                 penalties         = penalties        ,
-                 n_penalties       = n_penalties      ,
-                 min_ratio         = min_ratio        ,
-                 fixed_tau         = fixed_tau        ,
-                 clustering_init  = clustering_init   ))
-}

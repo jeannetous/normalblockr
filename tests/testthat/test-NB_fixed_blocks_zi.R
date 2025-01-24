@@ -22,6 +22,6 @@ test_that("NB_fixed_blocks_zi: check dimensions, optimization and field access",
   expect_gt(model$loglik, -48950)
   model_sparse <- NB_fixed_blocks_zi_spherical$new(Y, X, C, penalty = 0.05)
   model_sparse$optimize(threshold = 1e-5)
-  model_sparse <- normal_block(Y, X, C, sparsity = 10, zero_inflation = TRUE, control = NB_param(sparsity_weights = matrix(rep(1, Q * Q), nrow = Q)))
+  model_sparse <- normal_block(Y, X, C, sparsity = 10, zero_inflation = TRUE, control = normal_block_param(sparsity_weights = matrix(rep(1, Q * Q), nrow = Q)))
   expect_lt(sum(diag(model_sparse$model_par$omegaQ)), 0.5)
 })

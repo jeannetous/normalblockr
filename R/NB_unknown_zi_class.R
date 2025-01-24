@@ -26,10 +26,10 @@ NB_unknown_zi <- R6::R6Class(
     nb_blocks = NULL,
     #' @field penalty penalty on the network density for sparsity
     penalty = NULL,
-    #' @field models list of NB_fixed_Q_zi models corresponding to each nb_block value
-    models = NULL,
     #' @field verbose say whether information should be given about the optimization
     verbose = NULL,
+    #' @field models list of NB_fixed_Q_zi models corresponding to each nb_block value
+    models = NULL,
 
     #' @description Create a new [`NB_unknown_zi`] object.
     #' @param Y the matrix of responses (called Y in the model).
@@ -38,8 +38,8 @@ NB_unknown_zi <- R6::R6Class(
     #' @param threshold loglikelihood threshold under which optimization stops
     #' @param control structured list of more specific parameters
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, nb_blocks, penalty = 0, verbose = TRUE,
-                          noise_cov = "diagonal", control = NB_param()) {
+    initialize = function(Y, X, nb_blocks, penalty = 0,
+                          noise_cov = "diagonal", control = normal_block_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }
@@ -55,7 +55,7 @@ NB_unknown_zi <- R6::R6Class(
       stopifnot(all.equal(length(penalty), length(nb_blocks)))
       self$penalty <- penalty
       self$nb_blocks <- nb_blocks
-      self$verbose   <- verbose
+      self$verbose   <- control$verbose
 
       # instantiates an NB_fixed_Q_zi model for each Q in nb_blocks
       self$models <- map2(order(self$nb_blocks), self$penalty[order(self$nb_blocks)],
@@ -73,11 +73,11 @@ NB_unknown_zi <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
-      self$models <- furrr::future_map(self$models, function(model) {
+      self$models <- map(self$models, function(model) {
         if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
         model$optimize(niter, threshold)
         model
-      }, .options = furrr_options(seed=TRUE))
+      })
     },
 
     #' @description returns the NB_fixed_Q_zi model corresponding to given Q
@@ -134,9 +134,8 @@ NB_unknown_zi <- R6::R6Class(
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return(paste0("sparse zero-inflated", self$noise_cov,
-                    " normal-block model with unknown Q"))}
+    who_am_I  = function(value){
+      paste("sparse zero-inflated", self$noise_cov, "normal-block model with unknown Q")
+    }
   )
-
 )

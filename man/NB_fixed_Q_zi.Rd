@@ -62,7 +62,7 @@ R6 class for zero-inflated normal-block model with fixed Q
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q_zi$new(Y, X, Q, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

@@ -47,7 +47,7 @@ R6 class for normal-block model with fixed groups
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(Y, X, C, penalty = 0, control = NB_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(Y, X, C, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

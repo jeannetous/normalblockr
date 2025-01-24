@@ -2,7 +2,6 @@
 ##  NB_fixed_Q_zi ######################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 #' R6 class for zero-inflated normal-block model with fixed Q
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
@@ -28,7 +27,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, penalty = 0, control = NB_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
       if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       self$fixed_tau <- control$fixed_tau
       clustering_init <- control$clustering_init
@@ -278,11 +277,11 @@ NB_fixed_Q_zi_diagonal <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return("zero-inflated diagonal normal-block model with fixed Q (unknown blocks)... \n")
-    })
+    who_am_I  = function(value){
+      paste("zero-inflated diagonal normal-block model with", self$Q, "(unknown) blocks")
+    }
   )
-
+)
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ##  NB_fixed_Q_zi_spherical ############################
@@ -363,7 +362,8 @@ NB_fixed_Q_zi_spherical <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return("zero-inflated spherical normal-block model with fixed Q (unknown blocks)")
-    }))
-
+    who_am_I  = function(value){
+      "zero-inflated spherical normal-block model with fixed Q (unknown blocks)"
+    }
+  )
+)

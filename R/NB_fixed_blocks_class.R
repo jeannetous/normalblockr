@@ -45,7 +45,7 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, penalty = 0, control = NB_param()) {
+    initialize = function(Y, X, C, penalty = 0, control = normal_block_param()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(Y, X, ncol(C), penalty, control = control)
@@ -136,9 +136,7 @@ NB_fixed_blocks_diagonal <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return("diagonal normal-block model with fixed blocks... \n")
-    }
+    who_am_I = function(value) {"diagonal normal-block model with fixed blocks"}
   )
 )
 
@@ -184,8 +182,6 @@ NB_fixed_blocks_spherical <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return("spherical normal-block model with fixed blocks")
-    }
+    who_am_I = function(value) {"spherical normal-block model with fixed blocks"}
   )
 )

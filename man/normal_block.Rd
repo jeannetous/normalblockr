@@ -13,8 +13,7 @@ normal_block(
   noise_cov = c("diagonal", "spherical"),
   niter = 100,
   threshold = 1e-04,
-  verbose = TRUE,
-  control = NULL
+  control = normal_block_param()
 )
 }
 \arguments{
@@ -36,10 +35,8 @@ OR float to run model with a single penalty value}
 
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
 
-\item{verbose}{telling if information should be printed during optimization}
-
 \item{control}{a list-like structure for detailed control on parameters should be
-generated with either NB_param() or NB_sparse_param() for collections of sparse models}
+generated with normal_block_param() for collections of sparse models}
 
 \item{optimize}{boolean stating whether the model should just be instantiated (F) or optimized too (T)}
 }

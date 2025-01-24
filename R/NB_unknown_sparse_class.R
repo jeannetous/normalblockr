@@ -31,14 +31,14 @@ NB_unknown_sparse <- R6::R6Class(
     noise_cov = NULL,
     #' @field n_penalties number of penalty values
     n_penalties = NULL,
+    #' @field verbose say whether information should be given about the optimization
+    verbose = NULL,
     #' @field min_ratio ratio between min and max penalty to be tested
     min_ratio = NULL,
     #' @field sparsity_weights weights with which penalty should be applied
     sparsity_weights = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
-    #' @field verbose say whether information should be given about the optimization
-    verbose = NULL,
     #' @field latest_niter latest niter value used for optimization
     latest_niter = NULL,
     #' @field latest_threshold latest threshold value used for optimization
@@ -53,8 +53,7 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
     initialize = function(Y, X, blocks, zero_inflation = F,
-                          noise_cov = c("diagonal","spherical"), control = NB_sparse_param(),
-                          verbose=TRUE) {
+                          noise_cov = c("diagonal","spherical"), control = normal_block_param()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y and X must be matrices.")
       }
@@ -70,13 +69,13 @@ NB_unknown_sparse <- R6::R6Class(
       self$n_penalties      <- control$n_penalties
       self$min_ratio        <- control$min_ratio
       self$sparsity_weights <- control$sparsity_weights
-      self$verbose <- verbose
+      self$verbose          <- control$verbose
       self$models <- map(self$blocks[order(self$blocks)],
                          function(Q) {
                            model <- NB_sparse$new(self$Y, self$X, Q,
                                                   zero_inflation = self$zero_inflation,
                                                   noise_cov = self$noise_cov,
-                                                  control = control, verbose = F)
+                                                  control = control)
                          })
     },
 
@@ -85,17 +84,15 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param niter number of iterations in model optimization
     #' @param threshold loglikelihood threshold under which optimization stops
     optimize = function(niter = 100, threshold = 1e-4) {
-
       self$latest_niter     <- niter
       self$latest_threshold <- threshold
-
-      self$models <- furrr::future_map(seq_along(self$models), function(m) {
+      self$models <- map(seq_along(self$models), function(m) {
         model <- self$models[[m]]
         if(self$verbose) cat("\t Q =", self$models[[m]]$Q, "          \r")
         flush.console()
         model$optimize(niter, threshold)
         model
-      }, .options = furrr_options(seed=TRUE))
+      })
     },
 
     #' @description returns a collection of NB_unknown models corresponding to given Q
@@ -171,9 +168,9 @@ NB_unknown_sparse <- R6::R6Class(
         dplyr::summarize(penalties = paste(round(penalty, 2), collapse = ", "))
     },
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){
-      return(paste0("sparse ", ifelse(self$zero_inflation, " zero-inflated ",  ""),
-                    self$noise_cov, " normal-block model with unknown Q"))
+    who_am_I  = function(value){
+      paste("sparse", ifelse(self$zero_inflation, "zero-inflated ",  ""),
+                    self$noise_cov, "normal-block model with unknown Q")
     }
 
   )

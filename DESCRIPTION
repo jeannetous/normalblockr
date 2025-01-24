@@ -21,6 +21,7 @@ Imports:
     MASS,
     nloptr (>= 2.0.3),
     pdfCluster,
+    dplyr,
     purrr,
     furrr,
     R6,

@@ -19,9 +19,9 @@ R6 generic class for normal-block models
 
 \item{\code{penalty}}{penalty on the network density}
 
-\item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
-
 \item{\code{verbose}}{say whether information should be given about the optimization}
+
+\item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 }
 \if{html}{\out{</div>}}
 }
@@ -62,9 +62,8 @@ Create a new [`NB_unknown`] object.
   X,
   nb_blocks,
   penalty = 0,
-  verbose = TRUE,
   noise_cov = "diagonal",
-  control = NB_param()
+  control = normal_block_param()
 )}\if{html}{\out{</div>}}
 }
 
@@ -79,12 +78,10 @@ Create a new [`NB_unknown`] object.
 
 \item{\code{penalty}}{on the network density for sparsity}
 
-\item{\code{verbose}}{telling if information should be printed during optimization}
-
 \item{\code{noise_cov}}{"diagonal" or "spherical" - tells if the individual variance
 should be diagonal or spherical}
 
-\item{\code{control}}{structured list of more specific parameters, to generate with NB_param()}
+\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_param()}
 }
 \if{html}{\out{</div>}}
 }

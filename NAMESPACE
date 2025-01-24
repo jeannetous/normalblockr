@@ -2,9 +2,9 @@
 
 export(MVEM)
 export(NB)
-export(NB_param)
 export(get_model)
 export(normal_block)
+export(normal_block_param)
 export(normal_zi)
 import(MASS)
 import(Matrix)

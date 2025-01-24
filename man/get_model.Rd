@@ -26,7 +26,7 @@ OR float to run model with a single penalty value}
 \item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
 
 \item{control}{a list-like structure for detailed control on parameters should be
-generated with either NB_param() or NB_sparse_param() for collections of sparse models
+generated with normal_block_param() for collections of sparse models
 #' @examples
 myModel <- get_model(blocks = 2)}
 }
