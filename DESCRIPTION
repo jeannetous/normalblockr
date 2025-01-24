@@ -18,15 +18,15 @@ Imports:
     methods,
     glassoFast,
     Matrix,
-    MASS,
     nloptr (>= 2.0.3),
     pdfCluster,
     dplyr,
+    tidyr,
     purrr,
-    furrr,
     R6,
     ggplot2
 RoxygenNote: 7.3.2
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    MASS
 Config/testthat/edition: 3

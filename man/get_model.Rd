@@ -15,6 +15,12 @@ get_model(
 )
 }
 \arguments{
+\item{Y}{response matrix}
+
+\item{X}{design matrix
+#' @examples
+myModel <- get_model(blocks = 2)}
+
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
 
@@ -26,9 +32,7 @@ OR float to run model with a single penalty value}
 \item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
 
 \item{control}{a list-like structure for detailed control on parameters should be
-generated with normal_block_param() for collections of sparse models
-#' @examples
-myModel <- get_model(blocks = 2)}
+generated with normal_block_param() for collections of sparse models}
 }
 \description{
 Creates appropriate new normal block model depending on the parametrization

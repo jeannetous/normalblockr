@@ -2,6 +2,6 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @import MASS methods R6 glassoFast nloptr purrr Matrix furrr
+#' @import methods R6 glassoFast nloptr purrr Matrix ggplot2 dplyr
 ## usethis namespace: end
 NULL

@@ -37,8 +37,6 @@ OR float to run model with a single penalty value}
 
 \item{control}{a list-like structure for detailed control on parameters should be
 generated with normal_block_param() for collections of sparse models}
-
-\item{optimize}{boolean stating whether the model should just be instantiated (F) or optimized too (T)}
 }
 \value{
 an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]

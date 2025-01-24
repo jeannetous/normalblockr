@@ -181,6 +181,7 @@ NB_sparse <- R6::R6Class(
     #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
     #' @param criteria vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.
     #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
+    #' @importFrom tidyr gather
     #' @return a [`ggplot`] graph
     plot = function(criteria = c("loglik", "BIC", "AIC", "ICL"), log.x = TRUE) {
       vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$penalty)

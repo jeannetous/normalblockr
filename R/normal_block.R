@@ -7,6 +7,8 @@
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with normal_block_param() for collections of sparse models
+#' @param Y response matrix
+#' @param X design matrix
 #' #' @examples
 #' myModel <- get_model(blocks = 2)
 #' @export
@@ -58,7 +60,6 @@ get_model <- function(Y, X, blocks, sparsity = FALSE,
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with normal_block_param() for collections of sparse models
-#' @param optimize boolean stating whether the model should just be instantiated (F) or optimized too (T)
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
 #' data("example_data")
