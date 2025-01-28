@@ -82,7 +82,6 @@ NB_sparse <- R6::R6Class(
       self$sparsity_weights <- control$sparsity_weights
       if(!is.null(self$penalties)){
         self$n_penalties <- length(self$penalties)
-        self$penalties   <- self$penalties[order(self$penalties)]
       }else{
         init_model <- get_model(self$Y, self$X, self$blocks,
                            zero_inflation = self$zero_inflation,
@@ -92,11 +91,11 @@ NB_sparse <- R6::R6Class(
         diag_pen  <- max(diag(self$sparsity_weights)) > 0
         weights   <- self$sparsity_weights ; weights[weights == 0] <- 1
         max_pen   <- max(abs((sigmaQ / weights)[upper.tri(sigmaQ, diag = diag_pen)]))
-        penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
-        penalties <- c(1e-7, penalties)
-        self$penalties <- penalties[order(penalties)]
+        self$penalties <- 10^seq(log10(max_pen), log10(max_pen * self$min_ratio), len = self$n_penalties)
+        #        penalties <- c(1e-7, penalties)
       }
-      self$models <- map(self$penalties[order(self$penalties)],
+      self$penalties <- sort(self$penalties, decreasing = TRUE)
+      self$models <- map(self$penalties,
                          function(penalty) {
                            model <- get_model(self$Y, self$X, self$blocks,
                                               sparsity = penalty,
@@ -119,7 +118,7 @@ NB_sparse <- R6::R6Class(
       self$latest_threshold <- threshold
 
       self$models <- lapply(seq_along(self$models), function(m) {
-
+        browser()
         model <- self$models[[m]]
         if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
