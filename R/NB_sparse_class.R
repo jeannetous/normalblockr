@@ -118,17 +118,16 @@ NB_sparse <- R6::R6Class(
       self$latest_threshold <- threshold
 
       self$models <- lapply(seq_along(self$models), function(m) {
-        browser()
         model <- self$models[[m]]
         if(self$verbose) cat("\t penalty =", self$models[[m]]$penalty, "          \r")
         flush.console()
         model$optimize(niter, threshold)
-        if(m < self$n_penalties){
-          arg_names    <- names(formals(self$models[[m + 1]]$update))
-          params       <- c(model$model_par, model$var_par, model$posterior_par)
-          matched_args <- params[names(params) %in% arg_names]
-          do.call( self$models[[m + 1]]$update, matched_args)
-        }
+        # if(m < self$n_penalties){
+        #   arg_names    <- names(formals(self$models[[m + 1]]$update))
+        #   params       <- c(model$model_par, model$var_par, model$posterior_par)
+        #   matched_args <- params[names(params) %in% arg_names]
+        #   do.call( self$models[[m + 1]]$update, matched_args)
+        # }
         model
       })
     },
