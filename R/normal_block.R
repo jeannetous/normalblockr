@@ -120,7 +120,7 @@ normal_block_param <- function(
     sparsity_weights = NULL,
     penalties        = NULL,
     n_penalties      = 30,
-    min_ratio        = 0.05,
+    min_ratio        = 0.01,
     fixed_tau        = FALSE,
     clustering_init  = NULL,
     verbose          = TRUE) {

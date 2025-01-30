@@ -177,11 +177,11 @@ NB_sparse <- R6::R6Class(
     },
 
     #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
-    #' @param criteria vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.
+    #' @param criteria vector of characters. The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults to all of them.
     #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] graph
-    plot = function(criteria = c("loglik", "BIC", "AIC", "ICL"), log.x = TRUE) {
+    plot = function(criteria = c("deviance", "BIC", "AIC", "ICL"), log.x = TRUE) {
       vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$penalty)
       stopifnot(!anyNA(self$criteria[criteria]))
 
@@ -189,7 +189,6 @@ NB_sparse <- R6::R6Class(
         dplyr::select(dplyr::all_of(c("penalty", criteria))) %>%
         tidyr::gather(key = "criterion", value = "value", -penalty) %>%
         dplyr::group_by(criterion)
-      if("loglik" %in% criteria){dplot[dplot$criterion == "loglik",]$value <- - dplot[dplot$criterion == "loglik",]$value}
       p <- ggplot2::ggplot(dplot, ggplot2::aes(x = penalty, y = value, group = criterion, colour = criterion)) +
         ggplot2::geom_line() + ggplot2::geom_point() +
         ggplot2::ggtitle(label    = "Model selection criteria",

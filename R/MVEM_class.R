@@ -124,7 +124,7 @@ MVEM <- R6::R6Class(
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       data.frame(nb_param = self$nb_param, loglik = self$loglik,
-                 deviance = self$deviance, BIC = self$BIC,AIC = self$AIC, ICL = self$ICL)
+                 deviance = self$deviance, BIC = self$BIC, AIC = self$AIC, ICL = self$ICL)
     },
     #' @field objective evolution of the objective function during (V)EM algorithm
     objective = function() private$ll_list[-1]
