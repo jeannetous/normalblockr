@@ -59,7 +59,6 @@ NB <- R6::R6Class(
     #' @description Extract interaction network in the latent space
     #' @param type edge value in the network. Can be "support" (binary edges), "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species)
     #' @importFrom Matrix Matrix
-    #' @importFrom glasso glasso
     #' @return a square matrix of size `NB_fixed_blocks_class$Q`
     latent_network = function(type = c("partial_cor", "support", "precision")) {
       net <- switch(

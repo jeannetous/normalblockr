@@ -181,13 +181,13 @@ a [`NB_fixed_Q`] object
 \subsection{Method \code{plot()}}{
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_sparse$plot(criteria = c("loglik", "BIC", "AIC", "ICL"), log.x = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_sparse$plot(criteria = c("deviance", "BIC", "AIC", "ICL"), log.x = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criteria}}{vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.}
+\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults to all of them.}
 
 \item{\code{log.x}}{logical: should the x-axis be represented in log-scale? Default is `TRUE`.}
 }
