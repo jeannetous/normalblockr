@@ -6,11 +6,9 @@
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control a list-like structure for detailed control on parameters should be
-#' generated with normal_block_param() for collections of sparse models
+#' generated with normal_block_control() for collections of sparse models
 #' @param Y response matrix
 #' @param X design matrix
-#' #' @examples
-#' myModel <- get_model(blocks = 2)
 #' @export
 get_model <- function(Y, X, blocks, sparsity = FALSE,
                       zero_inflation = FALSE,
@@ -34,7 +32,7 @@ get_model <- function(Y, X, blocks, sparsity = FALSE,
     }
   }else{
     myClass <- eval(str2lang(paste0("NB", ifelse(block_class == "unknown", "_unknown", ""), sparse_class)))
-    if(is.null(control)){control <- normal_block_param()}
+    if(is.null(control)){control <- normal_block_control()}
     model   <- myClass$new(Y, X, blocks = blocks,
                            zero_inflation = zero_inflation,
                            noise_cov = noise_cov,
@@ -59,13 +57,11 @@ get_model <- function(Y, X, blocks, sparsity = FALSE,
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param control a list-like structure for detailed control on parameters should be
-#' generated with normal_block_param() for collections of sparse models
+#' generated with normal_block_control() for collections of sparse models
 #' @return an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 #' @examples
-#' data("example_data")
-#' Y <- example_data$Y
-#' X <- example_data$X
-#' my_normal_block <- normal_block(Y, X, blocks = 1:6)
+#' data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
+#' my_normal_block <- normal_block(data$Y, data$X, blocks = 1:6)
 #' \dontrun{
 #' my_normal_block$plot_criterion("loglik")
 #' my_normal_block$plot_criterion("BIC")
@@ -79,7 +75,7 @@ normal_block <- function(Y, X, blocks,
                          zero_inflation = FALSE,
                          noise_cov = c("diagonal","spherical"),
                          niter = 100, threshold = 1e-4,
-                         control = normal_block_param()) {
+                         control = normal_block_control()) {
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
@@ -116,7 +112,7 @@ normal_block <- function(Y, X, blocks,
 #' useful for calls to fixed_Q models in stability_selection
 #' Generates control parameters for NB sparse models
 #' @export
-normal_block_param <- function(
+normal_block_control <- function(
     sparsity_weights = NULL,
     penalties        = NULL,
     n_penalties      = 30,

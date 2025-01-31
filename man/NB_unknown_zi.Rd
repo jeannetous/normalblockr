@@ -63,7 +63,7 @@ Create a new [`NB_unknown_zi`] object.
   nb_blocks,
   penalty = 0,
   noise_cov = "diagonal",
-  control = normal_block_param()
+  control = normal_block_control()
 )}\if{html}{\out{</div>}}
 }
 

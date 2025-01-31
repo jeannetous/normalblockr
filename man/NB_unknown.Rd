@@ -63,7 +63,7 @@ Create a new [`NB_unknown`] object.
   nb_blocks,
   penalty = 0,
   noise_cov = "diagonal",
-  control = normal_block_param()
+  control = normal_block_control()
 )}\if{html}{\out{</div>}}
 }
 
@@ -81,7 +81,7 @@ Create a new [`NB_unknown`] object.
 \item{\code{noise_cov}}{"diagonal" or "spherical" - tells if the individual variance
 should be diagonal or spherical}
 
-\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_param()}
+\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_control()}
 }
 \if{html}{\out{</div>}}
 }

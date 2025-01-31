@@ -27,7 +27,7 @@ NB_fixed_Q_zi <- R6::R6Class(
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_control()) {
       if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       self$fixed_tau <- control$fixed_tau
       clustering_init <- control$clustering_init

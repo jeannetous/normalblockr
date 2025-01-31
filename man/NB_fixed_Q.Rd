@@ -60,7 +60,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(Y, X, Q, penalty = 0, control = normal_block_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

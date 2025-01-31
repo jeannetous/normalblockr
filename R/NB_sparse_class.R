@@ -101,7 +101,7 @@ NB_sparse <- R6::R6Class(
                                               sparsity = penalty,
                                               zero_inflation = self$zero_inflation,
                                               noise_cov = self$noise_cov,
-                                              control = normal_block_param(
+                                              control = normal_block_control(
                                                 sparsity_weights = self$sparsity_weights,
                                                 fixed_tau        = control$fixed_tau,
                                                 clustering_init  = control$clustering_init))
@@ -232,7 +232,7 @@ NB_sparse <- R6::R6Class(
                           sparsity = T,
                           zero_inflation = self$zero_inflation,
                           noise_cov = self$noise_cov,
-                          control = normal_block_param(sparsity_weights = self$sparsity_weights,
+                          control = normal_block_control(sparsity_weights = self$sparsity_weights,
                                                     penalties = self$penalties,
                                                     fixed_tau = TRUE,
                                                     clustering_init = clustering_init,

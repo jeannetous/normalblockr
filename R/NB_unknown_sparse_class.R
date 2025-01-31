@@ -53,7 +53,7 @@ NB_unknown_sparse <- R6::R6Class(
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`nb_fixed_blocks_sparse`] object
     initialize = function(Y, X, blocks, zero_inflation = F,
-                          noise_cov = c("diagonal","spherical"), control = normal_block_param()) {
+                          noise_cov = c("diagonal","spherical"), control = normal_block_control()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y and X must be matrices.")
       }

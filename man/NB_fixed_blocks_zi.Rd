@@ -60,7 +60,7 @@ R6 class for normal-block model with fixed groups
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks_zi`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_zi$new(Y, X, C, penalty = 0, control = normal_block_param())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_zi$new(Y, X, C, penalty = 0, control = normal_block_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -74,7 +74,7 @@ Create a new [`NB_fixed_blocks_zi`] object.
 
 \item{\code{penalty}}{penalty to apply to covariance matrix for sparsity.}
 
-\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_param()}
+\item{\code{control}}{structured list of more specific parameters, to generate with normal_block_control()}
 }
 \if{html}{\out{</div>}}
 }

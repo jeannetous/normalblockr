@@ -45,7 +45,7 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, penalty = 0, control = normal_block_param()) {
+    initialize = function(Y, X, C, penalty = 0, control = normal_block_control()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(Y, X, ncol(C), penalty, control = control)

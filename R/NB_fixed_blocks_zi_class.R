@@ -8,7 +8,7 @@
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
-#' @param control structured list of more specific parameters, to generate with normal_block_param()
+#' @param control structured list of more specific parameters, to generate with normal_block_control()
 NB_fixed_blocks_zi <- R6::R6Class(
   classname = "NB_fixed_blocks_zi",
   inherit = NB,
@@ -27,7 +27,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
     #' @param C group matrix C_jq = 1 if species j belongs to group q
     #' @param penalty penalty to apply to covariance matrix for sparsity.
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(Y, X, C, penalty = 0, control = normal_block_param()) {
+    initialize = function(Y, X, C, penalty = 0, control = normal_block_control()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(Y = Y, X = X, ncol(C), penalty = penalty, control = control)
@@ -185,7 +185,7 @@ NB_fixed_blocks_zi <- R6::R6Class(
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
-#' @param control structured list of more specific parameters, to generate with normal_block_param()
+#' @param control structured list of more specific parameters, to generate with normal_block_control()
 NB_fixed_blocks_zi_diagonal <- R6::R6Class(
   classname = "NB_fixed_blocks_zi_diagonal",
   inherit = NB_fixed_blocks_zi,
@@ -250,7 +250,7 @@ NB_fixed_blocks_zi_diagonal <- R6::R6Class(
 #' @param X design matrix (called X in the model).
 #' @param C group matrix C_jq = 1 if species j belongs to group q
 #' @param penalty to add on blocks precision matrix for sparsity
-#' @param control structured list of more specific parameters, to generate with normal_block_param()
+#' @param control structured list of more specific parameters, to generate with normal_block_control()
 NB_fixed_blocks_zi_spherical <- R6::R6Class(
   classname = "NB_fixed_blocks_zi_spherical",
   inherit = NB_fixed_blocks_zi,

@@ -26,7 +26,7 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_control()) {
       if (Q > ncol(Y)) stop("There cannot be more blocks than there are entities to cluster.")
       super$initialize(Y, X, Q, penalty, control)
       self$fixed_tau <- control$fixed_tau

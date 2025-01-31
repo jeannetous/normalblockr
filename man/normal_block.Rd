@@ -13,7 +13,7 @@ normal_block(
   noise_cov = c("diagonal", "spherical"),
   niter = 100,
   threshold = 1e-04,
-  control = normal_block_param()
+  control = normal_block_control()
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ OR float to run model with a single penalty value}
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
 
 \item{control}{a list-like structure for detailed control on parameters should be
-generated with normal_block_param() for collections of sparse models}
+generated with normal_block_control() for collections of sparse models}
 }
 \value{
 an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
@@ -45,10 +45,8 @@ an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
 Fit a normal-block model with a variational algorithm
 }
 \examples{
-data("example_data")
-Y <- example_data$Y
-X <- example_data$X
-my_normal_block <- normal_block(Y, X, blocks = 1:6)
+data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
+my_normal_block <- normal_block(data$Y, data$X, blocks = 1:6)
 \dontrun{
 my_normal_block$plot_criterion("loglik")
 my_normal_block$plot_criterion("BIC")

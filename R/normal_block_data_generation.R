@@ -148,7 +148,7 @@ generate_normal_block_data <-
            range_D = c(0.5, 1.5)) {
 
   X <- matrix(runif(n*d, min=range_X[1], max = range_X[2]), n, d)
-  param <- generate_normal_block_param(X, p, Q, kappa, omega_structure, alpha, SNR)
+  param <- generate_normal_block_control(X, p, Q, kappa, omega_structure, alpha, SNR)
 
   W <- MASS::mvrnorm(n, mu = matrix(rep(0, Q), Q, 1), Sigma = param$Sigma)
 

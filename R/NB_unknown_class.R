@@ -11,7 +11,7 @@
 #' @param verbose telling if information should be printed during optimization
 #' @param noise_cov "diagonal" or "spherical" - tells if the individual variance
 #' should be diagonal or spherical
-#' @param control structured list of more specific parameters, to generate with normal_block_param()
+#' @param control structured list of more specific parameters, to generate with normal_block_control()
 NB_unknown <- R6::R6Class(
   classname = "NB_unknown",
 
@@ -39,7 +39,7 @@ NB_unknown <- R6::R6Class(
     #' @param penalty on the network density for sparsity
     #' @return A new [`nb_unknown] object
     initialize = function(Y, X, nb_blocks, penalty = 0,
-                          noise_cov = "diagonal", control = normal_block_param()) {
+                          noise_cov = "diagonal", control = normal_block_control()) {
       if (!is.matrix(Y) || !is.matrix(X)) {
         stop("Y, X and C must be matrices.")
       }

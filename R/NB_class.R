@@ -27,7 +27,7 @@ NB <- R6::R6Class(
     #' @param penalty penalty on the network density
     #' @param control structured list of parameters, including sparsity_weights
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, Q, penalty = 0, control = normal_block_param()) {
+    initialize = function(Y, X, Q, penalty = 0, control = normal_block_control()) {
       super$initialize(Y, X)
       self$Q <- Q
       private$omegaQ <- diag(1, Q, Q)
