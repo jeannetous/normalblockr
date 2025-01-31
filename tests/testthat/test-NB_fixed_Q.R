@@ -5,7 +5,7 @@
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
-C <- testdata$C
+C <- testdata$parameters$C
 Q <- ncol(C)
 
 ###############################################################################
@@ -18,8 +18,8 @@ test_that("NB_fixed_Q: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 36250)
-  expect_gt(model$loglik, -17690)
+  expect_lt(model$BIC, 5442)
+  expect_gt(model$loglik, -2616)
 })
 
 test_that("NB_fixed_Q: sparsity works", {

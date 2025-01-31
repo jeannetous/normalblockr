@@ -1,9 +1,9 @@
 ###############################################################################
 ###############################################################################
-testdata <- readRDS("testdata/testdata_ZInormal.RDS")
+testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y
 X <- testdata$X
-C <- testdata$C
+C <- testdata$parameters$C
 Q <- ncol(C)
 
 ###############################################################################
@@ -16,8 +16,8 @@ test_that("NB_fixed_Q_zi: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 100500)
-  expect_gt(model$loglik, -49050)
+  expect_lt(model$BIC, 5447)
+  expect_gt(model$loglik, -2575)
 })
 
 test_that("NB_fixed_Q_zi: sparsity works", {
