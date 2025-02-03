@@ -107,10 +107,10 @@ normal_block <- function(Y, X, blocks,
 #' @param n_penalties number of penalties to test.
 #' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
 #' @param fixed_tau whether tau should be fixed at clustering_init during optimization
-#' @param verbose telling if information should be printed during optimization
-#' @param clustering_init proposal of initial value for tau , for when fixed_tau = TRUE
 #' useful for calls to fixed_Q models in stability_selection
-#' Generates control parameters for NB sparse models
+#' @param verbose telling if information should be printed during optimization
+#' @param clustering_init proposal of initial value for clustering, when Q is
+#' unknown, can be a list with one clustering for each Q value
 #' @export
 normal_block_control <- function(
     sparsity_weights = NULL,

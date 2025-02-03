@@ -201,6 +201,7 @@ NB_sparse <- R6::R6Class(
     ## Stability -------------------------
     #' @description Compute the stability path by stability selection
     #' @param subsamples a list of vectors describing the subsamples. The number of vectors (or list length) determines the number of subsamples used in the stability selection. Automatically set to 20 subsamples with size `10*sqrt(n)` if `n >= 144` and `0.8*n` otherwise following Liu et al. (2010) recommendations.
+    #' @param n_subsamples number of subsamples to create if the subsamples are not given
     stability_selection = function(subsamples = NULL, n_subsamples = 10) {
 
       ## select default subsamples according to Liu et al. (2010) recommendations.
