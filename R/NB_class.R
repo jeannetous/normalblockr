@@ -187,7 +187,9 @@ NB <- R6::R6Class(
       res$penalty <- self$penalty
       res$EBIC    <- self$EBIC
       res
-    }
+    },
+    #' @field elements_per_cluster given as the list of elements contained in each cluster
+    elements_per_cluster = function() split(names(self$clustering), self$clustering)
   )
 )
 

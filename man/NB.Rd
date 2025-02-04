@@ -36,6 +36,8 @@ R6 generic class for normal-block models
 \item{\code{EBIC}}{variational lower bound of the EBIC}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
+
+\item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
 }
 \if{html}{\out{</div>}}
 }
