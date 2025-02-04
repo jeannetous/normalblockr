@@ -25,10 +25,11 @@ R6 class for normal-block model with fixed groups, D diagonal
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB_fixed_blocks_zi" data-id="initialize"><a href='../../normalblockr/html/NB_fixed_blocks_zi.html#method-NB_fixed_blocks_zi-initialize'><code>normalblockr::NB_fixed_blocks_zi$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB_fixed_blocks_zi" data-id="optimize"><a href='../../normalblockr/html/NB_fixed_blocks_zi.html#method-NB_fixed_blocks_zi-optimize'><code>normalblockr::NB_fixed_blocks_zi$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB_fixed_blocks_zi" data-id="update"><a href='../../normalblockr/html/NB_fixed_blocks_zi.html#method-NB_fixed_blocks_zi-update'><code>normalblockr::NB_fixed_blocks_zi$update()</code></a></span></li>

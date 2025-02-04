@@ -45,6 +45,7 @@ R6 generic class for normal-block models
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-update}{\code{NB$update()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
+\item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
@@ -128,6 +129,43 @@ Extract interaction network in the latent space
 }
 \subsection{Returns}{
 a square matrix of size `NB_fixed_blocks_class$Q`
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-plot_network"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-plot_network}{}}}
+\subsection{Method \code{plot_network()}}{
+plot the latent network.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$plot_network(
+  type = c("partial_cor", "support"),
+  output = c("igraph", "corrplot"),
+  edge.color = c("#F8766D", "#00BFC4"),
+  remove.isolated = FALSE,
+  node.labels = NULL,
+  layout = igraph::layout_in_circle,
+  plot = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{edge value in the network. Either "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species).}
+
+\item{\code{output}}{Output type. Either `igraph` (for the network) or `corrplot` (for the adjacency matrix)}
+
+\item{\code{edge.color}}{Length 2 color vector. Color for positive/negative edges. Default is `c("#F8766D", "#00BFC4")`. Only relevant for igraph output.}
+
+\item{\code{remove.isolated}}{if `TRUE`, isolated node are remove before plotting. Only relevant for igraph output.}
+
+\item{\code{node.labels}}{vector of character. The labels of the nodes. The default will use the column names ot the response matrix.}
+
+\item{\code{layout}}{an optional igraph layout. Only relevant for igraph output.}
+
+\item{\code{plot}}{logical. Should the final network be displayed or only sent back to the user. Default is `TRUE`.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
