@@ -140,7 +140,7 @@ NB_sparse <- R6::R6Class(
         penalty <-  self$penalties[[which.min(abs(self$penalties - penalty))]]
         cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties \n"))
       }
-      penalty_rank <- which(sort(self$penalties) == penalty)
+      penalty_rank <- which(sort(self$penalties, decreasing = TRUE) == penalty)
       return(self$models[[penalty_rank]])
     },
 
