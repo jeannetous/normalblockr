@@ -135,6 +135,28 @@ NB_unknown_sparse <- R6::R6Class(
       }
       model <- self$get_model(best_Q, best_pen)$clone()
       model
+    },
+
+    #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
+    #' @param criteria vector of characters. The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults deviance.
+    #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
+    #' @importFrom tidyr gather
+    #' @return a [`ggplot`] heatmap
+    plot = function(criterion = c("deviance", "BIC", "AIC", "ICL")) {
+      criterion   <- match.arg(criterion)
+      n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
+      df <- self$criteria %>% mutate(pen_binned = cut(penalty, breaks = n_intervals)) %>%
+            group_by(pen_binned, Q) %>% summarize(avg_crit = mean(.data[[criterion]]), .groups = "drop")
+      p  <- ggplot2::ggplot(df, aes(x = pen_binned, y = Q, fill = avg_crit)) +
+            ggplot2::geom_tile() +
+            ggplot2::scale_fill_viridis_c() +
+            ggplot2::theme_minimal() +
+            ggplot2::ggtitle(label    = criterion,
+                             subtitle = "Lower is better" ) +
+            ggplot2::labs(x = "Penalties (Binned)", y = "Q", fill = paste0("Average ", criterion),
+                 title = criterion) +
+                 theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      p
     }
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
