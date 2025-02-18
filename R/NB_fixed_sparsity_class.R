@@ -151,6 +151,39 @@ NB_fixed_sparsity <- R6::R6Class(
         Sigma_Q[is.na(Sigma_Q)] <- 0
       }
       Sigma_Q
+    },
+
+    heuristic_loglik = function(B, OmegaQ){
+      Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
+      log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
+      R <- self$data$Y - self$data$X %*% B
+      J <- -.5 * self$p * log(2 * pi)
+      J <- J + .5 * self$n  * log_det_Sigma_tilde
+      J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))
+      J
+    },
+
+    get_clustering = function(Sigma = NA, R = NA){
+      if(self$clustering_method ==  "cluster_sigma"){
+        C <- private$cluster_sigma(Sigma)
+      }else{
+        C <- private$cluster_residuals(R)
+      }
+    },
+
+    cluster_sigma = function(Sigma){
+      sink('/dev/null')
+      mySBM <- Sigma %>%
+        sbm::estimateSimpleSBM("gaussian",
+                               estimOption=list(verbosity=0, exploreMin=self$Q, verbosity=0, plot=FALSE, nbCores=1)
+        )
+      sink()
+      mySBM$setModel(self$Q)
+      return(as_indicator(mySBM$memberships))
+    },
+
+    cluster_residuals = function(R){
+      return(as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster))
     }
   ),
 

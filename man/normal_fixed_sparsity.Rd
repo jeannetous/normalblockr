@@ -15,7 +15,7 @@ R6 class for a generic normal_fixed_sparsity model
 
 \item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
 
-\item{\code{sparsity_weights}}{weights to use for network penalization}
+\item{\code{sparsity_weights}}{weights to add on variance matrix for penalization}
 
 \item{\code{inference_method}}{which method should be used to infer parameters}
 }
@@ -30,7 +30,7 @@ R6 class for a generic normal_fixed_sparsity model
 
 \item{\code{d}}{number of variables (dimensions in X)}
 
-\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
+\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
 
 \item{\code{loglik}}{(or its variational lower bound)}
 

@@ -79,8 +79,8 @@ Update a [`NB_fixed_blocks_fixed_sparsity`] object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks_fixed_sparsity$update(
   B = NA,
-  dm1 = NA,
   OmegaQ = NA,
+  dm1 = NA,
   gamma = NA,
   mu = NA,
   ll_list = NA
@@ -92,9 +92,9 @@ Update a [`NB_fixed_blocks_fixed_sparsity`] object
 \describe{
 \item{\code{B}}{regression matrix}
 
-\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
-
 \item{\code{OmegaQ}}{groups inverse variance matrix}
+
+\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
 
 \item{\code{gamma}}{variance of  posterior distribution of W}
 

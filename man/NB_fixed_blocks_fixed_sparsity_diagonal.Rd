@@ -14,6 +14,8 @@ R6 class for normal-block model with fixed clusters and diagonal residual covari
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{nb_param}}{number of parameters in the model}
+
 \item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}

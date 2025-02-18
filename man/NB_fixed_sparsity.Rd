@@ -89,7 +89,7 @@ A new [`NB_fixed_sparsity`] object
 \subsection{Method \code{update()}}{
 Update a [`NB_fixed_sparsity`] object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_sparsity$update(B = NA, dm1 = NA, OmegaQ = NA, ll_list = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_sparsity$update(B = NA, OmegaQ = NA, dm1 = NA, ll_list = NA)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -97,9 +97,9 @@ Update a [`NB_fixed_sparsity`] object
 \describe{
 \item{\code{B}}{regression matrix}
 
-\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
-
 \item{\code{OmegaQ}}{groups inverse variance matrix}
+
+\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
 
 \item{\code{ll_list}}{log-likelihood during optimization}
 }

@@ -12,7 +12,8 @@ normal_control(
   fixed_tau = FALSE,
   clustering_init = NULL,
   verbose = TRUE,
-  inference_method = c("integrated", "heuristic")
+  inference_method = c("integrated", "heuristic"),
+  clustering_method = c("residuals", "sigma")
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ unknown, can be a list with one clustering for each Q value}
 \item{verbose}{telling if information should be printed during optimization}
 
 \item{inference_method}{which inference approach should be used: integrated or heuristic}
+
+\item{clustering_method}{to use for clustering with heuristic inference method}
 }
 \description{
 normal_control

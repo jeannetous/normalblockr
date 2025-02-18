@@ -70,20 +70,15 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
           J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
         }
       }else{
-        Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
-        log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
-        M <- self$data$Y - self$data$X %*% B
-        J <- -.5 * self$n * self$p * log(2 * pi)
-        J <- J - .5 * self$n  * log_det_Sigma_tilde
-        J <- J - .5 * sum(diag((M %*% solve(Sigma_tilde) %*% t(M))))
+        J <- private$heuristic_loglik(B, OmegaQ)
       }
       J
     },
 
     get_heuristic_parameters = function(){
-      reg_res <- private$multivariate_normal_inference()
-      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
-      OmegaQ  <- private$get_Omega(SigmaQ)
+      reg_res   <- private$multivariate_normal_inference()
+      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
+      OmegaQ    <- private$get_Omega(SigmaQ)
       list(B = reg_res$B, OmegaQ = OmegaQ, dm1 = NA, gamma = NA, mu = NA)
     }
   ),
