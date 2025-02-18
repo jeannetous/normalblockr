@@ -1,53 +1,53 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS normal #######################################
+##  CLASS normal_fixed_sparsity ########################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
+#' R6 class for a generic normal_fixed_sparsity model
+#' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param penalty to apply on variance matrix when calling GLASSO
-normal <- R6::R6Class(
-  classname = "normal",
+#' @param sparsity_weights  weights to use for network penalization
+#' @param inference_method which method should be used to infer parameters
+normal_fixed_sparsity <- R6::R6Class(
+  classname = "normal_fixed_sparsity",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field Y the matrix of responses
-    Y  = NULL,
-    #' @field X the matrix of covariates
-    X = NULL,
+    #' @field data object of normal_data class, with responses and design matrix
+    data  = NULL,
     #' @field penalty to apply on variance matrix when calling GLASSO
     penalty = NULL,
+    #' @field sparsity_weights weights to use for network penalization
+    sparsity_weights = NULL,
     #' @field inference_method which method should be used to infer parameters
     inference_method = NULL,
 
     #' @description Create a new [`normal`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
+    #' @param data object of normal_data class, with responses and design matrix
     #' @param penalty penalty on the network density
-    #' @param control structured list of more specific parameters, to generate with NB_contro
+    #' @param control structured list of more specific parameters, to generate with normal_control
     #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X,  penalty = 0, control = NB_control()) {
-      if (!is.matrix(Y) || !is.matrix(X)) {
-        stop("Y and Xmust be matrices.")
-      }
-      if (nrow(Y) != nrow(X)) {
-        stop("Y and X must have the same number of rows")
-      }
-      self$Y <- Y
-      self$X <- X
+    initialize = function(data,  penalty = 0, control = normal_control()) {
+      self$data <- data
       self$penalty <- penalty
+      if (penalty > 0) {
+        sparsity_weights  <- control$sparsity_weights
+        if(is.null(sparsity_weights)){
+          sparsity_weights <- matrix(1, self$Q, self$Q)
+          diag(sparsity_weights) <- 0
+        }
+        self$sparsity_weights  <- sparsity_weights
+      }
       self$inference_method <- control$inference_method
-      private$XtXm1   <- solve(crossprod(X, X))
       private$ll_list <- 0
     },
 
     #' @description
     #' Update a [`normal`] object
     #' @param B regression matrix
-    #' @param Sigma  p-dimensional var-covar matrix
+    #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
-    update = function(B = NA) {
+    update = function(B = NA, ll_list = NA) {
       if (!anyNA(B))          private$B       <- B
       if (!anyNA(ll_list))    private$ll_list <- ll_list
     },
@@ -59,7 +59,7 @@ normal <- R6::R6Class(
     optimize = function(niter = 100, threshold = 1e-4) {
       if(self$inference_method == "integrated"){
         optim_out <- private$EM_optimize(niter, threshold)
-      }else{optim_out <- NA}#############################
+      }else{optim_out <- private$heuristic_optimize()}
       do.call(self$update, optim_out)
     },
 
@@ -80,9 +80,12 @@ normal <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
     B          = NA, # regression matrix
-    XtXm1      = NA, # inverse of XtX, useful for inference
     ll_list    = NA, # list of log-likelihoods or ELBOs
 
+    compute_loglik  = function() {},
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for integrated EM inference------------------
     EM_optimize = function(niter, threshold) {
       parameters <- do.call(private$EM_initialize, list())
       ll_list    <- do.call(private$compute_loglik, parameters)
@@ -94,10 +97,21 @@ normal <- R6::R6Class(
       }
       c(parameters, list(ll_list = ll_list))
     },
-
     EM_step = function() {},
     EM_initialize = function() {},
-    compute_loglik  = function() {}
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for heuristic inference----------------------
+    heuristic_optimize = function(){},
+
+    multivariate_normal_inference = function(){
+      B       <- self$data$XtXm1 %*% t(self$data$X) %*% self$data$Y
+      R       <- self$data$Y - self$data$X %*% B
+      Sigma   <- (t(R) %*% R) / self$n
+      list(B = B, R = R, Sigma = Sigma)
+    },
+
+    multivariate_normal_inference_zi = function(){}
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,11 +119,13 @@ normal <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples
-    n = function() nrow(self$Y),
+    n = function() nrow(self$data$Y),
     #' @field p number of responses per sample
-    p = function() ncol(self$Y),
+    p = function() ncol(self$data$Y),
     #' @field d number of variables (dimensions in X)
-    d = function() ncol(self$X),
+    d = function() ncol(self$data$X),
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
+    model_par = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
     #' @field loglik (or its variational lower bound)
     loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty_term,
     #' @field penalty_term (for cases when a penalty is placed on the precision matrix)

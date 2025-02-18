@@ -1,16 +1,15 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB #######################################
+##  CLASS NB_fixed_sparsity ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for a generic normal model
-#' @param Y the matrix of responses (called Y in the model).
-#' @param X design matrix (called X in the model).
+#' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param Q number of clusters
-#' @param control structured list of more specific parameters, to generate with NB_control
-NB <- R6::R6Class(
-  classname = "NB",
-  inherit   = normal,
+#' @param control structured list of more specific parameters, to generate with normal_control
+NB_fixed_sparsity <- R6::R6Class(
+  classname = "NB_fixed_sparsity",
+  inherit   = normal_fixed_sparsity,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -19,39 +18,28 @@ NB <- R6::R6Class(
     #' @field Q number of blocks
     Q = NULL,
 
-    #' @description Create a new [`normal`] object.
-    #' @param Y the matrix of responses (called Y in the model).
-    #' @param X design matrix (called X in the model).
+    #' @description Create a new [`NB_fixed_sparsity`] object.
+    #' @param data object of normal_data class, with responses and design matrix
     #' @param penalty penalty on the network density
-    #' @param control structured list of more specific parameters, to generate with NB_contro
-    #' @return A new [`nb_fixed`] object
-    initialize = function(Y, X, Q, penalty = 0,
-                          control = NB_control()) {
-      super$initialize(Y, X,  penalty)
+    #' @param control structured list of more specific parameters, to generate with normal_control
+    #' @return A new [`NB_fixed_sparsity`] object
+    initialize = function(data, Q, penalty = 0,
+                          control = normal_control()) {
+      super$initialize(data,  penalty, control)
       self$Q <- Q
-      self$inference_method <- control$inference_method
-      if (penalty > 0) {
-        sparsity_weights  <- control$sparsity_weights
-        if(is.null(sparsity_weights)){
-          sparsity_weights <- matrix(1, self$Q, self$Q)
-          diag(sparsity_weights) <- 0
-        }
-        self$sparsity_weights  <- sparsity_weights
-      }
     },
 
     #' @description
-    #' Update a [`NB`] object
+    #' Update a [`NB_fixed_sparsity`] object
     #' @param B regression matrix
     #' @param dm1 diagonal vector of species inverse variance matrix
-    #' @param omegaQ groups inverse variance matrix
+    #' @param OmegaQ groups inverse variance matrix
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB`] object
-    update = function(B = NA, dm1 = NA, omegaQ = NA, ll_list = NA) {
-      super$update(B=B)
+    update = function(B = NA, dm1 = NA, OmegaQ = NA, ll_list = NA) {
+      super$update(B = B, ll_list = ll_list)
       if (!anyNA(dm1))        private$dm1     <- dm1
-      if (!anyNA(ll_list))    private$ll_list <- ll_list
-      if (!anyNA(omegaQ))     private$omegaQ  <- omegaQ
+      if (!anyNA(OmegaQ))     private$OmegaQ  <- OmegaQ
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,10 +51,10 @@ NB <- R6::R6Class(
     latent_network = function(type = c("partial_cor", "support", "precision")) {
       net <- switch(
         match.arg(type),
-        "support"     = 1 * (private$omegaQ != 0 & !diag(TRUE, ncol(private$omegaQ))),
-        "precision"   = private$omegaQ,
+        "support"     = 1 * (private$OmegaQ != 0 & !diag(TRUE, ncol(private$OmegaQ))),
+        "precision"   = private$OmegaQ,
         "partial_cor" = {
-          tmp <- -private$omegaQ / tcrossprod(sqrt(diag(private$omegaQ))); diag(tmp) <- 1
+          tmp <- -private$OmegaQ / tcrossprod(sqrt(diag(private$OmegaQ))); diag(tmp) <- 1
           tmp
         }
       )
@@ -92,7 +80,7 @@ NB <- R6::R6Class(
                             node.labels     = NULL,
                             layout          = igraph::layout_in_circle,
                             plot = TRUE){
-      if(anyNA(private$omegaQ)) stop("NA in the precision matrix")
+      if(anyNA(private$OmegaQ)) stop("NA in the precision matrix")
 
       type   <- match.arg(type)
       output <- match.arg(output)
@@ -144,25 +132,35 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    C          = NA, # the matrix of species groups
     dm1        = NA, # diagonal of variables' inverse variance matrix
-    omegaQ     = NA, # precision matrix for clusters
+    OmegaQ     = NA, # precision matrix for clusters
 
-    get_omegaQ = function(sigmaQ) {
+    glasso_OmegaQ = function(SigmaQ) {
       if (self$penalty == 0) {
-        omegaQ <- solve(sigmaQ)
+        OmegaQ <- solve(SigmaQ)
       } else {
-        glasso_out <- glassoFast::glassoFast(sigmaQ, rho = self$penalty * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(SigmaQ, rho = self$penalty * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) {
           warning(
             "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
-            rcond(sigmaQ), "\n We send back the original matrix and its inverse (unpenalized)."
+            rcond(SigmaQ), "\n We send back the original matrix and its inverse (unpenalized)."
           )
-          omegaQ <- solve(sigmaQ)
+          OmegaQ <- solve(SigmaQ)
         } else {
-          omegaQ <- Matrix::symmpart(glasso_out$wi)
+          OmegaQ <- Matrix::symmpart(glasso_out$wi)
         }
       }
-      omegaQ
+      OmegaQ
+    },
+
+    heuristic_SigmaQ_from_Sigma = function(){
+      Sigma_Q <- (t(private$C) %*% Sigma %*% private$C) / outer(colSums(private$C), colSums(private$C))
+      if(anyNA(Sigma_Q)){
+        diag(Sigma_Q)[is.na(diag(Sigma_Q))] <- mean(diag(Sigma_Q)[!is.na(diag(Sigma_Q))])
+        Sigma_Q[is.na(Sigma_Q)] <- 0
+      }
+      Sigma_Q
     }
   ),
 
@@ -173,11 +171,15 @@ NB <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function() as.integer(super$nb_param + self$Q + self$n_edges),
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
-    n_edges  = function() sum(private$omegaQ[upper.tri(private$omegaQ, diag = FALSE)] != 0),
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
-    model_par = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
+    n_edges  = function() sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
+    model_par = function(){
+      par <- super$model_par
+      par$dm1 <- private$dm1 ; par$OmegaQ <- private$OmegaQ
+      par
+    },
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
-    penalty_term = function() self$penalty * sum(abs(self$sparsity_weights * private$omegaQ)),
+    penalty_term = function() self$penalty * sum(abs(self$sparsity_weights * private$OmegaQ)),
     #' @field EBIC variational lower bound of the EBIC
     EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters
@@ -189,6 +191,8 @@ NB <- R6::R6Class(
       res$EBIC    <- self$EBIC
       res
     },
+    #' @field clustering given as the list of elements contained in each cluster
+    clustering = function()  get_clusters(private$C),
     #' @field elements_per_cluster given as the list of elements contained in each cluster
     elements_per_cluster = function() split(names(self$clustering), self$clustering)
   )
