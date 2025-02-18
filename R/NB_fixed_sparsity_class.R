@@ -27,6 +27,14 @@ NB_fixed_sparsity <- R6::R6Class(
                           control = normal_control()) {
       super$initialize(data,  penalty, control)
       self$Q <- Q
+      if (penalty > 0) {
+        sparsity_weights  <- control$sparsity_weights
+        if(is.null(sparsity_weights)){
+          sparsity_weights <- matrix(1, self$Q, self$Q)
+          diag(sparsity_weights) <- 0
+        }
+        self$sparsity_weights  <- sparsity_weights
+      }
     },
 
     #' @description
@@ -36,7 +44,7 @@ NB_fixed_sparsity <- R6::R6Class(
     #' @param OmegaQ groups inverse variance matrix
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB`] object
-    update = function(B = NA, dm1 = NA, OmegaQ = NA, ll_list = NA) {
+    update = function(B = NA, OmegaQ = NA, dm1 = NA,  ll_list = NA) {
       super$update(B = B, ll_list = ll_list)
       if (!anyNA(dm1))        private$dm1     <- dm1
       if (!anyNA(OmegaQ))     private$OmegaQ  <- OmegaQ
@@ -136,25 +144,7 @@ NB_fixed_sparsity <- R6::R6Class(
     dm1        = NA, # diagonal of variables' inverse variance matrix
     OmegaQ     = NA, # precision matrix for clusters
 
-    glasso_OmegaQ = function(SigmaQ) {
-      if (self$penalty == 0) {
-        OmegaQ <- solve(SigmaQ)
-      } else {
-        glasso_out <- glassoFast::glassoFast(SigmaQ, rho = self$penalty * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) {
-          warning(
-            "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
-            rcond(SigmaQ), "\n We send back the original matrix and its inverse (unpenalized)."
-          )
-          OmegaQ <- solve(SigmaQ)
-        } else {
-          OmegaQ <- Matrix::symmpart(glasso_out$wi)
-        }
-      }
-      OmegaQ
-    },
-
-    heuristic_SigmaQ_from_Sigma = function(){
+    heuristic_SigmaQ_from_Sigma = function(Sigma){
       Sigma_Q <- (t(private$C) %*% Sigma %*% private$C) / outer(colSums(private$C), colSums(private$C))
       if(anyNA(Sigma_Q)){
         diag(Sigma_Q)[is.na(diag(Sigma_Q))] <- mean(diag(Sigma_Q)[!is.na(diag(Sigma_Q))])

@@ -26,8 +26,10 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
       if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(data, ncol(C), penalty, control = control)
       private$C     <- C
-      private$mu    <- matrix(0, self$n, self$Q)
-      private$gamma <- diag(1, self$Q, self$Q)
+      if(control$inference_method == "integrated"){
+        private$mu    <- matrix(0, self$n, self$Q)
+        private$gamma <- diag(1, self$Q, self$Q)
+      }
     },
 
     #' @description
@@ -39,9 +41,9 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     #' @param mu  mean for posterior distribution of W
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB_fixed_blocks_fixed_sparsity`] object
-    update = function(B = NA, dm1 = NA, OmegaQ = NA, gamma = NA, mu = NA,
+    update = function(B = NA, OmegaQ = NA,  dm1 = NA, gamma = NA, mu = NA,
                       ll_list = NA) {
-      super$update(B, dm1, OmegaQ, ll_list)
+      super$update(B, OmegaQ, dm1, ll_list)
       if (!anyNA(gamma)) private$gamma <- gamma
       if (!anyNA(mu))   private$mu   <- mu
     }
@@ -54,19 +56,35 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     gamma   = NA, # variance of  posterior distribution of latent variable
     mu      = NA, #  mean for posterior distribution of latent variable
 
-    compute_loglik  = function(B, dm1, OmegaQ, gamma, mu) {
-      log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
+    compute_loglik  = function(B, OmegaQ, dm1 = NA, gamma = NA, mu = NA) {
+      if(self$inference_method == "integrated"){
+        log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
+        log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
 
-      J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
-      J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_OmegaQ
-      J <- J + .5 * self$n * log_det_gamma
-      if (self$penalty > 0) {
-        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + self$n *self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + t(mu) %*% mu)))
-        J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
+        J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
+        J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_OmegaQ
+        J <- J + .5 * self$n * log_det_gamma
+        if (self$penalty > 0) {
+          ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
+          J <- J + self$n *self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + t(mu) %*% mu)))
+          J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
+        }
+      }else{
+        Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
+        log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
+        M <- self$data$Y - self$data$X %*% B
+        J <- -.5 * self$n * self$p * log(2 * pi)
+        J <- J - .5 * self$n  * log_det_Sigma_tilde
+        J <- J - .5 * sum(diag((M %*% solve(Sigma_tilde) %*% t(M))))
       }
       J
+    },
+
+    get_heuristic_parameters = function(){
+      reg_res <- private$multivariate_normal_inference()
+      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
+      OmegaQ  <- private$get_Omega(SigmaQ)
+      list(B = reg_res$B, OmegaQ = OmegaQ, dm1 = NA, gamma = NA, mu = NA)
     }
   ),
 
@@ -108,7 +126,7 @@ NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
         OmegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
         list(B = B, dm1 = dm1, OmegaQ = OmegaQ, gamma = private$gamma, mu = private$mu)
       }else{
-        list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ,
+        list(B = private$B, OmegaQ = private$OmegaQ, dm1 = private$dm1,
              gamma = private$gamma, mu = private$mu)
       }
     },
@@ -123,8 +141,8 @@ NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
       B      <- self$data$XtXm1 %*% crossprod(self$data$X, YmmuCT)
       ddiag  <- colMeans((YmmuCT - self$data$X %*% B)^2) + private$C %*% diag(gamma)
       dm1    <- 1 / as.vector(ddiag)
-      OmegaQ <- private$glasso_OmegaQ(crossprod(mu)/self$n + gamma)
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, gamma = gamma, mu = mu)
+      OmegaQ <- private$get_Omega(crossprod(mu)/self$n + gamma)
+      list(B = B, OmegaQ = OmegaQ, dm1 = dm1, gamma = gamma, mu = mu)
     }
   ),
 
@@ -132,6 +150,12 @@ NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field nb_param number of parameters in the model
+    nb_param = function(){
+      if(self$inference_method == "integrated"){
+        as.integer(super$nb_param + self$p)
+      }else{as.integer(super$nb_param)}
+    },
     #' @field who_am_I a method to print what model is being fitted
     who_am_I = function(value) {"diagonal normal-block model with fixed blocks"}
   )
@@ -166,7 +190,7 @@ NB_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
       YmmuCT <- self$data$Y - mu %*% t(private$C)
       B      <- self$data$XtXm1 %*% crossprod(self$data$X, YmmuCT)
       sigma2 <- mean((YmmuCT - self$data$X %*% B)^2) + sum(colMeans(private$C) * diag(gamma))
-      OmegaQ <- private$glasso_OmegaQ(crossprod(mu)/self$n + gamma)
+      OmegaQ <- private$get_Omega(crossprod(mu)/self$n + gamma)
 
       list(B = B, dm1 = rep(1/sigma2, self$p), OmegaQ = OmegaQ, gamma = gamma, mu = mu)
     }
@@ -176,6 +200,12 @@ NB_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field nb_param number of parameters in the model
+    nb_param = function(){
+      if(self$inference_method == "integrated"){
+        as.integer(super$nb_param + 1)
+      }else{as.integer(super$nb_param)}
+    },
     #' @field who_am_I a method to print what model is being fitted
     who_am_I = function(value) {"spherical normal-block model with fixed blocks"}
   )

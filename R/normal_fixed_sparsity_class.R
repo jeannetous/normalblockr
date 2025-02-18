@@ -17,7 +17,7 @@ normal_fixed_sparsity <- R6::R6Class(
     data  = NULL,
     #' @field penalty to apply on variance matrix when calling GLASSO
     penalty = NULL,
-    #' @field sparsity_weights weights to use for network penalization
+    #' @field sparsity_weights weights to add on variance matrix for penalization
     sparsity_weights = NULL,
     #' @field inference_method which method should be used to infer parameters
     inference_method = NULL,
@@ -30,20 +30,12 @@ normal_fixed_sparsity <- R6::R6Class(
     initialize = function(data,  penalty = 0, control = normal_control()) {
       self$data <- data
       self$penalty <- penalty
-      if (penalty > 0) {
-        sparsity_weights  <- control$sparsity_weights
-        if(is.null(sparsity_weights)){
-          sparsity_weights <- matrix(1, self$Q, self$Q)
-          diag(sparsity_weights) <- 0
-        }
-        self$sparsity_weights  <- sparsity_weights
-      }
       self$inference_method <- control$inference_method
       private$ll_list <- 0
     },
 
     #' @description
-    #' Update a [`normal`] object
+    #' Update a [`normal_fixed_sparsity`] object
     #' @param B regression matrix
     #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
@@ -59,7 +51,8 @@ normal_fixed_sparsity <- R6::R6Class(
     optimize = function(niter = 100, threshold = 1e-4) {
       if(self$inference_method == "integrated"){
         optim_out <- private$EM_optimize(niter, threshold)
-      }else{optim_out <- private$heuristic_optimize()}
+      }else{
+        optim_out <- private$heuristic_optimize()}
       do.call(self$update, optim_out)
     },
 
@@ -84,6 +77,24 @@ normal_fixed_sparsity <- R6::R6Class(
 
     compute_loglik  = function() {},
 
+    get_Omega = function(Sigma) {
+      if (self$penalty == 0) {
+        Omega <- solve(Sigma)
+      } else {
+        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) {
+          warning(
+            "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
+            rcond(Sigma), "\n We send back the original matrix and its inverse (unpenalized)."
+          )
+          Omega <- solve(Sigma)
+        } else {
+          Omega <- Matrix::symmpart(glasso_out$wi)
+        }
+      }
+      Omega
+    },
+
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated EM inference------------------
     EM_optimize = function(niter, threshold) {
@@ -102,16 +113,20 @@ normal_fixed_sparsity <- R6::R6Class(
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference----------------------
-    heuristic_optimize = function(){},
+    heuristic_optimize = function(){
+      parameters <- do.call(private$get_heuristic_parameters, list())
+      ll_list    <- do.call(private$compute_loglik, parameters)
+      c(parameters, list(ll_list = ll_list))
+    },
+
+    get_heuristic_parameters = function(){},
 
     multivariate_normal_inference = function(){
       B       <- self$data$XtXm1 %*% t(self$data$X) %*% self$data$Y
       R       <- self$data$Y - self$data$X %*% B
       Sigma   <- (t(R) %*% R) / self$n
       list(B = B, R = R, Sigma = Sigma)
-    },
-
-    multivariate_normal_inference_zi = function(){}
+    }
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,8 +139,8 @@ normal_fixed_sparsity <- R6::R6Class(
     p = function() ncol(self$data$Y),
     #' @field d number of variables (dimensions in X)
     d = function() ncol(self$data$X),
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))
-    model_par = function() list(B = private$B, dm1 = private$dm1, omegaQ = private$omegaQ),
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
+    model_par = function() list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ),
     #' @field loglik (or its variational lower bound)
     loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty_term,
     #' @field penalty_term (for cases when a penalty is placed on the precision matrix)

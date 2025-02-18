@@ -12,7 +12,10 @@ C <- testdata$parameters$C
 
 test_that("normal: check dimensions and field access", {
   data <- normal_data$new(Y, X)
-  model <- NB_fixed_blocks_fixed_sparsity_diagonal$new(data, C)
+  model <- NB_fixed_blocks_fixed_sparsity_diagonal$new(data, C, penalty = 0.05)
   model$optimize()
   expect_gt(model$loglik, -2600)
+  model <- NB_fixed_blocks_fixed_sparsity_diagonal$new(data, C, penalty = 0.03,
+                                                       control = normal_control(inference_method = "heuristic"))
+  model$optimize()
 })

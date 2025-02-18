@@ -92,7 +92,7 @@ A new [`nb_fixed`] object
 \if{html}{\out{<a id="method-normal_fixed_sparsity-update"></a>}}
 \if{latex}{\out{\hypertarget{method-normal_fixed_sparsity-update}{}}}
 \subsection{Method \code{update()}}{
-Update a [`normal`] object
+Update a [`normal_fixed_sparsity`] object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{normal_fixed_sparsity$update(B = NA, ll_list = NA)}\if{html}{\out{</div>}}
 }
