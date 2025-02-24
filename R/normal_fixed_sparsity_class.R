@@ -5,8 +5,7 @@
 #' R6 class for a generic normal_fixed_sparsity model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param sparsity_weights  weights to use for network penalization
-#' @param inference_method which method should be used to infer parameters
+#' @param control structured list of more specific parameters, to generate with normal_control
 normal_fixed_sparsity <- R6::R6Class(
   classname = "normal_fixed_sparsity",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
