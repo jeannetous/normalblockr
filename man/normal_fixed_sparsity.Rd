@@ -94,13 +94,15 @@ A new [`nb_fixed`] object
 \subsection{Method \code{update()}}{
 Update a [`normal_fixed_sparsity`] object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_fixed_sparsity$update(B = NA, ll_list = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{normal_fixed_sparsity$update(B = NA, dm1 = NA, ll_list = NA)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{B}}{regression matrix}
+
+\item{\code{dm1}}{diagonal vector of inverse variance matrix (variables level)}
 
 \item{\code{ll_list}}{list of log-lik (elbo) values}
 }

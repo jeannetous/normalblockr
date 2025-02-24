@@ -36,10 +36,12 @@ normal_fixed_sparsity <- R6::R6Class(
     #' @description
     #' Update a [`normal_fixed_sparsity`] object
     #' @param B regression matrix
+    #' @param dm1 diagonal vector of inverse variance matrix (variables level)
     #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
-    update = function(B = NA, ll_list = NA) {
+    update = function(B = NA, dm1 = NA, ll_list = NA) {
       if (!anyNA(B))          private$B       <- B
+      if (!anyNA(dm1))        private$dm1     <- dm1
       if (!anyNA(ll_list))    private$ll_list <- ll_list
     },
 
@@ -72,6 +74,7 @@ normal_fixed_sparsity <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
     B          = NA, # regression matrix
+    dm1       = NA,  # diagonal vector of inverse variance matrix (variables level)
     ll_list    = NA, # list of log-likelihoods or ELBOs
 
     compute_loglik  = function() {},

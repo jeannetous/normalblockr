@@ -4,8 +4,8 @@
 
 #' R6 class for a generic normal model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param penalty to apply on variance matrix when calling GLASSO
 #' @param Q number of clusters
+#' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with normal_control
 NB_fixed_sparsity <- R6::R6Class(
   classname = "NB_fixed_sparsity",
@@ -45,8 +45,7 @@ NB_fixed_sparsity <- R6::R6Class(
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB`] object
     update = function(B = NA, OmegaQ = NA, dm1 = NA,  ll_list = NA) {
-      super$update(B = B, ll_list = ll_list)
-      if (!anyNA(dm1))        private$dm1     <- dm1
+      super$update(B = B, dm1 = dm1, ll_list = ll_list)
       if (!anyNA(OmegaQ))     private$OmegaQ  <- OmegaQ
     },
 
@@ -141,9 +140,10 @@ NB_fixed_sparsity <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
     C          = NA, # the matrix of species groups
-    dm1        = NA, # diagonal of variables' inverse variance matrix
     OmegaQ     = NA, # precision matrix for clusters
 
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for heuristic inference----------------------
     heuristic_SigmaQ_from_Sigma = function(Sigma){
       Sigma_Q <- (t(private$C) %*% Sigma %*% private$C) / outer(colSums(private$C), colSums(private$C))
       if(anyNA(Sigma_Q)){
@@ -163,15 +163,15 @@ NB_fixed_sparsity <- R6::R6Class(
       J
     },
 
-    get_clustering = function(Sigma = NA, R = NA){
+    heuristic_get_clustering = function(Sigma = NA, R = NA){
       if(self$clustering_method ==  "cluster_sigma"){
-        C <- private$cluster_sigma(Sigma)
+        C <- private$heuristic_cluster_sigma(Sigma)
       }else{
-        C <- private$cluster_residuals(R)
+        C <- private$heuristic_cluster_residuals(R)
       }
     },
 
-    cluster_sigma = function(Sigma){
+    heuristic_cluster_sigma = function(Sigma){
       sink('/dev/null')
       mySBM <- Sigma %>%
         sbm::estimateSimpleSBM("gaussian",
@@ -182,7 +182,7 @@ NB_fixed_sparsity <- R6::R6Class(
       return(as_indicator(mySBM$memberships))
     },
 
-    cluster_residuals = function(R){
+    heuristic_cluster_residuals = function(R){
       return(as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster))
     }
   ),

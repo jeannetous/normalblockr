@@ -6,7 +6,6 @@
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param Q number of clusters
 #' @param control structured list of more specific parameters, to generate with normal_control
 NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity",
@@ -18,6 +17,7 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks_fixed_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
+    #' @param penalty to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with normal_control
     #' @return A new [`NB_fixed_blocks_fixed_sparsity`] object
     initialize = function(data, C, penalty = 0,
@@ -104,6 +104,7 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
 #' R6 class for normal-block model with fixed clusters and diagonal residual covariance
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
+#' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with normal_control
 NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity_diagonal",
@@ -158,6 +159,8 @@ NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
 
 #' R6 class for normal-block model with fixed clusters and spherical residual covariance
 #' @param data object of normal_data class, with responses and design matrix
+#' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
+#' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with normal_control
 NB_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity_spherical",

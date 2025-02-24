@@ -108,7 +108,7 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
 
     get_heuristic_parameters = function(){
       reg_res <- private$multivariate_normal_inference()
-      private$C <- private$get_clustering(Sigma = reg_res$Sigma, R = reg_res$R)
+      private$C <- private$heuristic_get_clustering(Sigma = reg_res$Sigma, R = reg_res$R)
       SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
       OmegaQ  <- private$get_Omega(SigmaQ)
       list(B = reg_res$B, OmegaQ = OmegaQ,dm1 = NA, alpha = NA, tau = private$C,
@@ -152,6 +152,7 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of blocks
 #' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
   classname = "NB_fixed_Q_fixed_sparsity_diagonal",
   inherit = NB_fixed_Q_fixed_sparsity,
@@ -238,6 +239,7 @@ NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of blocks
 #' @param penalty to add on blocks precision matrix for sparsity
+#' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q_fixed_sparsity_spherical <- R6::R6Class(
   classname = "NB_fixed_Q_fixed_sparsity_spherical",
   inherit = NB_fixed_Q_fixed_sparsity,
