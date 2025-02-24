@@ -4,31 +4,23 @@
 
 #' R6 class for a generic normal_fixed_sparsity model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
-normal_fixed_sparsity <- R6::R6Class(
-  classname = "normal_fixed_sparsity",
+normal <- R6::R6Class(
+  classname = "normal",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @field data object of normal_data class, with responses and design matrix
     data  = NULL,
-    #' @field penalty to apply on variance matrix when calling GLASSO
-    penalty = NULL,
-    #' @field sparsity_weights weights to add on variance matrix for penalization
-    sparsity_weights = NULL,
     #' @field inference_method which method should be used to infer parameters
     inference_method = NULL,
 
     #' @description Create a new [`normal`] object.
     #' @param data object of normal_data class, with responses and design matrix
-    #' @param penalty penalty on the network density
-    #' @param control structured list of more specific parameters, to generate with normal_control
+    #' @param control structured list of more specific parameters, to generate with NB_control (useful only for NB objects)
     #' @return A new [`nb_fixed`] object
-    initialize = function(data,  penalty = 0, control = normal_control()) {
+    initialize = function(data, control = NB_control()) {
       self$data <- data
-      self$penalty <- penalty
       self$inference_method <- control$inference_method
       private$ll_list <- 0
     },
@@ -79,24 +71,6 @@ normal_fixed_sparsity <- R6::R6Class(
 
     compute_loglik  = function() {},
 
-    get_Omega = function(Sigma) {
-      if (self$penalty == 0) {
-        Omega <- solve(Sigma)
-      } else {
-        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$sparsity_weights)
-        if (anyNA(glasso_out$wi)) {
-          warning(
-            "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
-            rcond(Sigma), "\n We send back the original matrix and its inverse (unpenalized)."
-          )
-          Omega <- solve(Sigma)
-        } else {
-          Omega <- Matrix::symmpart(glasso_out$wi)
-        }
-      }
-      Omega
-    },
-
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated EM inference------------------
     EM_optimize = function(niter, threshold) {
@@ -144,9 +118,7 @@ normal_fixed_sparsity <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
     model_par = function() list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ),
     #' @field loglik (or its variational lower bound)
-    loglik = function() private$ll_list[[length(private$ll_list)]] + self$penalty_term,
-    #' @field penalty_term (for cases when a penalty is placed on the precision matrix)
-    penalty_term = function() 0,
+    loglik = function() private$ll_list[[length(private$ll_list)]],
     #' @field nb_param number of parameters in the model
     nb_param = function() as.integer(self$p * self$d),
     #' @field entropy Entropy of the variational distribution when applicable

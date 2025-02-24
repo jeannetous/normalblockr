@@ -16,6 +16,6 @@ test_that("normal: check dimensions and field access", {
   model$optimize()
   expect_gt(model$loglik, -2600)
   model <- NB_fixed_blocks_fixed_sparsity_diagonal$new(data, C, penalty = 0.03,
-                                                       control = normal_control(inference_method = "heuristic"))
+                                                       control = NB_control(inference_method = "heuristic"))
   model$optimize()
 })

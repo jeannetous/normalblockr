@@ -27,7 +27,7 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q_fixed_sparsity`] object
-    initialize = function(data, Q, penalty = 0, control = normal_control()) {
+    initialize = function(data, Q, penalty = 0, control = NB_control()) {
       super$initialize(data, Q, penalty, control)
       if (Q > ncol(self$data$Y)) stop("There cannot be more blocks than there are entities to cluster.")
       self$fixed_tau <- control$fixed_tau

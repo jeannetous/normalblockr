@@ -50,7 +50,7 @@ Create a new [`NB_fixed_blocks_fixed_sparsity`] object.
   data,
   C,
   penalty = 0,
-  control = normal_control()
+  control = NB_control()
 )}\if{html}{\out{</div>}}
 }
 
@@ -63,7 +63,7 @@ Create a new [`NB_fixed_blocks_fixed_sparsity`] object.
 
 \item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
 
-\item{\code{control}}{structured list of more specific parameters, to generate with normal_control}
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }
 \if{html}{\out{</div>}}
 }

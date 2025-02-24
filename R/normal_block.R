@@ -1,4 +1,4 @@
-#' normal_control
+#' NB_control
 #'
 #' @param sparsity_weights weights with which penalty should be applied in case
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
@@ -15,7 +15,7 @@
 #' @param inference_method which inference approach should be used: integrated or heuristic
 #' @param clustering_method  to use for clustering with heuristic inference method
 #' @export
-normal_control <- function(
+NB_control <- function(
     sparsity_weights  = NULL,
     penalties         = NULL,
     n_penalties       = 30,

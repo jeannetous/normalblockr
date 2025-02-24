@@ -1,14 +1,12 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS normal_zi_fixed_sparsity #####################
+##  CLASS normal_diag_zi #####################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for a generic normal model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
-normal_zi_fixed_sparsity <- R6::R6Class(
-  classname = "normal_zi_fixed_sparsity",
-  inherit   = normal_fixed_sparsity,
+normal_diag_zi <- R6::R6Class(
+  classname = "normal_diag_zi",
+  inherit   = normal,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,24 +15,22 @@ normal_zi_fixed_sparsity <- R6::R6Class(
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
 
-    #' @description Create a new [`normal_zi_fixed_sparsity`] object.
+    #' @description Create a new [`normal_diag_zi`] object.
     #' @param data contains the matrix of responses (Y) and the design matrix (X).
-    #' @param penalty to apply on variance matrix when calling GLASSO
-    #' @param control structured list of more specific parameters, to generate with normal_control
-    #' @return A new [`normal_zi_fixed_sparsity`] object
-    initialize = function(data,  penalty = 0, control = normal_control()) {
-      super$initialize(data,  penalty, control)
+    #' @return A new [`normal_diag_zi`] object
+    initialize = function(data) {
+      super$initialize(data)
       self$zeros <- 1 * (data$Y == 0)
     },
 
     #' @description
-    #' Update a [`normal_zi_fixed_sparsity`] object
+    #' Update a [`normal_diag_zi`] object
     #' @param B regression matrix
     #' @param dm1 diagonal vector of inverse variance matrix
     #' @param kappa vector of zero-inflation probabilities
     #' @param rho posterior probabilities of zero-inflation
     #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`normal_zi_fixed_sparsity`] object
+    #' @return Update the current [`normal_diag_zi`] object
     update = function(B = NA, dm1 = NA, kappa = NA, rho = NA, ll_list=NA) {
       super$update(B=B, dm1=dm1, ll_list=ll_list)
       if (!anyNA(kappa))      private$kappa   <- kappa

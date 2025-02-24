@@ -6,7 +6,7 @@
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
+#' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity",
   inherit   = NB_fixed_sparsity,
@@ -18,10 +18,10 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     #' @param data object of normal_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
     #' @param penalty to apply on variance matrix when calling GLASSO
-    #' @param control structured list of more specific parameters, to generate with normal_control
+    #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB_fixed_blocks_fixed_sparsity`] object
     initialize = function(data, C, penalty = 0,
-                          control = normal_control()) {
+                          control = NB_control()) {
       if (!is.matrix(C)) stop("C must be a matrix.")
       if (min(colSums(C)) < 1) stop("There cannot be empty clusters.")
       super$initialize(data, ncol(C), penalty, control = control)
@@ -105,7 +105,7 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
+#' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity_diagonal",
   inherit = NB_fixed_blocks_fixed_sparsity,
@@ -161,7 +161,7 @@ NB_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
+#' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
   classname = "NB_fixed_blocks_fixed_sparsity_spherical",
   inherit = NB_fixed_blocks_fixed_sparsity,

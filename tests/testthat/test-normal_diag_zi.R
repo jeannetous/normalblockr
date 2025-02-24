@@ -6,9 +6,9 @@ X <- testdata$X
 
 ###############################################################################
 ###############################################################################
-test_that("normal_zi: check dimensions, optimization and field access", {
+test_that("normal_diag_zi: check dimensions, optimization and field access", {
   data <- normal_data$new(Y, X)
-  model <- normal_zi_fixed_sparsity$new(data)
+  model <- normal_diag_zi$new(data)
   model$optimize()
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))

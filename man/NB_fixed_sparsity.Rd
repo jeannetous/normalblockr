@@ -14,6 +14,12 @@ R6 class for a generic normal model
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
+\item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
+
+\item{\code{sparsity_weights}}{weights to add on variance matrix for penalization}
+
+\item{\code{inference_method}}{which method should be used to infer parameters}
+
 \item{\code{Q}}{number of blocks}
 }
 \if{html}{\out{</div>}}
@@ -28,6 +34,8 @@ R6 class for a generic normal model
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
 
 \item{\code{penalty_term}}{(penalty term in log-likelihood due to sparsity)}
+
+\item{\code{loglik}}{(or its variational lower bound)}
 
 \item{\code{EBIC}}{variational lower bound of the EBIC}
 
@@ -63,7 +71,7 @@ R6 class for a generic normal model
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_sparsity`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_sparsity$new(data, Q, penalty = 0, control = normal_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_sparsity$new(data, Q, penalty = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -75,7 +83,7 @@ Create a new [`NB_fixed_sparsity`] object.
 
 \item{\code{penalty}}{penalty on the network density}
 
-\item{\code{control}}{structured list of more specific parameters, to generate with normal_control}
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }
 \if{html}{\out{</div>}}
 }

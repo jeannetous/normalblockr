@@ -6,26 +6,32 @@
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
 #' @param penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with normal_control
+#' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_sparsity <- R6::R6Class(
   classname = "NB_fixed_sparsity",
-  inherit   = normal_fixed_sparsity,
+  inherit   = normal,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-
+    #' @field penalty to apply on variance matrix when calling GLASSO
+    penalty = NULL,
+    #' @field sparsity_weights weights to add on variance matrix for penalization
+    sparsity_weights = NULL,
+    #' @field inference_method which method should be used to infer parameters
+    inference_method = NULL,
     #' @field Q number of blocks
     Q = NULL,
 
     #' @description Create a new [`NB_fixed_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param penalty penalty on the network density
-    #' @param control structured list of more specific parameters, to generate with normal_control
+    #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB_fixed_sparsity`] object
     initialize = function(data, Q, penalty = 0,
-                          control = normal_control()) {
-      super$initialize(data,  penalty, control)
+                          control = NB_control()) {
+      super$initialize(data, control = control)
+      self$penalty <- penalty
       self$Q <- Q
       if (penalty > 0) {
         sparsity_weights  <- control$sparsity_weights
@@ -142,6 +148,24 @@ NB_fixed_sparsity <- R6::R6Class(
     C          = NA, # the matrix of species groups
     OmegaQ     = NA, # precision matrix for clusters
 
+    get_Omega = function(Sigma) {
+      if (self$penalty == 0) {
+        Omega <- solve(Sigma)
+      } else {
+        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$sparsity_weights)
+        if (anyNA(glasso_out$wi)) {
+          warning(
+            "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
+            rcond(Sigma), "\n We send back the original matrix and its inverse (unpenalized)."
+          )
+          Omega <- solve(Sigma)
+        } else {
+          Omega <- Matrix::symmpart(glasso_out$wi)
+        }
+      }
+      Omega
+    },
+
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference----------------------
     heuristic_SigmaQ_from_Sigma = function(Sigma){
@@ -203,6 +227,8 @@ NB_fixed_sparsity <- R6::R6Class(
     },
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
     penalty_term = function() self$penalty * sum(abs(self$sparsity_weights * private$OmegaQ)),
+    #' @field loglik (or its variational lower bound)
+    loglik = function() super$loglik + self$penalty_term,
     #' @field EBIC variational lower bound of the EBIC
     EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters

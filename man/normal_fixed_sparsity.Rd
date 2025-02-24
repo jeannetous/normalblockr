@@ -13,10 +13,6 @@ R6 class for a generic normal_fixed_sparsity model
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
-
-\item{\code{sparsity_weights}}{weights to add on variance matrix for penalization}
-
 \item{\code{inference_method}}{which method should be used to infer parameters}
 }
 \if{html}{\out{</div>}}
@@ -33,8 +29,6 @@ R6 class for a generic normal_fixed_sparsity model
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
 
 \item{\code{loglik}}{(or its variational lower bound)}
-
-\item{\code{penalty_term}}{(for cases when a penalty is placed on the precision matrix)}
 
 \item{\code{nb_param}}{number of parameters in the model}
 
@@ -70,7 +64,7 @@ R6 class for a generic normal_fixed_sparsity model
 \subsection{Method \code{new()}}{
 Create a new [`normal`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_fixed_sparsity$new(data, penalty = 0, control = normal_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{normal_fixed_sparsity$new(data, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -78,9 +72,7 @@ Create a new [`normal`] object.
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{penalty}}{penalty on the network density}
-
-\item{\code{control}}{structured list of more specific parameters, to generate with normal_control}
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_control (useful only for NB objects)}
 }
 \if{html}{\out{</div>}}
 }
