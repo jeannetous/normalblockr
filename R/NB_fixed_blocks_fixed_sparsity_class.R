@@ -91,12 +91,17 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     posterior_par  = function() list(gamma = private$gamma, mu = private$mu),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      log_det_Gamma <- as.numeric(determinant(private$gamma)$modulus)
-      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
-      ent
+      if(self$inference_method == "integrated"){
+        log_det_Gamma <- as.numeric(determinant(private$gamma)$modulus)
+        ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * log_det_Gamma
+        ent
+      }else{NA}
     },
     #' @field fitted Y values predicted by the model
-    fitted = function() self$data$X %*% private$B + private$mu %*% t(private$C)
+    fitted = function(){
+      if(self$inference_method == "integrated"){self$data$X %*% private$B + private$mu %*% t(private$C)
+      }else{self$data$X %*% private$B }
+    }
   )
 )
 

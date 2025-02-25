@@ -160,6 +160,8 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field nb_param number of parameters in the model
+    nb_param = function() super$nb_param + self$p, # adding kappa
     #' @field var_par a list with variational parameters
     var_par  = function() list(M = private$M, S = private$S, rho = private$rho),
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix), kappa (zero-inflation probabilities)
@@ -170,9 +172,11 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
     },
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
-      ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
-      ent
+      if(self$inference_method == "integrated"){
+        ent <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
+        ent <- ent - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
+        ent
+      }else{NA}
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function(){

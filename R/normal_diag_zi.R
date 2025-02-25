@@ -106,7 +106,7 @@ normal_diag_zi <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + self$p),
+    nb_param = function() as.integer(super$nb_param + 2 * self$p), # adding D and kappa
     #' @field model_par a list with the matrices of the model parameters:
     #' B (regression coefficients), dm1 (species variance),
     #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)

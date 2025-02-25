@@ -217,7 +217,7 @@ NB_fixed_sparsity <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + self$Q + self$n_edges),
+    nb_param = function() as.integer(super$nb_param + self$Q + self$n_edges + self$p), # adding OmegaQ and dm1
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function() sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))

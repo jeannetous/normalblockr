@@ -126,21 +126,23 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
       parameters$alpha <- private$alpha
       parameters},
     #' @field nb_param number of parameters in the model
-    nb_param = function() {as.integer(super$nb_param + self$Q - 1)},
+    nb_param = function() {as.integer(super$nb_param + self$Q - 1)}, # adding alpha
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
     var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
     #' @field clustering a list of labels giving the clustering obtained in the model
     clustering = function() get_clusters(private$tau),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
-      ent <- ent - sum(xlogx(private$tau))
-      ent
+      if(self$inference_method == "integrated"){
+        ent <- .5 * self$n * self$Q * log(2 * pi* exp(1)) + .5 * self$n * sum(log(private$S))
+        ent <- ent - sum(xlogx(private$tau))
+        ent
+      }else{NA}
     },
     #' @field fitted Y values predicted by the model
     fitted = function(){
       if(self$inference_method == "integrated"){self$data$X %*% private$B + tcrossprod(private$M, private$tau)
-        }else{self$data$X %*% private$B}}
+      }else{self$data$X %*% private$B}}
   ),
 )
 
