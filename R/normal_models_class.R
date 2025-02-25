@@ -46,6 +46,7 @@ normal_models <- R6::R6Class(
         optim_out <- private$EM_optimize(niter, threshold)
       }else{
         optim_out <- private$heuristic_optimize()}
+      # browser()
       do.call(self$update, optim_out)
     },
 
@@ -91,6 +92,7 @@ normal_models <- R6::R6Class(
     ## Methods for heuristic inference----------------------
     heuristic_optimize = function(){
       parameters <- do.call(private$get_heuristic_parameters, list())
+      # browser()
       ll_list    <- do.call(private$compute_loglik, parameters)
       c(parameters, list(ll_list = ll_list))
     },

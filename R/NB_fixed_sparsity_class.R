@@ -177,10 +177,11 @@ NB_fixed_sparsity <- R6::R6Class(
       Sigma_Q
     },
 
-    heuristic_loglik = function(B, OmegaQ, R = NA){
+    heuristic_loglik = function(B, OmegaQ, rho = NA){
       Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
       log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
-      if(anyNA(R)) R <- self$data$Y - self$data$X %*% B
+      R <- self$data$Y - self$data$X %*% B
+      if(!anyNA(rho)) R[rho > 0.7] <- 0
       J <- -.5 * self$p * log(2 * pi)
       J <- J + .5 * self$n  * log_det_Sigma_tilde
       J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))

@@ -79,7 +79,7 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
           J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
         }
       }else{
-        J <- private$heuristic_loglik(B, OmegaQ, R)
+        J <- private$heuristic_loglik(B, OmegaQ, rho)
       }
       J
     },
@@ -145,14 +145,14 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference -------------------------
     get_heuristic_parameters = function(){
-      model  <- normal_diag_zi$new(self$data$Y, self$data$X) ; model$optimize()
+      model  <- normal_diag_zi$new(self$data) ; model$optimize()
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
       rho    <- model$model_par$rho
       R      <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
       Sigma  <- (t(R) %*% R) / model$n
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_Omega(SigmaQ)
-      list(B = B, OmegaQ = OmegaQ, R = R, rho = rho, kappa = colMeans(rho))
+      list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = colMeans(rho))
     }
   ),
 
