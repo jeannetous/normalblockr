@@ -35,8 +35,8 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
     #' @description
     #' Update a [`NB_fixed_blocks_fixed_sparsity`] object
     #' @param B regression matrix
-    #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param OmegaQ groups inverse variance matrix
+    #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param gamma  variance of  posterior distribution of W
     #' @param mu  mean for posterior distribution of W
     #' @param ll_list log-likelihood during optimization
@@ -79,7 +79,7 @@ NB_fixed_blocks_fixed_sparsity <- R6::R6Class(
       reg_res   <- private$multivariate_normal_inference()
       SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
       OmegaQ    <- private$get_Omega(SigmaQ)
-      list(B = reg_res$B, OmegaQ = OmegaQ, dm1 = NA, gamma = NA, mu = NA)
+      list(B = reg_res$B, OmegaQ = OmegaQ)
     }
   ),
 

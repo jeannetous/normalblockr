@@ -1,12 +1,12 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS normal_diag_zi #####################
+##  CLASS normal_diag_zi ###############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
+#' R6 class for a generic normal_diag_zi model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 normal_diag_zi <- R6::R6Class(
   classname = "normal_diag_zi",
-  inherit   = normal,
+  inherit   = normal_models,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -111,9 +111,9 @@ normal_diag_zi <- R6::R6Class(
     #' B (regression coefficients), dm1 (species variance),
     #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)
     model_par  = function() {
-      par <- super$model_par
+      par       <- super$model_par
       par$kappa <- private$kappa
-      par$rho <- private$rho
+      par$rho   <- private$rho
       par
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model

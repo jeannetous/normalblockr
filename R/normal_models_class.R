@@ -4,10 +4,10 @@
 
 #' R6 class for a generic normal_fixed_sparsity model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
-normal <- R6::R6Class(
-  classname = "normal",
+normal_models <- R6::R6Class(
+  classname = "normal_models",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
+  ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @field data object of normal_data class, with responses and design matrix
@@ -15,7 +15,7 @@ normal <- R6::R6Class(
     #' @field inference_method which method should be used to infer parameters
     inference_method = NULL,
 
-    #' @description Create a new [`normal`] object.
+    #' @description Create a new [`normal_models`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param control structured list of more specific parameters, to generate with NB_control (useful only for NB objects)
     #' @return A new [`nb_fixed`] object
@@ -26,7 +26,7 @@ normal <- R6::R6Class(
     },
 
     #' @description
-    #' Update a [`normal_fixed_sparsity`] object
+    #' Update a [`normal_models`] object
     #' @param B regression matrix
     #' @param dm1 diagonal vector of inverse variance matrix (variables level)
     #' @param ll_list  list of log-lik (elbo) values
@@ -62,7 +62,7 @@ normal <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PRIVATE MEMBERS ----
+  ## PRIVATE MEMBERS -------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
     B          = NA, # regression matrix
@@ -106,7 +106,7 @@ normal <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ##  ACTIVE BINDINGS ----
+  ##  ACTIVE BINDINGS ------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples

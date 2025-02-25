@@ -2,14 +2,14 @@
 ##  CLASS NB_fixed_sparsity ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
+#' R6 class for a generic NB_fixed_sparsity model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_sparsity <- R6::R6Class(
   classname = "NB_fixed_sparsity",
-  inherit   = normal,
+  inherit   = normal_models,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -46,8 +46,8 @@ NB_fixed_sparsity <- R6::R6Class(
     #' @description
     #' Update a [`NB_fixed_sparsity`] object
     #' @param B regression matrix
-    #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param OmegaQ groups inverse variance matrix
+    #' @param dm1 diagonal vector of species inverse variance matrix
     #' @param ll_list log-likelihood during optimization
     #' @return Update the current [`NB`] object
     update = function(B = NA, OmegaQ = NA, dm1 = NA,  ll_list = NA) {
@@ -177,10 +177,10 @@ NB_fixed_sparsity <- R6::R6Class(
       Sigma_Q
     },
 
-    heuristic_loglik = function(B, OmegaQ){
+    heuristic_loglik = function(B, OmegaQ, R = NA){
       Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
       log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
-      R <- self$data$Y - self$data$X %*% B
+      if(anyNA(R)) R <- self$data$Y - self$data$X %*% B
       J <- -.5 * self$p * log(2 * pi)
       J <- J + .5 * self$n  * log_det_Sigma_tilde
       J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))
