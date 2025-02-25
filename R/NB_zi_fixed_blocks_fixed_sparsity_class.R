@@ -11,7 +11,7 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
   classname = "NB_zi_fixed_blocks_fixed_sparsity",
   inherit   = NB_fixed_sparsity,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PUBLIC MEMBERS ----
+  ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @field zeros indicator matrix of zeros in Y
@@ -157,7 +157,7 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ##  ACTIVE BINDINGS ----
+  ##  ACTIVE BINDINGS ------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
@@ -199,7 +199,7 @@ NB_zi_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
   inherit = NB_zi_fixed_blocks_fixed_sparsity,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PRIVATE MEMBERS ----
+  ## PRIVATE MEMBERS -------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
     EM_initialize = function() {
@@ -243,7 +243,7 @@ NB_zi_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ##  ACTIVE BINDINGS ----
+  ##  ACTIVE BINDINGS ------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
@@ -267,7 +267,7 @@ NB_zi_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
   inherit = NB_zi_fixed_blocks_fixed_sparsity,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PRIVATE MEMBERS ----
+  ## PRIVATE MEMBERS -------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
@@ -321,7 +321,7 @@ NB_zi_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function(){
       if(self$inference_method == "integrated"){
-        as.integer(super$nb_param + 1)
+        as.integer(super$nb_param - self$p + 1)
       }else{as.integer(super$nb_param)}
     },
     #' @field who_am_I a method to print what model is being fitted

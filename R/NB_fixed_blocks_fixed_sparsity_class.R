@@ -206,7 +206,7 @@ NB_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function(){
       if(self$inference_method == "integrated"){
-        as.integer(super$nb_param + 1)
+        as.integer(super$nb_param - self$p + 1)
       }else{as.integer(super$nb_param)}
     },
     #' @field who_am_I a method to print what model is being fitted

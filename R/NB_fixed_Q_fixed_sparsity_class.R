@@ -5,7 +5,7 @@
 
 #' R6 class for normal-block model with fixed Q (number of groups)
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param Q number of blocks
+#' @param Q number of clusters
 #' @param penalty to add on blocks precision matrix for sparsity
 #' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q_fixed_sparsity <- R6::R6Class(
@@ -157,7 +157,7 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
 #' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
   classname = "NB_fixed_Q_fixed_sparsity_diagonal",
-  inherit = NB_fixed_Q_fixed_sparsity,
+  inherit   = NB_fixed_Q_fixed_sparsity,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
@@ -315,6 +315,12 @@ NB_fixed_Q_fixed_sparsity_spherical <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field nb_param number of parameters in the model
+    nb_param = function(){
+      if(self$inference_method == "integrated"){
+        as.integer(super$nb_param - self$p + 1)
+      }else{as.integer(super$nb_param)}
+    },
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(value){paste("spherical normal-block model with", self$Q, "unknown blocks")}
   )

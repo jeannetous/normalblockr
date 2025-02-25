@@ -2,14 +2,14 @@
 % Please edit documentation in R/normal_diag_zi.R
 \name{normal_diag_zi}
 \alias{normal_diag_zi}
-\title{R6 class for a generic normal model}
+\title{R6 class for a generic normal_diag_zi model}
 \description{
-R6 class for a generic normal model
+R6 class for a generic normal_diag_zi model
 
-R6 class for a generic normal model
+R6 class for a generic normal_diag_zi model
 }
 \section{Super class}{
-\code{\link[normalblockr:normal_fixed_sparsity]{normalblockr::normal_fixed_sparsity}} -> \code{normal_diag_zi}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{normal_diag_zi}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -44,8 +44,8 @@ kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_fixed_sparsity" data-id="optimize"><a href='../../normalblockr/html/normal_fixed_sparsity.html#method-normal_fixed_sparsity-optimize'><code>normalblockr::normal_fixed_sparsity$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_fixed_sparsity" data-id="plot_loglik"><a href='../../normalblockr/html/normal_fixed_sparsity.html#method-normal_fixed_sparsity-plot_loglik'><code>normalblockr::normal_fixed_sparsity$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
 </ul>
 </details>
 }}
