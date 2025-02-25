@@ -16,8 +16,6 @@ R6 class for normal-block model with fixed Q (number of groups)
 \describe{
 \item{\code{clustering_init}}{model initial clustering}
 
-\item{\code{clustering_method}}{to use for clustering with heuristic inference method}
-
 \item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
 }
 \if{html}{\out{</div>}}

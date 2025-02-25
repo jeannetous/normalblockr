@@ -18,8 +18,6 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
   public = list(
     #' @field clustering_init model initial clustering
     clustering_init = NULL,
-    #' @field clustering_method to use for clustering with heuristic inference method
-    clustering_method = NULL,
     #' @field fixed_tau whether tau should be fixed at clustering_init during optimization, useful for stability selection
     fixed_tau = NULL,
 

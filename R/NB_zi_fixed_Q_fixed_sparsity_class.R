@@ -71,7 +71,7 @@ NB_zi_fixed_Q_fixed_sparsity <- R6::R6Class(
     #' @return Update the current [`NB_fixed_Q`] object
     update = function(B = NA, OmegaQ = NA, dm1 = NA, alpha = NA, kappa = NA,
                       M = NA, S = NA, tau = NA, rho = NA, ll_list = NA) {
-      super$update(B, dm1, OmegaQ, ll_list)
+      super$update(B, OmegaQ, dm1, ll_list)
       if (!anyNA(alpha)) private$alpha <- alpha
       if (!anyNA(kappa)) private$kappa <- kappa
       if (!anyNA(M))     private$M     <- M
@@ -174,17 +174,17 @@ NB_zi_fixed_Q_fixed_sparsity <- R6::R6Class(
       newB
     },
 
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for heuristic inference -------------------------
-    get_heuristic_parameters = function(){######################## TO DO
-      model  <- normal_diag_zi$new(self$data) ; model$optimize()
+    get_heuristic_parameters = function(){
+      model <- normal_diag_zi$new(self$data) ; model$optimize()
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
       rho    <- model$model_par$rho
-      R      <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
+      R      <- self$data$Y - self$data$X %*% B ; R[self$rho > 0.7] <- 0
       Sigma  <- (t(R) %*% R) / model$n
+      private$C <- private$heuristic_get_clustering(Sigma, R)
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_Omega(SigmaQ)
-      list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = colMeans(rho))
+      return(list("B" = B, "OmegaQ" = OmegaQ, rho = rho, kappa = colMeans(rho),
+                  alpha = colMeans(private$C)))
     }
   ),
 

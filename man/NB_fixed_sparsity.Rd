@@ -21,6 +21,8 @@ R6 class for a generic NB_fixed_sparsity model
 \item{\code{inference_method}}{which method should be used to infer parameters}
 
 \item{\code{Q}}{number of blocks}
+
+\item{\code{clustering_method}}{to use for clustering with heuristic inference method}
 }
 \if{html}{\out{</div>}}
 }

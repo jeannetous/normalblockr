@@ -11,4 +11,8 @@ test_that("NB_zi_fixed_Q: check dimensions, optimization and field access", {
   data  <- normal_data$new(Y, X)
   model <- NB_zi_fixed_Q_fixed_sparsity_diagonal$new(data, Q, penalty = 0.2)
   model$optimize()
+  expect_lt(model$BIC, 5540)
+  model <- NB_zi_fixed_Q_fixed_sparsity_diagonal$new(data, Q, penalty = 0.2,
+                                                     control = NB_control(inference_method = "heuristic"))
+  model$optimize()
 })

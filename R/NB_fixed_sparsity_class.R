@@ -22,6 +22,8 @@ NB_fixed_sparsity <- R6::R6Class(
     inference_method = NULL,
     #' @field Q number of blocks
     Q = NULL,
+    #' @field clustering_method to use for clustering with heuristic inference method
+    clustering_method = NULL,
 
     #' @description Create a new [`NB_fixed_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix

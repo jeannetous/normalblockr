@@ -9,7 +9,7 @@ R6 class for normal-block model with fixed clusters and diagonal residual covari
 R6 class for normal-block model with fixed clusters and diagonal residual covariance
 }
 \section{Super classes}{
-\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB_fixed_sparsity]{normalblockr::NB_fixed_sparsity}} -> \code{normalblockr::NB_zi_fixed_Q_fixed_sparsity} -> \code{NB_fixed_Q_fixed_sparsity_diagonal}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB_fixed_sparsity]{normalblockr::NB_fixed_sparsity}} -> \code{\link[normalblockr:NB_zi_fixed_Q_fixed_sparsity]{normalblockr::NB_zi_fixed_Q_fixed_sparsity}} -> \code{NB_fixed_Q_fixed_sparsity_diagonal}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
