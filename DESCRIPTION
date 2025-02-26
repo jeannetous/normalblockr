@@ -21,7 +21,6 @@ Imports:
     nloptr (>= 2.0.3),
     pdfCluster,
     dplyr,
-    tidyr,
     purrr,
     R6,
     ggplot2,

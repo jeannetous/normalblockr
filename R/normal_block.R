@@ -12,8 +12,8 @@
 #' @param clustering_init proposal of initial value for clustering, when Q is
 #' unknown, can be a list with one clustering for each Q value
 #' @param verbose telling if information should be printed during optimization
-#' @param noise_variance variance can be variable specific ("diagonal", the default) or common ("spherical")
-#' @param heuristic weither to use heuristical approach or not. Default is FALSE
+#' @param noise_covariance variance can be variable specific ("diagonal", the default) or common ("spherical")
+#' @param heuristic weather to use heuristic approach or not. Default is FALSE
 #' @param clustering_approx to use for clustering with heuristic inference method
 #' @export
 NB_control <- function(

@@ -37,11 +37,11 @@ unknown, can be a list with one clustering for each Q value}
 
 \item{verbose}{telling if information should be printed during optimization}
 
-\item{heuristic}{weither to use heuristical approach or not. Default is FALSE}
+\item{heuristic}{weather to use heuristic approach or not. Default is FALSE}
+
+\item{noise_covariance}{variance can be variable specific ("diagonal", the default) or common ("spherical")}
 
 \item{clustering_approx}{to use for clustering with heuristic inference method}
-
-\item{noise_variance}{variance can be variable specific ("diagonal", the default) or common ("spherical")}
 }
 \description{
 NB_control
