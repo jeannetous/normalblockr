@@ -100,7 +100,7 @@ NB_fixed_blocks <- R6::R6Class(
     },
     #' @field fitted Y values predicted by the model
     fitted = function(value){
-      if(private$approx) {
+      if (private$approx) {
         res <- self$data$X %*% private$B
       } else {
         res <- self$data$X %*% private$B + private$mu %*% t(private$C)
