@@ -9,7 +9,7 @@ R6 class for normal-block model with fixed groups and diagonal residual covarian
 R6 class for normal-block model with fixed groups and diagonal residual covariance
 }
 \section{Super classes}{
-\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{normalblockr::NB} -> \code{normalblockr::NB_fixed_Q} -> \code{NB_fixed_Q_diagonal}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{\link[normalblockr:NB_fixed_Q]{normalblockr::NB_fixed_Q}} -> \code{NB_fixed_Q_diagonal}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

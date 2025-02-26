@@ -130,7 +130,7 @@ normal_models <- R6::R6Class(
       }
       c(parameters, list(ll_list = ll_list))
     },
-    EM_step = function() {},
+    EM_step   = function() {},
     EM_initialize = function() {}
 
   ),

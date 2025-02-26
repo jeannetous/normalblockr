@@ -5,20 +5,36 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 
 data  <- normalblockr:::normal_data$new(Y, X)
 
+## =======================================================
+## FIXED BLOCKS
 
-model_fixed_block <- normalblockr:::NB_fixed_blocks_diagonal$new(data, C)
+## Diagonal model
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C)
 model_fixed_block$optimize()
-model_fixed_block <- normalblockr:::NB_fixed_blocks_diagonal$new(data, C, penalty = 0.05)
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C, penalty = 0.05)
 model_fixed_block$optimize()
-model_fixed_block <- normalblockr:::NB_fixed_blocks_diagonal$new(data, C, penalty = 0.05,
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C, penalty = 0.05,
                                                                  control = NB_control(heuristic = TRUE))
 model_fixed_block$optimize()
 
-model_unkwn_block <- normalblockr:::NB_fixed_Q_diagonal$new(data, Q)
+## Spherical model
+ctrl <- NB_control(noise_covariance = "spherical")
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C, control = ctrl)
+model_fixed_block$optimize()
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C, penalty = 0.05, control = ctrl)
+model_fixed_block$optimize()
+model_fixed_block <- normalblockr:::NB_fixed_blocks$new(data, C, penalty = 0.05,
+                                                        control = NB_control(heuristic = TRUE, noise_covariance = "spherical"))
+model_fixed_block$optimize()
+
+## =======================================================
+## UNKNOWN BLOCKS
+
+model_unkwn_block <- normalblockr:::NB_fixed_Q$new(data, Q)
 model_unkwn_block$optimize()
-model_unkwn_block <- normalblockr:::NB_fixed_Q_diagonal$new(data, Q, penalty = 0.05)
+model_unkwn_block <- normalblockr:::NB_fixed_Q$new(data, Q, penalty = 0.05)
 model_unkwn_block$optimize()
-model_unkwn_block <- normalblockr:::NB_fixed_Q_diagonal$new(data, Q, penalty = 0.05,
+model_unkwn_block <- normalblockr:::NB_fixed_Q$new(data, Q, penalty = 0.05,
                                                             control = NB_control(heuristic = TRUE))
 model_unkwn_block$optimize()
 

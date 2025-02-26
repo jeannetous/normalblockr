@@ -26,20 +26,25 @@ NB <- R6::R6Class(
     #' @return A new [`NB`] object
     initialize = function(data, Q, penalty = 0, control = NB_control()) {
       super$initialize(data, control)
-      self$penalty <- penalty
       private$C <- matrix(NA, self$data$n, Q)
-      private$approx <- control$heuristic
-      ## point to the chosen optimization function
+
+      ## variant (either diaongal or spherical residuals covariance)
+      private$res_covariance <- control$noise_covariance
+
+      ## pointer to the chosen optimization function
       private$optimizer <- ifelse(control$heuristic,
                                   private$heuristic_optimize,
                                   private$EM_optimize)
-      ## point to the chosen clustering function for heuristic approach
+      ## pointer to the chosen clustering function for heuristic approach
+      private$approx <- control$heuristic
       private$clustering_approx <-
         switch(control$clustering_approx,
                "residuals"  = private$heuristic_cluster_residuals,
                "covariance" = private$heuristic_cluster_sigma
         )
 
+      ## penalty mask
+      self$penalty <- penalty
       if (penalty > 0) {
         if (is.null(control$sparsity_weights)) {
           weights <- matrix(1, self$Q, self$Q)
@@ -144,6 +149,7 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    res_covariance    = NA, # shape of the residuals covariance (diagonal or)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
 

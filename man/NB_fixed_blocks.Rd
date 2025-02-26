@@ -9,16 +9,20 @@ R6 class for a generic normal model
 R6 class for a generic normal model
 }
 \section{Super classes}{
-\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{normalblockr::NB} -> \code{NB_fixed_blocks}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_blocks}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{nb_param}}{number of parameters in the model}
+
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }

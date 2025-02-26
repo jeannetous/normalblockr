@@ -9,7 +9,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 R6 class for normal-block model with fixed Q (number of groups)
 }
 \section{Super classes}{
-\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{normalblockr::NB} -> \code{NB_fixed_Q}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
