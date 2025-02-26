@@ -36,6 +36,8 @@ R6 class for a generic normal model
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }
@@ -43,7 +45,6 @@ R6 class for a generic normal model
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-NB_zi_fixed_Q-new}{\code{NB_zi_fixed_Q$new()}}
-\item \href{#method-NB_zi_fixed_Q-update}{\code{NB_zi_fixed_Q$update()}}
 \item \href{#method-NB_zi_fixed_Q-clone}{\code{NB_zi_fixed_Q$clone()}}
 }
 }
@@ -52,6 +53,7 @@ R6 class for a generic normal model
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
 </ul>
@@ -83,55 +85,6 @@ Create a new [`NB_zi_fixed_Q`] object.
 }
 \subsection{Returns}{
 A new [`NB_zi_fixed_Q`] object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_zi_fixed_Q-update"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_zi_fixed_Q-update}{}}}
-\subsection{Method \code{update()}}{
-Update a [`NB_zi_fixed_Q`] object
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_zi_fixed_Q$update(
-  B = NA,
-  OmegaQ = NA,
-  dm1 = NA,
-  alpha = NA,
-  kappa = NA,
-  M = NA,
-  S = NA,
-  tau = NA,
-  rho = NA,
-  ll_list = NA
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{regression matrix}
-
-\item{\code{OmegaQ}}{blocks inverse variance matrix}
-
-\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
-
-\item{\code{alpha}}{vector of blocks probabilities}
-
-\item{\code{kappa}}{zero-inflation probability}
-
-\item{\code{M}}{variational mean for posterior distribution of W}
-
-\item{\code{S}}{variational diagonal of variances for posterior distribution of W}
-
-\item{\code{tau}}{posterior probabilities for block affectation}
-
-\item{\code{rho}}{variational parameter for zero-inflation probability}
-
-\item{\code{ll_list}}{log-likelihood during optimization}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Update the current [`NB_fixed_Q`] object
 }
 }
 \if{html}{\out{<hr>}}

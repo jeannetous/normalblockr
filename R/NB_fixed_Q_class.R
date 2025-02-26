@@ -48,6 +48,7 @@ NB_fixed_Q <- R6::R6Class(
             stop("The number of clusters in the initial clustering must be equal to Q.")
         }
       }
+      self$clustering_init <- clustering_init
     }
   ),
 

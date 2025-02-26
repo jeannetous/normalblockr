@@ -91,7 +91,6 @@ NB_zi_fixed_blocks <- R6::R6Class(
 
       # M step
       B <- private$zi_NB_fixed_blocks_nlopt_optim_B(B, dm1, OmegaQ, M, rho)
-
       dm1  <- switch(private$res_covariance,
         "diagonal"  = colSums(1 - rho) / colSums((1 - rho) * A),
         "spherical" = rep(sum(1 - rho) / sum((1 - rho) * A), self$p))
