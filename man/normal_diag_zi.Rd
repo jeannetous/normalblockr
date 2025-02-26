@@ -37,7 +37,6 @@ kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-normal_diag_zi-new}{\code{normal_diag_zi$new()}}
-\item \href{#method-normal_diag_zi-update}{\code{normal_diag_zi$update()}}
 \item \href{#method-normal_diag_zi-clone}{\code{normal_diag_zi$clone()}}
 }
 }
@@ -46,6 +45,7 @@ kappa (zero-inflation probas)), rho (zero-inflation posterior proba)}
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -67,34 +67,6 @@ Create a new [`normal_diag_zi`] object.
 }
 \subsection{Returns}{
 A new [`normal_diag_zi`] object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-normal_diag_zi-update"></a>}}
-\if{latex}{\out{\hypertarget{method-normal_diag_zi-update}{}}}
-\subsection{Method \code{update()}}{
-Update a [`normal_diag_zi`] object
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_diag_zi$update(B = NA, dm1 = NA, kappa = NA, rho = NA, ll_list = NA)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{regression matrix}
-
-\item{\code{dm1}}{diagonal vector of inverse variance matrix}
-
-\item{\code{kappa}}{vector of zero-inflation probabilities}
-
-\item{\code{rho}}{posterior probabilities of zero-inflation}
-
-\item{\code{ll_list}}{log-likelihood during optimization}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Update the current [`normal_diag_zi`] object
 }
 }
 \if{html}{\out{<hr>}}

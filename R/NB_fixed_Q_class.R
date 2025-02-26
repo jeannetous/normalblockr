@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_Q_fixed_sparsity ####################
+##  CLASS NB_fixed_Q                                  ##
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -8,9 +8,9 @@
 #' @param Q number of clusters
 #' @param penalty to add on blocks precision matrix for sparsity
 #' @param control structured list for specific parameters (including initial clustering proposal)
-NB_fixed_Q_fixed_sparsity <- R6::R6Class(
-  classname = "NB_fixed_Q_fixed_sparsity",
-  inherit = NB_fixed_sparsity,
+NB_fixed_Q <- R6::R6Class(
+  classname = "NB_fixed_Q",
+  inherit = NB,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -21,13 +21,13 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
     #' @field fixed_tau whether tau should be fixed at clustering_init during optimization, useful for stability selection
     fixed_tau = NULL,
 
-    #' @description Create a new [`NB_fixed_Q_fixed_sparsity`] object.
+    #' @description Create a new [`NB_fixed_Q`] object.
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
-    #' @return A new [`NB_fixed_Q_fixed_sparsity`] object
+    #' @return A new [`NB_fixed_Q`] object
     initialize = function(data, Q, penalty = 0, control = NB_control()) {
       super$initialize(data, Q, penalty, control)
-      if (Q > ncol(self$data$Y)) stop("There cannot be more blocks than there are entities to cluster.")
+      stopifnot("There cannot be more blocks than there are entities to cluster" = Q <= ncol(self$data$Y))
       self$fixed_tau <- control$fixed_tau
       clustering_init <- control$clustering_init
       if (!is.null(clustering_init)) {
@@ -48,30 +48,6 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
             stop("The number of clusters in the initial clustering must be equal to Q.")
         }
       }
-      self$clustering_init <- clustering_init
-      if(control$inference_method == "heuristic"){
-        self$clustering_method <- control$clustering_method
-      }
-    },
-
-    #' @description
-    #' Update a [`NB_fixed_Q_fixed_sparsity`] object
-    #' @param B regression matrix
-    #' @param dm1 diagonal vector of species inverse variance matrix
-    #' @param OmegaQ groups inverse variance matrix
-    #' @param alpha vector of groups probabilities
-    #' @param tau posterior probabilities for group affectation
-    #' @param M variational mean for posterior distribution of W
-    #' @param S variational diagonal of variances for posterior distribution of W
-    #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`NB_fixed_Q_fixed_sparsity`] object
-    update = function(B = NA, OmegaQ = NA, dm1 = NA, alpha = NA, tau = NA,
-                      M = NA, S = NA, ll_list = NA) {
-      super$update(B, OmegaQ, dm1, ll_list)
-      if (!anyNA(alpha)) private$alpha <- alpha
-      if (!anyNA(tau))   private$tau   <- tau
-      if (!anyNA(M))     private$M     <- M
-      if (!anyNA(S))     private$S     <- S
     }
   ),
 
@@ -79,38 +55,29 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    alpha   = NA, # vector of groups probabilities
-    M       = NA, # variational mean for posterior distribution of W
-    S       = NA, # variational diagonal of variances for posterior distribution of W
-    tau     = NA, # posterior probabilities for group affectation
 
     compute_loglik  = function(B, dm1, OmegaQ, alpha, tau, M, S) {
-      if(self$inference_method == "integrated"){
-        log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
+      log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
 
-        J <- -.5 * self$n * self$p * log(2 * pi * exp(1)) + .5 * self$n * sum(log(dm1))
-        J <- J  + .5 * self$n * log_det_OmegaQ
-        J <- J + sum(tau %*% log(alpha))
-        J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
+      J <- -.5 * self$n * self$p * log(2 * pi * exp(1)) + .5 * self$n * sum(log(dm1))
+      J <- J  + .5 * self$n * log_det_OmegaQ
+      J <- J + sum(tau %*% log(alpha))
+      J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
 
-        if (self$penalty > 0) {
-          ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
-          J <- J + self$n *self$Q / 2 - .5 * sum(diag(OmegaQ %*% (crossprod(M) + self$n * diag(S, self$Q, self$Q))))
-          J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
-        }
-      }else{
-        J <- private$heuristic_loglik(B, OmegaQ)
+      if (self$penalty > 0) {
+        ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
+        J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (crossprod(M) + self$n * diag(S, self$Q, self$Q))))
+        J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
     },
 
     get_heuristic_parameters = function(){
-      reg_res <- private$multivariate_normal_inference()
-      private$C <- private$heuristic_get_clustering(Sigma = reg_res$Sigma, R = reg_res$R)
-      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
-      OmegaQ  <- private$get_Omega(SigmaQ)
-      list(B = reg_res$B, OmegaQ = OmegaQ,dm1 = NA, alpha = NA, tau = private$C,
-           M = NA, S = NA)
+      reg_res   <- private$multivariate_normal_inference()
+      private$C <- private$clustering_approx(reg_res$R)
+      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
+      OmegaQ    <- private$get_OmegaQ(SigmaQ)
+      list(B = reg_res$B, OmegaQ = OmegaQ)
     }
   ),
 
@@ -144,18 +111,17 @@ NB_fixed_Q_fixed_sparsity <- R6::R6Class(
   ),
 )
 
-
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_Q_fixed_sparsity_diagonal ###########
+##  CLASS NB_fixed_Q_diagonal                         ##
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #' R6 class for normal-block model with fixed groups and diagonal residual covariance
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of blocks
 #' @param penalty to add on blocks precision matrix for sparsity
 #' @param control structured list for specific parameters (including initial clustering proposal)
-NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
-  classname = "NB_fixed_Q_fixed_sparsity_diagonal",
-  inherit   = NB_fixed_Q_fixed_sparsity,
+NB_fixed_Q_diagonal <- R6::R6Class(
+  classname = "NB_fixed_Q_diagonal",
+  inherit   = NB_fixed_Q,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----
@@ -164,19 +130,19 @@ NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
 
     EM_initialize = function() {
       if(any(sapply(self$model_par, function(x) any(is.na(x)))) | any(sapply(self$var_par, function(x) any(is.na(x))))){
-        B       <- self$data$XtXm1 %*% t(self$data$X) %*% self$data$Y
+        B       <- self$data$XtXm1 %*% self$data$XtY
         R       <- self$data$Y - self$data$X %*% B
-        if(is.null(self$clustering_init)){
+        if (is.null(self$clustering_init)){
           clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
           if(length(unique(clustering)) < self$Q){
             # We try to ensure the optimization does not start with an empty cluster
-            clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
+            clustering <- cutree(ClustOfVar::hclustvar(t(R)), Q)
           }
-          tau     <- as_indicator(clustering)
-          if(min(colSums(tau)) < 1) warning("Initialization failed to place elements in each cluster")
-        }else{
-          if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
-          }else{ tau <- self$clustering_init}
+          tau <- as_indicator(clustering)
+          if (min(colSums(tau)) < 1) warning("Initialization failed to place elements in each cluster")
+        } else {
+          if (is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
+          } else { tau <- self$clustering_init}
         }
 
         tau     <- check_one_boundary(check_zero_boundary(tau))
@@ -217,7 +183,7 @@ NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
       B     <- self$data$XtXm1 %*% t(self$data$X) %*% (self$data$Y - MtauT)
       dm1   <- 1/colMeans(R^2 - 2 * R * MtauT + (M^2 + outer(rep(1, self$n), S)) %*% t(tau))
       alpha <- colMeans(tau)
-      OmegaQ <- private$get_Omega(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
+      OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
 
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, alpha = alpha, tau = tau, M = M, S = S)
     }
@@ -232,7 +198,7 @@ NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
 )
 
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_Q_fixed_sparsity_spherical ##########
+##  CLASS NB_fixed_Q_spherical ##########
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for normal-block model with fixed groups and spherical residual covariance
@@ -240,9 +206,9 @@ NB_fixed_Q_fixed_sparsity_diagonal <- R6::R6Class(
 #' @param Q number of blocks
 #' @param penalty to add on blocks precision matrix for sparsity
 #' @param control structured list for specific parameters (including initial clustering proposal)
-NB_fixed_Q_fixed_sparsity_spherical <- R6::R6Class(
-  classname = "NB_fixed_Q_fixed_sparsity_spherical",
-  inherit = NB_fixed_Q_fixed_sparsity,
+NB_fixed_Q_spherical <- R6::R6Class(
+  classname = "NB_fixed_Q_spherical",
+  inherit = NB_fixed_Q,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS ----

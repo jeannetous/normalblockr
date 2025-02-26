@@ -12,8 +12,6 @@ R6 class for a generic normal_fixed_sparsity model
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
-
-\item{\code{inference_method}}{which method should be used to infer parameters}
 }
 \if{html}{\out{</div>}}
 }
@@ -85,8 +83,23 @@ A new [`nb_fixed`] object
 \if{latex}{\out{\hypertarget{method-normal_models-update}{}}}
 \subsection{Method \code{update()}}{
 Update a [`normal_models`] object
+
+All possible parameters of the child classes
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_models$update(B = NA, dm1 = NA, ll_list = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{normal_models$update(
+  B = NA,
+  OmegaQ = NA,
+  dm1 = NA,
+  gamma = NA,
+  mu = NA,
+  kappa = NA,
+  rho = NA,
+  alpha = NA,
+  tau = NA,
+  M = NA,
+  S = NA,
+  ll_list = NA
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -94,7 +107,25 @@ Update a [`normal_models`] object
 \describe{
 \item{\code{B}}{regression matrix}
 
+\item{\code{OmegaQ}}{groups inverse variance matrix}
+
 \item{\code{dm1}}{diagonal vector of inverse variance matrix (variables level)}
+
+\item{\code{gamma}}{variance of  posterior distribution of W}
+
+\item{\code{mu}}{mean for posterior distribution of W}
+
+\item{\code{kappa}}{vector of zero-inflation probabilities}
+
+\item{\code{rho}}{posterior probabilities of zero-inflation}
+
+\item{\code{alpha}}{vector of groups probabilities}
+
+\item{\code{tau}}{posterior probabilities for group affectation}
+
+\item{\code{M}}{variational mean for posterior distribution of W}
+
+\item{\code{S}}{variational diagonal of variances for posterior distribution of W}
 
 \item{\code{ll_list}}{list of log-lik (elbo) values}
 }
@@ -108,9 +139,9 @@ Update the current [`normal`] object
 \if{html}{\out{<a id="method-normal_models-optimize"></a>}}
 \if{latex}{\out{\hypertarget{method-normal_models-optimize}{}}}
 \subsection{Method \code{optimize()}}{
-calls EM optimization and updates relevant fields
+calls optimization (EM or heuristic) and updates relevant fields
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{normal_models$optimize(niter = 100, threshold = 1e-04)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{normal_models$optimize(control = list(niter = 100, threshold = 1e-04))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -118,7 +149,7 @@ calls EM optimization and updates relevant fields
 \describe{
 \item{\code{niter}}{number of iterations in model optimization}
 
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
+\item{\code{threshold}}{log-likelihood threshold under which optimization stops}
 }
 \if{html}{\out{</div>}}
 }

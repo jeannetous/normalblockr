@@ -1,5 +1,5 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS normal_fixed_sparsity ########################
+##  CLASS normal_models         ########################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for a generic normal_fixed_sparsity model
@@ -12,8 +12,6 @@ normal_models <- R6::R6Class(
   public = list(
     #' @field data object of normal_data class, with responses and design matrix
     data  = NULL,
-    #' @field inference_method which method should be used to infer parameters
-    inference_method = NULL,
 
     #' @description Create a new [`normal_models`] object.
     #' @param data object of normal_data class, with responses and design matrix
@@ -21,31 +19,59 @@ normal_models <- R6::R6Class(
     #' @return A new [`nb_fixed`] object
     initialize = function(data, control = NB_control()) {
       self$data <- data
-      self$inference_method <- control$inference_method
-      private$ll_list <- 0
     },
 
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Setters    ------------------------
     #' @description
     #' Update a [`normal_models`] object
+    #'
+    #' All possible parameters of the child classes
     #' @param B regression matrix
     #' @param dm1 diagonal vector of inverse variance matrix (variables level)
+    #' @param OmegaQ groups inverse variance matrix
+    #' @param gamma  variance of  posterior distribution of W
+    #' @param mu  mean for posterior distribution of W
+    #' @param kappa vector of zero-inflation probabilities
+    #' @param rho posterior probabilities of zero-inflation
+    #' @param alpha vector of groups probabilities
+    #' @param tau posterior probabilities for group affectation
+    #' @param M variational mean for posterior distribution of W
+    #' @param S variational diagonal of variances for posterior distribution of W
     #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
-    update = function(B = NA, dm1 = NA, ll_list = NA) {
-      if (!anyNA(B))          private$B       <- B
-      if (!anyNA(dm1))        private$dm1     <- dm1
-      if (!anyNA(ll_list))    private$ll_list <- ll_list
+    update = function(B = NA,
+                      OmegaQ = NA,
+                      dm1 = NA,
+                      gamma = NA,
+                      mu = NA,
+                      kappa = NA,
+                      rho = NA,
+                      alpha = NA,
+                      tau = NA,
+                      M = NA,
+                      S = NA,
+                      ll_list = NA) {
+      if (!anyNA(B))       private$B       <- B
+      if (!anyNA(dm1))     private$dm1     <- dm1
+      if (!anyNA(OmegaQ))  private$OmegaQ  <- OmegaQ
+      if (!anyNA(gamma))   private$gamma   <- gamma
+      if (!anyNA(kappa))   private$kappa   <- kappa
+      if (!anyNA(rho))     private$rho     <- rho
+      if (!anyNA(mu))      private$mu      <- mu
+      if (!anyNA(alpha))   private$alpha   <- alpha
+      if (!anyNA(tau))     private$tau     <- tau
+      if (!anyNA(M))       private$M       <- M
+      if (!anyNA(S))       private$S       <- S
+      if (!anyNA(ll_list)) private$ll_list <- ll_list
     },
 
-    #' @description calls EM optimization and updates relevant fields
+    #' @description calls optimization (EM or heuristic) and updates relevant fields
     #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @param threshold log-likelihood threshold under which optimization stops
     #' @return optimizes the model and updates its parameters
-    optimize = function(niter = 100, threshold = 1e-4) {
-      if(self$inference_method == "integrated"){
-        optim_out <- private$EM_optimize(niter, threshold)
-      }else{
-        optim_out <- private$heuristic_optimize()}
+    optimize = function(control = list(niter = 100, threshold = 1e-4)) {
+      optim_out <- private$optimizer(control)
       do.call(self$update, optim_out)
     },
 
@@ -65,44 +91,48 @@ normal_models <- R6::R6Class(
   ## PRIVATE MEMBERS -------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    B          = NA, # regression matrix
-    dm1       = NA,  # diagonal vector of inverse variance matrix (variables level)
-    ll_list    = NA, # list of log-likelihoods or ELBOs
+    B         = NA, # regression matrix
+    dm1       = NA, # diagonal vector of inverse variance matrix (variables level)
+    C         = NA, # the matrix of species groups
+    OmegaQ    = NA, # precision matrix for clusters
+    kappa     = NA, # vector of zero-inflation probabilities
+    alpha     = NA, # vector of groups probabilities
+    rho       = NA, # posterior probabilities of zero-inflation
+    tau       = NA, # posterior probabilities for group affectation
+    gamma     = NA, # variance of  posterior distribution of W
+    mu        = NA, # mean for posterior distribution of W
+    M         = NA, # variational mean for posterior distribution of W
+    S         = NA, # variational diagonal of variances for posterior distribution of W
+    optimizer = NA, # a link to the function that perform the optimization
+    ll_list   = NA, # list of log-likelihoods or ELBOs
 
     compute_loglik  = function() {},
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## MLE of MV distribution
+    multivariate_normal_inference = function(){
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      R     <- self$data$Y - self$data$X %*% B
+      Sigma <- cov(R)
+      list(B = B, R = R, Sigma = Sigma)
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated EM inference------------------
-    EM_optimize = function(niter, threshold) {
+    EM_optimize = function(control) {
       parameters <- do.call(private$EM_initialize, list())
       ll_list    <- do.call(private$compute_loglik, parameters)
-      for (h in 2:niter) {
+      for (h in 2:control$niter) {
         parameters <- do.call(private$EM_step, parameters)
         ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
-        if (abs(ll_list[h] - ll_list[h - 1]) < threshold)
+        if (abs(ll_list[h] - ll_list[h - 1]) < control$threshold)
           break
       }
       c(parameters, list(ll_list = ll_list))
     },
     EM_step = function() {},
-    EM_initialize = function() {},
+    EM_initialize = function() {}
 
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for heuristic inference----------------------
-    heuristic_optimize = function(){
-      parameters <- do.call(private$get_heuristic_parameters, list())
-      ll_list    <- do.call(private$compute_loglik, parameters)
-      c(parameters, list(ll_list = ll_list))
-    },
-
-    get_heuristic_parameters = function(){},
-
-    multivariate_normal_inference = function(){
-      B       <- self$data$XtXm1 %*% t(self$data$X) %*% self$data$Y
-      R       <- self$data$Y - self$data$X %*% B
-      Sigma   <- (t(R) %*% R) / self$n
-      list(B = B, R = R, Sigma = Sigma)
-    }
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,13 +140,13 @@ normal_models <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field n number of samples
-    n = function() nrow(self$data$Y),
+    n = function() self$data$n,
     #' @field p number of responses per sample
-    p = function() ncol(self$data$Y),
+    p = function() self$data$p,
     #' @field d number of variables (dimensions in X)
-    d = function() ncol(self$data$X),
+    d = function() self$data$d,
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function() list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ),
+    model_par = function() list(B = private$B, dm1 = private$dm1),
     #' @field loglik (or its variational lower bound)
     loglik = function() private$ll_list[[length(private$ll_list)]],
     #' @field nb_param number of parameters in the model

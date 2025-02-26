@@ -7,9 +7,9 @@
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
-NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
-  classname = "NB_zi_fixed_blocks_fixed_sparsity",
-  inherit   = NB_fixed_sparsity,
+NB_zi_fixed_blocks <- R6::R6Class(
+  classname = "NB_zi_fixed_blocks",
+  inherit   = NB,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,9 +194,9 @@ NB_zi_fixed_blocks_fixed_sparsity <- R6::R6Class(
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
-NB_zi_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
-  classname = "NB_fixed_blocks_fixed_sparsity_diagonal",
-  inherit = NB_zi_fixed_blocks_fixed_sparsity,
+NB_zi_fixed_blocks_diagonal <- R6::R6Class(
+  classname = "NB_fixed_blocks_diagonal",
+  inherit = NB_zi_fixed_blocks,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS -------------------------------------
@@ -262,9 +262,9 @@ NB_zi_fixed_blocks_fixed_sparsity_diagonal <- R6::R6Class(
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
-NB_zi_fixed_blocks_fixed_sparsity_spherical <- R6::R6Class(
-  classname = "NB_fixed_blocks_fixed_sparsity_spherical",
-  inherit = NB_zi_fixed_blocks_fixed_sparsity,
+NB_zi_fixed_blocks_spherical <- R6::R6Class(
+  classname = "NB_fixed_blocks_spherical",
+  inherit = NB_zi_fixed_blocks,
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PRIVATE MEMBERS -------------------------------------

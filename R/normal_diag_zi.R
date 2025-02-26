@@ -20,21 +20,8 @@ normal_diag_zi <- R6::R6Class(
     #' @return A new [`normal_diag_zi`] object
     initialize = function(data) {
       super$initialize(data)
+      private$optimizer <- private$EM_optimize
       self$zeros <- 1 * (data$Y == 0)
-    },
-
-    #' @description
-    #' Update a [`normal_diag_zi`] object
-    #' @param B regression matrix
-    #' @param dm1 diagonal vector of inverse variance matrix
-    #' @param kappa vector of zero-inflation probabilities
-    #' @param rho posterior probabilities of zero-inflation
-    #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`normal_diag_zi`] object
-    update = function(B = NA, dm1 = NA, kappa = NA, rho = NA, ll_list=NA) {
-      super$update(B=B, dm1=dm1, ll_list=ll_list)
-      if (!anyNA(kappa))      private$kappa   <- kappa
-      if (!anyNA(rho))        private$rho     <- rho
     }
   ),
 
@@ -42,8 +29,6 @@ normal_diag_zi <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    kappa     = NA,   # vector of zero-inflation probabilities
-    rho       = NA,   # posterior probabilities of zero-inflation
 
     compute_loglik  = function(B, dm1, rho, kappa) {
       rho_bar <- 1 - rho

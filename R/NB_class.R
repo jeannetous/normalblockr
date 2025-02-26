@@ -1,14 +1,14 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_sparsity ############################
+##  CLASS NB ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic NB_fixed_sparsity model
+#' R6 class for a generic Normal Block model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
 #' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
-NB_fixed_sparsity <- R6::R6Class(
-  classname = "NB_fixed_sparsity",
+NB <- R6::R6Class(
+  classname = "NB",
   inherit   = normal_models,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
@@ -18,43 +18,39 @@ NB_fixed_sparsity <- R6::R6Class(
     penalty = NULL,
     #' @field sparsity_weights weights to add on variance matrix for penalization
     sparsity_weights = NULL,
-    #' @field inference_method which method should be used to infer parameters
-    inference_method = NULL,
-    #' @field Q number of blocks
-    Q = NULL,
-    #' @field clustering_method to use for clustering with heuristic inference method
-    clustering_method = NULL,
 
-    #' @description Create a new [`NB_fixed_sparsity`] object.
+    #' @description Create a new [`NB`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param penalty penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_control
-    #' @return A new [`NB_fixed_sparsity`] object
-    initialize = function(data, Q, penalty = 0,
-                          control = NB_control()) {
-      super$initialize(data, control = control)
+    #' @return A new [`NB`] object
+    initialize = function(data, Q, penalty = 0, control = NB_control()) {
+      super$initialize(data, control)
       self$penalty <- penalty
-      self$Q <- Q
-      if (penalty > 0) {
-        sparsity_weights  <- control$sparsity_weights
-        if(is.null(sparsity_weights)){
-          sparsity_weights <- matrix(1, self$Q, self$Q)
-          diag(sparsity_weights) <- 0
-        }
-        self$sparsity_weights  <- sparsity_weights
-      }
-    },
+      private$C <- matrix(NA, self$data$n, Q)
+      private$approx <- control$heuristic
+      ## point to the chosen optimization function
+      private$optimizer <- ifelse(control$heuristic,
+                                  private$heuristic_optimize,
+                                  private$EM_optimize)
+      ## point to the chosen clustering function for heuristic approach
+      private$clustering_approx <-
+        switch(control$clustering_approx,
+               "residuals"  = private$heuristic_cluster_residuals,
+               "covariance" = private$heuristic_cluster_sigma
+        )
 
-    #' @description
-    #' Update a [`NB_fixed_sparsity`] object
-    #' @param B regression matrix
-    #' @param OmegaQ groups inverse variance matrix
-    #' @param dm1 diagonal vector of species inverse variance matrix
-    #' @param ll_list log-likelihood during optimization
-    #' @return Update the current [`NB`] object
-    update = function(B = NA, OmegaQ = NA, dm1 = NA,  ll_list = NA) {
-      super$update(B = B, dm1 = dm1, ll_list = ll_list)
-      if (!anyNA(OmegaQ))     private$OmegaQ  <- OmegaQ
+      if (penalty > 0) {
+        if (is.null(control$sparsity_weights)) {
+          weights <- matrix(1, self$Q, self$Q)
+          diag(weights) <- 0
+        } else {
+          weights <- control$sparsity_weights
+        }
+        self$sparsity_weights  <- weights
+      }
+
+
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -94,7 +90,7 @@ NB_fixed_sparsity <- R6::R6Class(
                             remove.isolated = FALSE,
                             node.labels     = NULL,
                             layout          = igraph::layout_in_circle,
-                            plot = TRUE){
+                            plot = TRUE) {
       if(anyNA(private$OmegaQ)) stop("NA in the precision matrix")
 
       type   <- match.arg(type)
@@ -144,13 +140,14 @@ NB_fixed_sparsity <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    C          = NA, # the matrix of species groups
-    OmegaQ     = NA, # precision matrix for clusters
+    approx            = NA, # use approximation/heuristic approach or not
+    clustering_approx = NA, # clustering function in the heuristic approach
 
-    get_Omega = function(Sigma) {
+    get_OmegaQ = function(Sigma) {
       if (self$penalty == 0) {
         Omega <- solve(Sigma)
       } else {
@@ -170,72 +167,80 @@ NB_fixed_sparsity <- R6::R6Class(
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference----------------------
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    heuristic_optimize = function(control){
+      parameters <- private$get_heuristic_parameters()
+      ll_list    <- do.call(private$heuristic_loglik, parameters)
+      c(parameters, list(ll_list = ll_list))
+    },
+
     heuristic_SigmaQ_from_Sigma = function(Sigma){
       Sigma_Q <- (t(private$C) %*% Sigma %*% private$C) / outer(colSums(private$C), colSums(private$C))
-      if(anyNA(Sigma_Q)){
+### TODO: why is there any NA?
+      if (anyNA(Sigma_Q)) {
         diag(Sigma_Q)[is.na(diag(Sigma_Q))] <- mean(diag(Sigma_Q)[!is.na(diag(Sigma_Q))])
         Sigma_Q[is.na(Sigma_Q)] <- 0
       }
       Sigma_Q
     },
 
-    heuristic_loglik = function(B, OmegaQ, rho = NA){
-      Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
-      log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
-      R <- self$data$Y - self$data$X %*% B
-      if(!anyNA(rho)) R[rho > 0.7] <- 0
-      J <- -.5 * self$p * log(2 * pi)
-      J <- J + .5 * self$n  * log_det_Sigma_tilde
-      J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))
-      J
-    },
-
-    heuristic_get_clustering = function(Sigma = NA, R = NA){
-      if(self$clustering_method ==  "cluster_sigma"){
-        C <- private$heuristic_cluster_sigma(Sigma)
-      }else{
-        C <- private$heuristic_cluster_residuals(R)
-      }
-    },
-
-    heuristic_cluster_sigma = function(Sigma){
+    heuristic_cluster_sigma = function(R){
       sink('/dev/null')
-      mySBM <- Sigma %>%
+      mySBM <- cov(R) %>%
         sbm::estimateSimpleSBM("gaussian",
                                estimOption=list(verbosity=0, exploreMin=self$Q, verbosity=0, plot=FALSE, nbCores=1)
         )
       sink()
       mySBM$setModel(self$Q)
-      return(as_indicator(mySBM$memberships))
+      mySBM$memberships |> as_indicator()
     },
 
     heuristic_cluster_residuals = function(R){
-      return(as_indicator(kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster))
+      kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster |>
+        as_indicator()
+    },
+
+    heuristic_loglik = function(B, OmegaQ, rho = NA){
+      Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
+      log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
+      R <- self$data$Y - self$data$X %*% B
+      ### what is this threshold??
+      if (!anyNA(rho)) R[rho > 0.7] <- 0
+      J <- -.5 * self$p * log(2 * pi)
+      J <- J + .5 * self$n  * log_det_Sigma_tilde
+      J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))
+      J
     }
+
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field inference_method inference procedure used (heuristic or integrated with EM)
+    inference_method = function(value) ifelse(private$approx, "heuristical", "integrated"),
+    #' @field Q number of blocks
+    Q = function(value) as.integer(ncol(private$C)),
     #' @field nb_param number of parameters in the model
-    nb_param = function() as.integer(super$nb_param + self$Q + self$n_edges + self$p), # adding OmegaQ and dm1
+    nb_param = function(value) as.integer(super$nb_param + self$Q + self$n_edges + self$p), # adding OmegaQ and dm1
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
-    n_edges  = function() sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
+    n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function(){
+    model_par = function(value) {
       par <- super$model_par
-      par$dm1 <- private$dm1 ; par$OmegaQ <- private$OmegaQ
+      par$OmegaQ <- private$OmegaQ
       par
     },
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
-    penalty_term = function() self$penalty * sum(abs(self$sparsity_weights * private$OmegaQ)),
+    penalty_term = function(value) self$penalty * sum(abs(self$sparsity_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
-    loglik = function() super$loglik + self$penalty_term,
+    loglik = function(value) super$loglik + self$penalty_term,
     #' @field EBIC variational lower bound of the EBIC
-    EBIC      = function() {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
+    EBIC      = function(value) {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function() {
+    criteria   = function(value) {
       res   <- super$criteria
       res$Q <- self$Q
       res$n_edges <- self$n_edges
@@ -244,8 +249,8 @@ NB_fixed_sparsity <- R6::R6Class(
       res
     },
     #' @field clustering given as the list of elements contained in each cluster
-    clustering = function()  get_clusters(private$C),
+    clustering = function(value) get_clusters(private$C),
     #' @field elements_per_cluster given as the list of elements contained in each cluster
-    elements_per_cluster = function() split(names(self$clustering), self$clustering)
+    elements_per_cluster = function(value) split(names(self$clustering), self$clustering)
   )
 )

@@ -15,7 +15,15 @@ R6 class for a generic normal model
 
 \item{\code{X}}{the matrix of covariates}
 
+\item{\code{n}}{sample size}
+
+\item{\code{d}}{number of covariates}
+
+\item{\code{p}}{number of variables}
+
 \item{\code{XtXm1}}{inverse of XtX, useful for inference}
+
+\item{\code{XtY}}{useful for inference}
 }
 \if{html}{\out{</div>}}
 }

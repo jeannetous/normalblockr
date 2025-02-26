@@ -12,8 +12,9 @@ NB_control(
   fixed_tau = FALSE,
   clustering_init = NULL,
   verbose = TRUE,
-  inference_method = c("integrated", "heuristic"),
-  clustering_method = c("residuals", "sigma")
+  heuristic = FALSE,
+  noise_covariance = c("diagonal", "spherical"),
+  clustering_approx = c("residuals", "covariance")
 )
 }
 \arguments{
@@ -36,9 +37,11 @@ unknown, can be a list with one clustering for each Q value}
 
 \item{verbose}{telling if information should be printed during optimization}
 
-\item{inference_method}{which inference approach should be used: integrated or heuristic}
+\item{heuristic}{weither to use heuristical approach or not. Default is FALSE}
 
-\item{clustering_method}{to use for clustering with heuristic inference method}
+\item{clustering_approx}{to use for clustering with heuristic inference method}
+
+\item{noise_variance}{variance can be variable specific ("diagonal", the default) or common ("spherical")}
 }
 \description{
 NB_control
