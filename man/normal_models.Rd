@@ -147,9 +147,7 @@ calls optimization (EM or heuristic) and updates relevant fields
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{log-likelihood threshold under which optimization stops}
+\item{\code{control}}{a list for controlling the optimization proces}
 }
 \if{html}{\out{</div>}}
 }

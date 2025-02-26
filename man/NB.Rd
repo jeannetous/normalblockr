@@ -11,15 +11,6 @@ R6 class for a generic Normal Block model
 \section{Super class}{
 \code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{NB}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
-
-\item{\code{sparsity_weights}}{weights to add on variance matrix for penalization}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -32,6 +23,10 @@ R6 class for a generic Normal Block model
 \item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
+
+\item{\code{penalty}}{(overall sparsity parameter)}
+
+\item{\code{penalty_weights}}{(weights associated to each pair of groups)}
 
 \item{\code{penalty_term}}{(penalty term in log-likelihood due to sparsity)}
 

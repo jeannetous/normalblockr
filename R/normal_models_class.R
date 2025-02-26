@@ -67,8 +67,7 @@ normal_models <- R6::R6Class(
     },
 
     #' @description calls optimization (EM or heuristic) and updates relevant fields
-    #' @param niter number of iterations in model optimization
-    #' @param threshold log-likelihood threshold under which optimization stops
+    #' @param control a list for controlling the optimization proces
     #' @return optimizes the model and updates its parameters
     optimize = function(control = list(niter = 100, threshold = 1e-4)) {
       optim_out <- private$optimizer(control)

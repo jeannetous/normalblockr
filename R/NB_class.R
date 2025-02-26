@@ -5,7 +5,6 @@
 #' R6 class for a generic Normal Block model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
-#' @param penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB <- R6::R6Class(
   classname = "NB",
@@ -14,10 +13,6 @@ NB <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field penalty to apply on variance matrix when calling GLASSO
-    penalty = NULL,
-    #' @field sparsity_weights weights to add on variance matrix for penalization
-    sparsity_weights = NULL,
 
     #' @description Create a new [`NB`] object.
     #' @param data object of normal_data class, with responses and design matrix
@@ -42,19 +37,14 @@ NB <- R6::R6Class(
                "residuals"  = private$heuristic_cluster_residuals,
                "covariance" = private$heuristic_cluster_sigma
         )
-
       ## penalty mask
-      self$penalty <- penalty
-      if (penalty > 0) {
-        if (is.null(control$sparsity_weights)) {
-          weights <- matrix(1, self$Q, self$Q)
-          diag(weights) <- 0
-        } else {
-          weights <- control$sparsity_weights
-        }
-        self$sparsity_weights  <- weights
+      private$lambda <- penalty
+      weights <- matrix(1, self$Q, self$Q)
+      diag(weights) <- 0
+      if (!is.null(control$sparsity_weights)) {
+        weights <- control$sparsity_weights
       }
-
+      private$weights <- weights
 
     },
 
@@ -149,6 +139,8 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    lambda            = NA, # scalar controlling the overall sparsity
+    weights           = NA, # sparsity weights specific to each pairs of group
     res_covariance    = NA, # shape of the residuals covariance (diagonal or)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
@@ -157,7 +149,7 @@ NB <- R6::R6Class(
       if (self$penalty == 0) {
         Omega <- solve(Sigma)
       } else {
-        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$sparsity_weights)
+        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$penalty_weights)
         if (anyNA(glasso_out$wi)) {
           warning(
             "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
@@ -242,8 +234,12 @@ NB <- R6::R6Class(
       par$OmegaQ <- private$OmegaQ
       par
     },
+    #' @field penalty (overall sparsity parameter)
+    penalty = function(value) private$lambda,
+    #' @field penalty_weights (weights associated to each pair of groups)
+    penalty_weights = function(value) private$weights,
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
-    penalty_term = function(value) self$penalty * sum(abs(self$sparsity_weights * private$OmegaQ)),
+    penalty_term = function(value) self$penalty * sum(abs(self$penalty_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
     loglik = function(value) super$loglik + self$penalty_term,
     #' @field EBIC variational lower bound of the EBIC
