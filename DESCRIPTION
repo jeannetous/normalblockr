@@ -19,7 +19,7 @@ Imports:
     glassoFast,
     Matrix,
     nloptr (>= 2.0.3),
-    pdfCluster,
+    aricode,
     dplyr,
     purrr,
     R6,
