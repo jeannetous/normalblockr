@@ -230,7 +230,10 @@ NB <- R6::R6Class(
     #' @field Q number of blocks
     Q = function(value) as.integer(ncol(private$C)),
     #' @field nb_param number of parameters in the model
-    nb_param = function(value) as.integer(super$nb_param + self$Q + self$n_edges + self$p), # adding OmegaQ and dm1
+    nb_param = function(value) {
+      nb_param_D <- ifelse(private$res_covariance == "diagonal", self$p, 1)
+      as.integer(super$nb_param + self$Q + self$n_edges + nb_param_D)
+      }, # adding OmegaQ and dm1
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))

@@ -14,8 +14,6 @@ R6 class for a generic normal model
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{nb_param}}{number of parameters in the model}
-
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}

@@ -88,15 +88,10 @@ NB_fixed_blocks <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field nb_param number of parameters in the model
-    nb_param = function(value) {
-      nb_param_D <- ifelse(private$res_covariance == "diagonal", self$p, 1)
-      as.integer(super$nb_param + nb_param_D)
-    },
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
-    posterior_par = function() list(gamma = private$gamma, mu = private$mu),
+    posterior_par = function(value) list(gamma = private$gamma, mu = private$mu),
     #' @field entropy Entropy of the variational distribution when applicable
-    entropy    = function() {
+    entropy    = function(value) {
       if (!private$approx){
         res <- .5 * self$n * self$Q * log(2 * pi * exp(1)) +
           .5 * self$n * as.numeric(determinant(private$gamma)$modulus)
@@ -104,7 +99,7 @@ NB_fixed_blocks <- R6::R6Class(
       res
     },
     #' @field fitted Y values predicted by the model
-    fitted = function(){
+    fitted = function(value){
       if(private$approx) {
         res <- self$data$X %*% private$B
       } else {

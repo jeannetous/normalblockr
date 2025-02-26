@@ -120,7 +120,7 @@ normal_models <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated EM inference------------------
     EM_optimize = function(control) {
-      parameters <- do.call(private$EM_initialize, list())
+      parameters <- private$EM_initialize()
       ll_list    <- do.call(private$compute_loglik, parameters)
       for (h in 2:control$niter) {
         parameters <- do.call(private$EM_step, parameters)
