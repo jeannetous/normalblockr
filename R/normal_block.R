@@ -52,9 +52,9 @@ NB_control <- function(
 #' @export
 get_model <- function(data, blocks, sparsity = 0,
                       zero_inflation = FALSE, control= NB_control()){
-  block_class   <- ifelse(is.matrix(blocks), "_fixed_blocks",
-                        ifelse(length(blocks) > 1, "_unknown_Q", "_fixed_Q"))
   sparse_class  <- ifelse(typeof(sparsity) == "logical" & sparsity, "_changing_sparsity", "")
+  block_class   <- ifelse(sparse_class == "_changing_sparsity", "",
+                          ifelse(is.matrix(blocks), "_fixed_blocks",ifelse(length(blocks) > 1, "_unknown_Q", "_fixed_Q")))
   zi_class      <- ifelse(block_class != "unknown_Q" & sparse_class != "_changing_sparsity" &
                          zero_inflation, "_zi",  "")
   is_collection <- ifelse( sparse_class == "_changing_sparsity" | block_class == "_unknown_Q",
@@ -62,7 +62,8 @@ get_model <- function(data, blocks, sparsity = 0,
 
   myClass <- eval(str2lang(paste0("NB", zi_class, block_class, sparse_class)))
   if(is_collection){
-    model   <- myClass$new(data, blocks, zero_inflation, sparsity, control = control)
+    if(sparse_class == "_changing_sparsity"){model   <- myClass$new(data, blocks, zero_inflation, control = control)
+    }else{model   <- myClass$new(data, blocks, zero_inflation, sparsity, control = control)}
   }else{model   <- myClass$new(data, blocks, sparsity, control = control)}
   model
 }
