@@ -38,6 +38,8 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{d}}{number of variables (dimensions in X)}
 
+\item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
+
 \item{\code{penalties_list}}{list of lambda values for sparsity penalties}
 
 \item{\code{penalties_details}}{list of information about model's penalties}
