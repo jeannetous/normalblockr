@@ -6,7 +6,6 @@
 #' R6 class for normal-block model with unknown Q (number of groups)
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param zero_inflation whether the models should be zero-inflated or not
-#' @param verbose telling if information should be printed during optimization
 #' @param control structured list for specific parameters (including initial clustering proposal)
 NB_unknown_Q <- R6::R6Class(
   classname = "NB_unknown_Q",
@@ -59,8 +58,7 @@ NB_unknown_Q <- R6::R6Class(
     },
 
     #' @description optimizes an NB_fixed_Q object for each value of Q
-    #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @param control optimization parameters (niter and threshold)
     optimize = function(control = list(niter = 100, threshold = 1e-4)) {
       self$models <- map(self$models, function(model) {
         if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
@@ -75,7 +73,7 @@ NB_unknown_Q <- R6::R6Class(
     #' @return A NB_fixed_Q object with given value Q
     get_model = function(Q) {
       if(!(Q %in% self$nb_blocks)) {
-        stop("No such model in the collection. Acceptable parameter values can be found via $nb_blocks")
+        stop("No such model in the collection. Acceptable parameter values can be found via $Q_list")
       }
       Q_rank <- which(sort(self$nb_blocks) == Q)
       self$models[[Q_rank]]
@@ -136,6 +134,8 @@ NB_unknown_Q <- R6::R6Class(
     p = function() self$data$p,
     #' @field d number of variables (dimensions in X)
     d = function() self$data$d,
+    #' @field get_res_covariance whether the residual covariance is diagonal or spherical
+    get_res_covariance = function(value) self$models[[1]]$get_res_covariance,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
     #' @field who_am_I a method to print what model is being fitted

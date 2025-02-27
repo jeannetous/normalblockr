@@ -32,6 +32,8 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{d}}{number of variables (dimensions in X)}
 
+\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
+
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
 \item{\code{who_am_I}}{a method to print what model is being fitted}
@@ -95,11 +97,7 @@ optimizes an NB_fixed_Q object for each value of Q
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{control}}{structured list for specific parameters (including initial clustering proposal)}
-
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
+\item{\code{control}}{optimization parameters (niter and threshold)}
 }
 \if{html}{\out{</div>}}
 }

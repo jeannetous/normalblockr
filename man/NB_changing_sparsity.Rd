@@ -30,13 +30,13 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{Q}}{number of blocks}
-
 \item{\code{n}}{number of samples}
 
 \item{\code{p}}{number of responses per sample}
 
 \item{\code{d}}{number of variables (dimensions in X)}
+
+\item{\code{Q}}{number of blocks}
 
 \item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
 
@@ -46,7 +46,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{penalty_weights}}{(weights associated to each pair of groups)}
 
-\item{\code{res_covariance}}{whether the residual covariance is diagonal or spherical}
+\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
@@ -113,11 +113,7 @@ optimizes a model for each penalty
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{control}}{structured list for specific parameters (including initial clustering proposal)}
-
-\item{\code{niter}}{number of iterations in model optimization}
-
-\item{\code{threshold}}{loglikelihood threshold under which optimization stops}
+\item{\code{control}}{optimization parameters (niter and threshold)}
 }
 \if{html}{\out{</div>}}
 }

@@ -37,12 +37,22 @@ NB_changing_sparsity <- R6::R6Class(
     #' @return A new [`NB_changing_sparsity`] object
     initialize = function(data, blocks, zero_inflation = FALSE,
                           control = NB_control()) {
+      stopifnot("blocks must be either a clustering matrix or a fixed number of blocks" =
+                  is.matrix(blocks) | length(blocks) == 1)
       if (!is.null(control$penalties)) {
         if (min(control$penalties) <= 0) stop("All penalties must be strictly positive")
       }
+      if(!is.matrix(blocks)){
+        if(blocks == 1){
+          stop("No penalty can be applied with one cluster as there is no network.")
+        }
+      }
+
+      private$penalties <- c(0)
       self$data   <- data
       self$blocks <- blocks
       self$zero_inflation   <- zero_inflation
+      self$verbose <- control$verbose
 
       private$penalties        <- control$penalties
       private$n_penalties      <- control$n_penalties
@@ -52,15 +62,15 @@ NB_changing_sparsity <- R6::R6Class(
       if(!is.null(control$penalties)){
         private$n_penalties <- length(control$penalties)
       }else{
-        init_model <- get_model(data, blocks,
-                                zero_inflation = self$zero_inflation,
-                                control = control)
-        init_model$optimize(control = list(niter = 5, threshold = 1e-4))
-        SigmaQ    <- solve(init_model$model_par$OmegaQ)
-        diag_pen  <- max(diag(init_model$penalty_weights)) > 0
-        weights   <- init_model$penalty_weights ; weights[weights == 0] <- 1
-        max_pen   <- max(abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)]))
-        private$penalties <- 10^seq(log10(max_pen), log10(max_pen * private$min_ratio), len = private$n_penalties)
+          init_model <- get_model(data, blocks,
+                                  zero_inflation = self$zero_inflation,
+                                  control = control)
+          init_model$optimize(control = list(niter = 5, threshold = 1e-4))
+          SigmaQ    <- solve(init_model$model_par$OmegaQ)
+          diag_pen  <- max(diag(init_model$penalty_weights)) > 0
+          weights   <- init_model$penalty_weights ; weights[weights == 0] <- 1
+          max_pen   <- max(abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)]))
+          private$penalties <- 10^seq(log10(max_pen), log10(max_pen * private$min_ratio), len = private$n_penalties)
       }
       private$penalties <- sort(private$penalties, decreasing = TRUE)
       self$models <- map(private$penalties,
@@ -70,12 +80,10 @@ NB_changing_sparsity <- R6::R6Class(
                                               zero_inflation = zero_inflation,
                                               control = control)
                          })
-      self$verbose <- control$verbose
     },
 
     #' @description optimizes a model for each penalty
-    #' @param niter number of iterations in model optimization
-    #' @param threshold loglikelihood threshold under which optimization stops
+    #' @param control optimization parameters (niter and threshold)
     optimize = function(control = list(niter = 100, threshold = 1e-4)) {
       self$latest_niter     <- control$niter
       self$latest_threshold <- control$threshold
@@ -95,7 +103,7 @@ NB_changing_sparsity <- R6::R6Class(
     get_model = function(penalty) {
       if(!(penalty %in% private$penalties)) {
         penalty <-  private$penalties[[which.min(abs(private$penalties - penalty))]]
-        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties \n"))
+        cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties_list \n"))
       }
       penalty_rank <- which(sort(private$penalties, decreasing = TRUE) == penalty)
       return(self$models[[penalty_rank]])
@@ -191,7 +199,7 @@ NB_changing_sparsity <- R6::R6Class(
                                                penalties = private$penalties,
                                                fixed_tau = TRUE,
                                                clustering_init = clustering_init,
-                                               noise_covariance = self$res_covariance,
+                                               noise_covariance = self$get_res_covariance,
                                                verbose = FALSE))
         if(is.null(self$latest_niter)){
           stop("The model must be optimized before running a stability selection.")
@@ -234,14 +242,14 @@ NB_changing_sparsity <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field n number of samples
+    n = function() self$data$n,
+    #' @field p number of responses per sample
+    p = function() self$data$p,
+    #' @field d number of variables (dimensions in X)
+    d = function() self$data$d,
     #' @field Q number of blocks
     Q = function(value) ifelse(is.matrix(self$blocks), ncol(self$blocks), self$blocks),
-    #' @field n number of samples
-    n = function() nrow(self$data$Y),
-    #' @field p number of responses per sample
-    p = function() ncol(self$data$Y),
-    #' @field d number of variables (dimensions in X)
-    d = function() ncol(self$data$X),
     #' @field inference_method inference procedure used (heuristic or integrated with EM)
     inference_method = function(value) ifelse(private$approx, "heuristical", "integrated"),
     #' @field penalties_list list of lambda values for sparsity penalties
@@ -251,8 +259,8 @@ NB_changing_sparsity <- R6::R6Class(
                                       "min_penalty" = min(private$penalties), "max_penalty" = max(private$penalties)),
     #' @field penalty_weights (weights associated to each pair of groups)
     penalty_weights = function(value) self$models[[1]]$penalty_weights,
-    #' @field res_covariance whether the residual covariance is diagonal or spherical
-    res_covariance = function(value) self$models[[1]]$res_covariance,
+    #' @field get_res_covariance whether the residual covariance is diagonal or spherical
+    get_res_covariance = function(value) self$models[[1]]$get_res_covariance,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)

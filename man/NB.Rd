@@ -36,6 +36,8 @@ R6 class for a generic Normal Block model
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 
+\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
+
 \item{\code{clustering}}{given as the list of elements contained in each cluster}
 
 \item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
