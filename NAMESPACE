@@ -2,6 +2,7 @@
 
 export(NB_control)
 export(generate_normal_block_data)
+export(get_model)
 import(Matrix)
 import(R6)
 import(dplyr)
