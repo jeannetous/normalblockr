@@ -29,6 +29,7 @@ normal_data <- R6::R6Class(
     #' @description Create a new [`normal_data`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
+    #' @export
     initialize = function(Y, X) {
       stopifnot("Y and X must be matrices" = all(is.matrix(Y), is.matrix(X))) |> try()
       stopifnot("Y and X must have the same number of rows" = (nrow(Y) == nrow(X))) |> try()
