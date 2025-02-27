@@ -46,7 +46,6 @@ NB_control <- function(
 #' @param sparsity boolean to say whether the model should have a changing penalty
 #' OR float to run model with a single penalty value
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
-#' @param noise_cov character the type of covariance for the noise: either diagonal of spherical
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with normal_block_control() for collections of sparse models
 #' @param data contains the matrix of responses (Y) and the design matrix (X).

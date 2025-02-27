@@ -130,15 +130,14 @@ A NB_fixed_Q object with given value Q
 \subsection{Method \code{get_best_model()}}{
 Extract best model in the collection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$get_best_model(crit = c("loglik", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$get_best_model(crit = c("ICL", "BIC", "AIC"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{crit}}{a character for the criterion used to performed the selection.
-Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
-"loglik" is the default criterion}
+Either "ICL", "BIC" or AIC". "ICL" is the default criterion}
 }
 \if{html}{\out{</div>}}
 }
@@ -152,18 +151,18 @@ a [`NB_fixed_Q`] object
 \subsection{Method \code{plot()}}{
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$plot(criteria = c("loglik", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$plot(criteria = c("deviance", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criteria}}{vector of characters. The criteria to plot in `c("loglik", "BIC", "AIC", "ICL")`. Defaults to all of them.}
+\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", "BIC", "AIC", "ICL")`. Defaults to all of them.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-a [`ggplot`] graph
+a [`ggplot2::ggplot`] graph
 }
 }
 \if{html}{\out{<hr>}}

@@ -25,8 +25,6 @@ OR float to run model with a single penalty value}
 
 \item{control}{a list-like structure for detailed control on parameters should be
 generated with normal_block_control() for collections of sparse models}
-
-\item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
 }
 \description{
 Creates appropriate new normal block model depending on the parametrization
