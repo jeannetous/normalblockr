@@ -7,8 +7,6 @@
 #' @param sparsity either TRUE to run the optimization for different penalty values
 #' OR float to run model with a single penalty value
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
-#' @param niter number of iterations in model optimization
-#' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with NB_control().
 #' @return an R6 object with one of the NB classes
@@ -27,7 +25,6 @@
 normal_block <- function(data , blocks,
                          sparsity = 0,
                          zero_inflation = FALSE,
-                         niter = 100, threshold = 1e-4,
                          control = NB_control()) {
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
@@ -40,7 +37,7 @@ normal_block <- function(data , blocks,
   ## Estimation/optimization
   if(control$verbose) cat("Fitting a", model$who_am_I, "\n")
 
-  model$optimize(control = list(niter = niter, threshold = threshold))
+  model$optimize(control)
 
   ## Finishing
   if(control$verbose) cat("\nDONE\n")
@@ -50,6 +47,10 @@ normal_block <- function(data , blocks,
 
 #' NB_control
 #'
+#' Control the model settings and various optimization parameters
+#'
+#' @param niter number of iterations in model optimization
+#' @param threshold loglikelihood / elbo threshold under which optimization stops
 #' @param sparsity_weights weights with which penalty should be applied in case
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
 #' penalized too (default is non-penalized diagonal and 1s off-diagonal)
@@ -67,6 +68,8 @@ normal_block <- function(data , blocks,
 #' @param clustering_approx to use for clustering with heuristic inference method
 #' @export
 NB_control <- function(
+    niter             = 100,
+    threshold         = 1e-4,
     sparsity_weights  = NULL,
     penalties         = NULL,
     n_penalties       = 30,
@@ -77,7 +80,9 @@ NB_control <- function(
     heuristic         = FALSE,
     noise_covariance  = c("diagonal", "spherical"),
     clustering_approx = c("residuals", "covariance")) {
-  structure(list(sparsity_weights = sparsity_weights ,
+  structure(list(niter            = niter            ,
+                 threshold        = threshold        ,
+                 sparsity_weights = sparsity_weights ,
                  penalties        = penalties        ,
                  n_penalties      = n_penalties      ,
                  min_ratio        = min_ratio        ,
@@ -100,21 +105,48 @@ NB_control <- function(
 #' generated with normal_block_control() for collections of sparse models
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @export
-get_model <- function(data, blocks, sparsity = 0,
-                      zero_inflation = FALSE, control= NB_control()){
-  sparse_class  <- ifelse(typeof(sparsity) == "logical" & sparsity, "_changing_sparsity", "")
-  block_class   <- ifelse(sparse_class == "_changing_sparsity" & (is.matrix(blocks) | length(blocks) == 1), "",
-                          ifelse(is.matrix(blocks), "_fixed_blocks",ifelse(length(blocks) > 1, "_unknown_Q", "_fixed_Q")))
-  zi_class      <- ifelse(block_class != "unknown_Q" & sparse_class != "_changing_sparsity" &
-                         zero_inflation, "_zi",  "")
-  is_collection <- ifelse( sparse_class == "_changing_sparsity" | block_class == "_unknown_Q",
-                           TRUE, FALSE)
+get_model <- function(data,
+                      blocks,
+                      sparsity = 0,
+                      zero_inflation = FALSE,
+                      control = NB_control()) {
 
-  myClass <- eval(str2lang(paste0("NB", zi_class, block_class, sparse_class)))
-  if(is_collection){
-    if(sparse_class == "_changing_sparsity"){model   <- myClass$new(data, blocks, zero_inflation, control = control)
-    }else{model   <- myClass$new(data, blocks, zero_inflation, sparsity, control = control)}
-  }else{model   <- myClass$new(data, blocks, sparsity, control = control)}
+  sparse_class  <- ifelse(typeof(sparsity) == "logical" &
+                            sparsity,
+                          "_changing_sparsity",
+                          "")
+  block_class   <- ifelse(
+    sparse_class == "_changing_sparsity" &
+      (is.matrix(blocks) | length(blocks) == 1),
+    "",
+    ifelse(
+      is.matrix(blocks),
+      "_fixed_blocks",
+      ifelse(length(blocks) > 1, "_unknown_Q", "_fixed_Q")
+    )
+  )
+  zi_class      <- ifelse(
+    block_class != "unknown_Q" & sparse_class != "_changing_sparsity" &
+      zero_inflation,
+    "_zi",
+    ""
+  )
+  is_collection <- ifelse(sparse_class == "_changing_sparsity" |
+                            block_class == "_unknown_Q",
+                          TRUE,
+                          FALSE)
+
+  myClass <- eval(str2lang(paste0(
+    "NB", zi_class, block_class, sparse_class
+  )))
+  if (is_collection) {
+    if (sparse_class == "_changing_sparsity") {
+      model   <- myClass$new(data, blocks, zero_inflation, control = control)
+    } else{
+      model   <- myClass$new(data, blocks, zero_inflation, sparsity, control = control)
+    }
+  } else{
+    model   <- myClass$new(data, blocks, sparsity, control = control)
+  }
   model
 }
-

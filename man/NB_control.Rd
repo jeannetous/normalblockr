@@ -5,6 +5,8 @@
 \title{NB_control}
 \usage{
 NB_control(
+  niter = 100,
+  threshold = 1e-04,
   sparsity_weights = NULL,
   penalties = NULL,
   n_penalties = 30,
@@ -18,6 +20,10 @@ NB_control(
 )
 }
 \arguments{
+\item{niter}{number of iterations in model optimization}
+
+\item{threshold}{loglikelihood / elbo threshold under which optimization stops}
+
 \item{sparsity_weights}{weights with which penalty should be applied in case
 sparsity is required, non-0 values on the diagonal mean diagonal shall be
 penalized too (default is non-penalized diagonal and 1s off-diagonal)}
@@ -44,5 +50,5 @@ unknown, can be a list with one clustering for each Q value}
 \item{clustering_approx}{to use for clustering with heuristic inference method}
 }
 \description{
-NB_control
+Control the model settings and various optimization parameters
 }

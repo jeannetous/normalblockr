@@ -14,17 +14,9 @@ R6 class for normal-block model with unknown Q (number of groups)
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{blocks}}{group matrix or number of blocks.}
-
-\item{\code{zero_inflation}}{whether the object is a collection of zero-inflated models or not}
-
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
-\item{\code{verbose}}{say whether information should be given about the optimization}
-
-\item{\code{latest_niter}}{latest niter value used for optimization}
-
-\item{\code{latest_threshold}}{latest threshold value used for optimization}
+\item{\code{control}}{store the list of user-defined model settings and optimization parameters}
 }
 \if{html}{\out{</div>}}
 }
@@ -39,13 +31,9 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{Q}}{number of blocks}
 
-\item{\code{nb_blocks}}{number of blocks}
-
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
 \item{\code{penalties_list}}{list of penalties used for each Q}
-
-\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
 \item{\code{who_am_I}}{a method to print what model is being fitted}
 }
@@ -100,7 +88,7 @@ A new [`NB_unknown_Q_changing_sparsity`] object
 optimizes an NB_changing_sparsity object for each penalty value
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$optimize(
-  control = list(niter = 100, threshold = 1e-04)
+  control = list(niter = 100, threshold = 1e-04, verbose = TRUE)
 )}\if{html}{\out{</div>}}
 }
 
@@ -142,7 +130,7 @@ either a NB_changing_sparsity or a NB_fixed_Q object
 Extract best model in the collection
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$get_best_model(
-  crit = c("loglik", "BIC", "AIC", "ICL")
+  crit = c("BIC", "EBIC", "AIC", "ICL")
 )}\if{html}{\out{</div>}}
 }
 
@@ -150,8 +138,7 @@ Extract best model in the collection
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{crit}}{a character for the criterion used to performed the selection.
-Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
-"loglik" is the default criterion}
+Either "BIC", "EBIC", "AIC". "BIC" is the default criterion}
 }
 \if{html}{\out{</div>}}
 }
@@ -166,7 +153,7 @@ a [`NB_unknown`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$plot(
-  criterion = c("deviance", "BIC", "AIC", "ICL")
+  criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL")
 )}\if{html}{\out{</div>}}
 }
 

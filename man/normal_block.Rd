@@ -9,8 +9,6 @@ normal_block(
   blocks,
   sparsity = 0,
   zero_inflation = FALSE,
-  niter = 100,
-  threshold = 1e-04,
   control = NB_control()
 )
 }
@@ -24,10 +22,6 @@ or a p * Q matrix (for indicating block membership when its known)}
 OR float to run model with a single penalty value}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
-
-\item{niter}{number of iterations in model optimization}
-
-\item{threshold}{loglikelihood / elbo threshold under which optimization stops}
 
 \item{control}{a list-like structure for detailed control on parameters should be
 generated with NB_control().}

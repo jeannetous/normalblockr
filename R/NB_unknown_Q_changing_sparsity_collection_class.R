@@ -15,18 +15,10 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
   public = list(
     #' @field data object of normal_data class, with responses and design matrix
     data  = NULL,
-    #' @field blocks group matrix or number of blocks.
-    blocks  = NULL,
-    #' @field zero_inflation whether the object is a collection of zero-inflated models or not
-    zero_inflation = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
-    models = NULL,
-    #' @field verbose say whether information should be given about the optimization
-    verbose = NULL,
-    #' @field latest_niter latest niter value used for optimization
-    latest_niter = NULL,
-    #' @field latest_threshold latest threshold value used for optimization
-    latest_threshold = NULL,
+    models = NA,
+    #' @field control store the list of user-defined model settings and optimization parameters
+    control = NA,
 
     #' @description Create a new [`NB_unknown_Q_changing_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
@@ -36,24 +28,23 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @return A new [`NB_unknown_Q_changing_sparsity`] object
     initialize = function(data, Q_list, zero_inflation = F,
                           control = NB_control()) {
-      self$data      <- data
-      private$Q_list <- Q_list
-      self$zero_inflation   <- zero_inflation
-      self$verbose          <- control$verbose
 
-      self$models <- map(Q_list[order(Q_list)],
-                         function(Q) {
-                           model <- NB_changing_sparsity$new(data, Q,
-                                                            zero_inflation,
-                                                            control = control)
-                         })
+      ## Store user-defined fields
+      self$data   <- data
+      self$control <- control
+      self$control$zero_inflation <- zero_inflation
+      private$Q_list <- sort(Q_list)
+
+      self$models <- map(Q_list, function(Q)
+        model <- NB_changing_sparsity$new(data, Q, zero_inflation, control)
+      )
     },
 
     #' @description optimizes an NB_changing_sparsity object for each penalty value
     #' @param control optimization parameters (niter and threshold)
-    optimize = function(control = list(niter = 100, threshold = 1e-4)) {
-      self$models <-map(self$models, function(model) {
-        if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
+    optimize = function(control = list(niter=100, threshold=1e-4, verbose=TRUE)) {
+      self$models <- map(self$models, function(model) {
+        if(control$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
         flush.console()
         model$optimize(control)
         model
@@ -65,7 +56,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @param penalty penalty asked by user
     #' @return either a NB_changing_sparsity or a NB_fixed_Q object
     get_model = function(Q, penalty = NA) {
-      if(!(Q %in% self$Q)) {
+      if (!(Q %in% self$Q)) {
         stop("No such model in the collection. Acceptable parameter values can be found via $Q_list")
       }
       Q_rank <- which(sort(self$Q) == Q)
@@ -78,17 +69,15 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
           cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties_list \n"))
         }
         penalty_rank <- which(sort(model$penalties_list) == penalty)
-        return(model$models[[penalty_rank]])
+        model$models[[penalty_rank]]
       }
     },
 
-
     #' @description Extract best model in the collection
     #' @param crit a character for the criterion used to performed the selection.
-    #' Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
-    #' "loglik" is the default criterion
+    #' Either "BIC", "EBIC", "AIC". "BIC" is the default criterion
     #' @return a [`NB_unknown`] object
-    get_best_model = function(crit = c("loglik", "BIC", "AIC", "ICL")) {
+    get_best_model = function(crit = c("BIC", "EBIC", "AIC", "ICL")) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
@@ -106,7 +95,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] heatmap
-    plot = function(criterion = c("deviance", "BIC", "AIC", "ICL")) {
+    plot = function(criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL")) {
       criterion   <- match.arg(criterion)
       n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
       df <- self$criteria %>% mutate(pen_binned = cut(penalty, breaks = n_intervals)) %>%
@@ -129,7 +118,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    Q_list            = NA # list of Q values (number of groups) in the collection
+    Q_list = NA # list of Q values (number of groups) in the collection
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
@@ -143,8 +132,6 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     d = function() self$data$d,
     #' @field Q number of blocks
     Q = function(value) private$Q_list,
-    #' @field nb_blocks number of blocks
-    nb_blocks = function() self$blocks,
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
@@ -155,12 +142,12 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
         dplyr::group_by(Q) %>%
         dplyr::summarize(penalties = paste(round(penalty, 2), collapse = ", "))
     },
-    #' @field get_res_covariance whether the residual covariance is diagonal or spherical
-    get_res_covariance = function(value) self$models[[1]]$get_res_covariance,
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(value){
-      paste("Collection of ", ifelse(self$zero_inflation, "zero-inflated ",  ""),
-            self$get_res_covariance, "normal-block models with different values of Q and different penalties.")
+      paste("Collection of ",
+            ifelse(self$control$zero_inflation, " zero-inflated ", ""),
+            self$control$noise_covariance,
+            "normal-block models with different values of Q and different penalties.")
     }
 
   )

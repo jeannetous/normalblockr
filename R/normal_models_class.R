@@ -131,7 +131,6 @@ normal_models <- R6::R6Class(
     },
     EM_step   = function() {},
     EM_initialize = function() {}
-
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

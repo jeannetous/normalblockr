@@ -10,10 +10,10 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 ###############################################################################
 ###############################################################################
 
+data  <- normalblockr:::normal_data$new(Y, X)
 
 test_that("normal block with spherical residual covariance and unknown clusters", {
-  data  <- normal_data$new(Y, X)
-  model <- NB_unknown_Q_changing_sparsity$new(data, c(2,3,4))
+  model <- normalblockr:::NB_unknown_Q_changing_sparsity$new(data, c(2,3,4))
   model$optimize()
   model_BIC <- model$get_best_model("BIC")
   expect_lt(model_BIC$BIC, 5509)

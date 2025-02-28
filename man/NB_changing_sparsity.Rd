@@ -13,17 +13,9 @@ R6 class for normal-block model with unknown Q (number of groups)
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{blocks}}{group matrix or number of blocks.}
-
-\item{\code{zero_inflation}}{whether the object is a collection of zero-inflated models or not}
-
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
-\item{\code{verbose}}{say whether information should be given about the optimization}
-
-\item{\code{latest_niter}}{latest niter value used for optimization}
-
-\item{\code{latest_threshold}}{latest threshold value used for optimization}
+\item{\code{control}}{store the list of user-defined model settings and optimization parameters}
 }
 \if{html}{\out{</div>}}
 }
@@ -38,15 +30,11 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{Q}}{number of blocks}
 
-\item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
+\item{\code{blocks}}{group matrix or number of blocks.}
 
 \item{\code{penalties_list}}{list of lambda values for sparsity penalties}
 
 \item{\code{penalties_details}}{list of information about model's penalties}
-
-\item{\code{penalty_weights}}{(weights associated to each pair of groups)}
-
-\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
@@ -107,7 +95,9 @@ A new [`NB_changing_sparsity`] object
 \subsection{Method \code{optimize()}}{
 optimizes a model for each penalty
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$optimize(control = list(niter = 100, threshold = 1e-04))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$optimize(
+  control = list(niter = 100, threshold = 1e-04, verbose = TRUE)
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -145,7 +135,7 @@ A NB_fixed_blocks_sparse object with given value penalty
 Extract best model in the collection
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$get_best_model(
-  crit = c("loglik", "BIC", "AIC", "ICL", "StARS"),
+  crit = c("BIC", "EBIC", "AIC", "ICL", "StARS"),
   stability = 0.9
 )}\if{html}{\out{</div>}}
 }
@@ -156,8 +146,7 @@ Extract best model in the collection
 \item{\code{crit}}{a character for the criterion used to performed the selection.}
 
 \item{\code{stability}}{if criterion = "StARS" gives level of stability required.
-Either "BIC", "AIC" or "loglik" (-loglik so that criterion to be minimized)
-"loglik" is the default criterion}
+Either "BIC", "EBIC", "AIC", "ICL" or "StARS". Default is BIC}
 }
 \if{html}{\out{</div>}}
 }
@@ -172,7 +161,7 @@ a [`NB_fixed_Q`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$plot(
-  criteria = c("deviance", "BIC", "AIC", "ICL"),
+  criteria = c("deviance", "BIC", "EBIC", "ICL", "AIC"),
   log.x = TRUE
 )}\if{html}{\out{</div>}}
 }
