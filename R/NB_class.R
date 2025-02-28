@@ -241,7 +241,9 @@ NB <- R6::R6Class(
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
     penalty_term = function(value) self$penalty * sum(abs(self$penalty_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
-    loglik = function(value) super$loglik + self$penalty_term,
+    loglik = function(value){
+      if(self$inference_method == "integrated"){super$loglik + self$penalty_term
+        }else{NA}},
     #' @field EBIC variational lower bound of the EBIC
     EBIC      = function(value) {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
     #' @field criteria a vector with loglik, BIC and number of parameters

@@ -23,9 +23,9 @@ test_that("normal block with diagonal residual covariance and unknown Q", {
 
 test_that("normal block with unknown Q, heuristic", {
   data  <- normal_data$new(Y, X)
-  model <- NB_unknown_Q$new(data, Q, penalty = 0.05,
+  model <- NB_unknown_Q$new(data, c(2, 3, 4), penalty = 0.05,
                             control = NB_control(heuristic = TRUE))
   model$optimize()
-  model_BIC <- model$get_best_model("BIC")
-  expect_lt(Metrics::rmse(model_BIC$fitted, Y), 2.9)
+  model_3 <- model$get_model(3)
+  expect_lt(Metrics::rmse(model_3$fitted, Y), 2.9)
 })

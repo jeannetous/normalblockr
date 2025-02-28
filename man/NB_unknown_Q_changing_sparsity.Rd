@@ -153,7 +153,8 @@ a [`NB_unknown`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$plot(
-  criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL")
+  criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL"),
+  n_intervals = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -162,7 +163,7 @@ Display various outputs (goodness-of-fit criteria, robustness, diagnostic) assoc
 \describe{
 \item{\code{criterion}}{The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults deviance.}
 
-\item{\code{log.x}}{logical: should the x-axis be represented in log-scale? Default is `TRUE`.}
+\item{\code{n_intervals}}{number of intervals into which the penalties range should be splitted}
 }
 \if{html}{\out{</div>}}
 }

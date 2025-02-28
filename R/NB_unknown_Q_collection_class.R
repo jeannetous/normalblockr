@@ -72,10 +72,10 @@ NB_unknown_Q <- R6::R6Class(
     #' @param Q number of blocks asked by user
     #' @return A NB_fixed_Q object with given value Q
     get_model = function(Q) {
-      if(!(Q %in% self$nb_blocks)) {
-        stop("No such model in the collection. Acceptable parameter values can be found via $Q_list")
+      if(!(Q %in% private$Q_list)) {
+        stop("No such model in the collection. Acceptable parameter values can be found via $Q")
       }
-      Q_rank <- which(sort(self$nb_blocks) == Q)
+      Q_rank <- which(sort(private$Q_list) == Q)
       self$models[[Q_rank]]
     },
 
@@ -84,6 +84,7 @@ NB_unknown_Q <- R6::R6Class(
     #' Either "ICL", "BIC" or AIC". "ICL" is the default criterion
     #' @return a [`NB_fixed_Q`] object
     get_best_model = function(crit = c("ICL", "BIC", "AIC")) {
+      stopifnot("Log-likelihood based criteria do not apply to the heuristic method" = self$models[[1]]$inference_method == "integrated")
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
@@ -139,6 +140,6 @@ NB_unknown_Q <- R6::R6Class(
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(value){paste0("sparse ", self$noise_cov, " normal-block model with unknown Q")}
+    who_am_I  = function(value){paste0(self$noise_cov, " normal-block model with unknown Q")}
   )
 )

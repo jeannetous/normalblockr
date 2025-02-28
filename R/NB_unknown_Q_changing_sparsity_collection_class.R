@@ -92,12 +92,13 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
 
     #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
     #' @param criterion The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults deviance.
-    #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
+    #' @param n_intervals number of intervals into which the penalties range should be splitted
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] heatmap
-    plot = function(criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL")) {
+    plot = function(criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL"),
+                    n_intervals = NULL) {
       criterion   <- match.arg(criterion)
-      n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
+      if(is.null(n_intervals)) n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
       df <- self$criteria %>% mutate(pen_binned = cut(penalty, breaks = n_intervals)) %>%
         group_by(pen_binned, Q) %>% summarize(avg_crit = mean(.data[[criterion]]), .groups = "drop")
       p  <- ggplot2::ggplot(df, aes(x = pen_binned, y = Q, fill = avg_crit)) +

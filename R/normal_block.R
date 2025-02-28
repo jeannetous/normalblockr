@@ -115,6 +115,7 @@ get_model <- function(data,
                             sparsity,
                           "_changing_sparsity",
                           "")
+
   block_class   <- ifelse(
     sparse_class == "_changing_sparsity" &
       (is.matrix(blocks) | length(blocks) == 1),
@@ -125,8 +126,9 @@ get_model <- function(data,
       ifelse(length(blocks) > 1, "_unknown_Q", "_fixed_Q")
     )
   )
+
   zi_class      <- ifelse(
-    block_class != "unknown_Q" & sparse_class != "_changing_sparsity" &
+    block_class != "_unknown_Q" & sparse_class != "_changing_sparsity" &
       zero_inflation,
     "_zi",
     ""
@@ -135,7 +137,6 @@ get_model <- function(data,
                             block_class == "_unknown_Q",
                           TRUE,
                           FALSE)
-
   myClass <- eval(str2lang(paste0(
     "NB", zi_class, block_class, sparse_class
   )))

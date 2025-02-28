@@ -60,8 +60,8 @@ NB_changing_sparsity <- R6::R6Class(
       }
       private$penalties <- sort(penalties, decreasing = TRUE)
       ## Instantiation of the models in the collection
-      self$models <- map(private$penalties, function(lambda)
-        model <- get_model(data, blocks, lambda, zero_inflation, control)
+      self$models <- map(private$penalties, function(penalty)
+        model <- get_model(data, blocks, penalty, zero_inflation, control)
       )
     },
 
@@ -96,6 +96,7 @@ NB_changing_sparsity <- R6::R6Class(
     #' @return a [`NB_fixed_Q`] object
     get_best_model = function(crit = c("BIC", "EBIC", "AIC", "ICL", "StARS"),
                               stability = 0.9) {
+      stopifnot("Log-likelihood based criteria do not apply to the heuristic method" = (self$models[[1]]$inference_method == "integrated" | crit == "StARS" ))
       crit <- match.arg(crit)
       if (crit == "StARS") {
         if (is.null(private$stab_path)) self$stability_selection()
@@ -154,7 +155,7 @@ NB_changing_sparsity <- R6::R6Class(
         subsamples <- replicate(n_subsamples, sample.int(self$n, subsample.size), simplify = FALSE)
       }
 
-      ## retrieve all the appropriate control parameters for calling stabsel
+      ## retrieve all the appropriate control parameters for calling stabselection
       control_stabs <- self$control
       control_stabs$penalties <- private$penalties
       control_stabs$verbose <- FALSE
@@ -253,7 +254,7 @@ NB_changing_sparsity <- R6::R6Class(
     who_am_I  = function(value){
       paste0("Collection of ",
              ifelse(self$control$zero_inflation, " zero-inflated ", ""),
-                    self$control$noise_covariance, "normal-block models with ",
+                    self$control$noise_covariance, " normal-block models with ",
              ifelse(is.matrix(private$blocks_), "fixed blocks", "fixed Q"),
         ", with different sparsity penalties.")}
   )
