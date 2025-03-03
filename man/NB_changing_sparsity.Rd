@@ -22,12 +22,6 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{n}}{number of samples}
-
-\item{\code{p}}{number of responses per sample}
-
-\item{\code{d}}{number of variables (dimensions in X)}
-
 \item{\code{Q}}{number of blocks}
 
 \item{\code{blocks}}{group matrix or number of blocks.}

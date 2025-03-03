@@ -13,8 +13,6 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field data object of normal_data class, with responses and design matrix
-    data  = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NA,
     #' @field control store the list of user-defined model settings and optimization parameters
@@ -26,14 +24,12 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_unknown_Q_changing_sparsity`] object
-    initialize = function(data, Q_list, zero_inflation = F,
+    initialize = function(data, Q_list, zero_inflation = FALSE,
                           control = NB_control()) {
 
       ## Store user-defined fields
-      self$data   <- data
       self$control <- control
       self$control$zero_inflation <- zero_inflation
-      private$Q_list <- sort(Q_list)
 
       self$models <- map(Q_list, function(Q)
         model <- NB_changing_sparsity$new(data, Q, zero_inflation, control)
@@ -50,27 +46,24 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
         model
       })
     },
+
     #' @description returns a collection of NB_unknown models corresponding to given Q
     #' or one single model if penalty is also given
     #' @param Q number of blocks asked by user.
     #' @param penalty penalty asked by user
     #' @return either a NB_changing_sparsity or a NB_fixed_Q object
     get_model = function(Q, penalty = NA) {
-      if (!(Q %in% self$Q)) {
-        stop("No such model in the collection. Acceptable parameter values can be found via $Q_list")
-      }
-      Q_rank <- which(sort(self$Q) == Q)
-      model  <- self$models[[Q_rank]]$clone()
-      if(is.na(penalty)){
-        return(model)
-      }else{
-        if(!(penalty %in% model$penalties_list)) {
+      stopifnot("No such model in the collection. Acceptable values can be found via $Q" = Q %in% self$Q_list)
+      model <- self$models[[which(self$Q_list == Q)]]
+      if (!is.na(penalty)) {
+        if (!(penalty %in% model$penalties_list)) {
           penalty <-  model$penalties_list[[which.min(abs(model$penalties_list - penalty))]]
-          cat(paste0("No model with this penalty in the collection. Returning model with closest penalty : ", penalty,  " Collection penalty values can be found via $penalties_list \n"))
+          cat(paste0("No model with this penalty in the collection. Returning model with closest penalty: ",
+                     penalty,  " Collection penalty values can be found via $penalties_list \n"))
         }
-        penalty_rank <- which(sort(model$penalties_list) == penalty)
-        model$models[[penalty_rank]]
+        model <- model$models[[which(model$penalties_list == penalty)]]
       }
+      model
     },
 
     #' @description Extract best model in the collection
@@ -116,23 +109,11 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PRIVATE MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  private = list(
-    Q_list = NA # list of Q values (number of groups) in the collection
-  ),
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field n number of samples
-    n = function() self$data$n,
-    #' @field p number of responses per sample
-    p = function() self$data$p,
-    #' @field d number of variables (dimensions in X)
-    d = function() self$data$d,
-    #' @field Q number of blocks
-    Q = function(value) private$Q_list,
+    #' @field Q_list  number of blocks
+    Q_list = function(value) map_dbl(self$models, "Q"),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function(){
       crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)

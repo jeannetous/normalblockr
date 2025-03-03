@@ -12,8 +12,6 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
-
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
 \item{\code{control}}{store the list of user-defined model settings and optimization parameters}
@@ -23,13 +21,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{n}}{number of samples}
-
-\item{\code{p}}{number of responses per sample}
-
-\item{\code{d}}{number of variables (dimensions in X)}
-
-\item{\code{Q}}{number of blocks}
+\item{\code{Q_list}}{number of blocks}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
@@ -59,7 +51,7 @@ Create a new [`NB_unknown_Q_changing_sparsity`] object.
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$new(
   data,
   Q_list,
-  zero_inflation = F,
+  zero_inflation = FALSE,
   control = NB_control()
 )}\if{html}{\out{</div>}}
 }

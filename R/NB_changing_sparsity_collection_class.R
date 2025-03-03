@@ -85,8 +85,7 @@ NB_changing_sparsity <- R6::R6Class(
         cat(paste0("No model with this penalty in the collection. Returning model with closest penalty: ",
                    penalty,  " Collection penalty values can be found via $penalties_list \n"))
       }
-      penalty_rank <- which(private$penalties == penalty)
-      self$models[[penalty_rank]]
+      self$models[[which(private$penalties == penalty)]]
     },
 
     #' @description Extract best model in the collection
@@ -151,8 +150,8 @@ NB_changing_sparsity <- R6::R6Class(
 
       ## select default subsamples according to Liu et al. (2010) recommendations.
       if (is.null(subsamples)) {
-        subsample.size <- round(ifelse(self$n >= 144, 10*sqrt(self$n), 0.8*self$n))
-        subsamples <- replicate(n_subsamples, sample.int(self$n, subsample.size), simplify = FALSE)
+        subsample.size <- round(ifelse(self$data$n >= 144, 10*sqrt(self$data$n), 0.8*self$data$n))
+        subsamples <- replicate(n_subsamples, sample.int(self$data$n, subsample.size), simplify = FALSE)
       }
 
       ## retrieve all the appropriate control parameters for calling stabselection
@@ -212,12 +211,6 @@ NB_changing_sparsity <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field n number of samples
-    n = function() self$data$n,
-    #' @field p number of responses per sample
-    p = function() self$data$p,
-    #' @field d number of variables (dimensions in X)
-    d = function() self$data$d,
     #' @field Q number of blocks
     Q = function(value) ifelse(is.matrix(private$blocks_), ncol(private$blocks_), private$blocks_),
     #' @field blocks group matrix or number of blocks.

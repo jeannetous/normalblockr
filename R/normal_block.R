@@ -15,11 +15,11 @@
 #' data <- normal_data$new(ex_data$Y, ex_data$X)
 #' my_normal_block <- normal_block(data, blocks = 1:6)
 #' \dontrun{
-#' my_normal_block$plot_criterion("loglik")
-#' my_normal_block$plot_criterion("BIC")
-#' my_normal_block$plot_criterion("ICL")
+#' my_normal_block$plot("deviance")
+#' my_normal_block$plot("BIC")
+#' my_normal_block$plot("ICL")
 #' Y_hat <- my_normal_block$get_best_model()$fitted
-#' plot(Y, Y_hat); abline(0,1)
+#' plot(data$Y, Y_hat); abline(0,1)
 #' }
 #' @export
 normal_block <- function(data , blocks,
@@ -30,6 +30,7 @@ normal_block <- function(data , blocks,
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
   if(!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
+  if(!is.null(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))
 
   model <- get_model(data, blocks, sparsity = sparsity,
                      zero_inflation = zero_inflation,

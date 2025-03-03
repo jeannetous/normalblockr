@@ -11,28 +11,16 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
-
-\item{\code{zero_inflation}}{whether the object is a collection of zero-inflated models or not}
-
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
-\item{\code{verbose}}{say whether information should be given about the optimization}
+\item{\code{control}}{store the list of user-defined model settings and optimization parameters}
 }
 \if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{Q}}{number of blocks}
-
-\item{\code{n}}{number of samples}
-
-\item{\code{p}}{number of responses per sample}
-
-\item{\code{d}}{number of variables (dimensions in X)}
-
-\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
+\item{\code{Q_list}}{number of blocks}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
 
@@ -91,7 +79,9 @@ A new [`NB_unknown_Q`] object
 \subsection{Method \code{optimize()}}{
 optimizes an NB_fixed_Q object for each value of Q
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$optimize(control = list(niter = 100, threshold = 1e-04))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$optimize(
+  control = list(niter = 100, threshold = 1e-04, verbose = TRUE)
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

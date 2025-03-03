@@ -37,10 +37,10 @@ ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
 data <- normal_data$new(ex_data$Y, ex_data$X)
 my_normal_block <- normal_block(data, blocks = 1:6)
 \dontrun{
-my_normal_block$plot_criterion("loglik")
-my_normal_block$plot_criterion("BIC")
-my_normal_block$plot_criterion("ICL")
+my_normal_block$plot("deviance")
+my_normal_block$plot("BIC")
+my_normal_block$plot("ICL")
 Y_hat <- my_normal_block$get_best_model()$fitted
-plot(Y, Y_hat); abline(0,1)
+plot(data$Y, Y_hat); abline(0,1)
 }
 }

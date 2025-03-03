@@ -32,7 +32,7 @@ normal_diag_zi <- R6::R6Class(
 
     compute_loglik  = function(B, dm1, rho, kappa) {
       rho_bar <- 1 - rho
-      J <- - .5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
+      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
       J <- J - .5 * sum(rho_bar * t(t(self$data$Y - self$data$X %*% B)^2 * dm1))
       J <- J + sum(rho %*% log(kappa)) + sum(rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
@@ -64,8 +64,8 @@ normal_diag_zi <- R6::R6Class(
     normal_zi_obj_grad_B = function(B_vec, dm1_1mrho) {
       R <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
       grad <- crossprod(self$data$X, dm1_1mrho * R)
-      obj <- - .5 * sum(dm1_1mrho * R^2)
-      res <- list("objective" = - obj, "gradient"  = - grad)
+      obj <- -.5 * sum(dm1_1mrho * R^2)
+      res <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 

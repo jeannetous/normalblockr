@@ -14,14 +14,10 @@ NB_unknown_Q <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field data object of normal_data class, with responses and design matrix
-    data  = NULL,
-    #' @field zero_inflation whether the object is a collection of zero-inflated models or not
-    zero_inflation = NULL,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NULL,
-    #' @field verbose say whether information should be given about the optimization
-    verbose = NULL,
+    #' @field control store the list of user-defined model settings and optimization parameters
+    control = NA,
 
     #' @description Create a new [`NB_unknown_Q`] object.
     #' @param data object of normal_data class, with responses and design matrix
@@ -34,23 +30,19 @@ NB_unknown_Q <- R6::R6Class(
                           penalty = 0, control = NB_control()) {
       stopifnot("each nb_blocks value can only be present once in nb_blocks" =
                   length(Q_list) == length(unique(Q_list)))
-      stopifnot("each nb_blocks value can only be present once in nb_blocks" =
-                  length(Q_list) == length(unique(Q_list)))
       stopifnot("There cannot be more blocks than there are entities to cluster." =
                   max(Q_list) <= ncol(data$Y))
-      self$data      <- data
-      self$verbose   <- control$verbose
-      private$Q_list <- Q_list
+
+      self$control <- control
+      self$control$zero_inflation <- zero_inflation
 
       # instantiates an NB_fixed_Q model for each Q in nb_blocks
-      self$models <- map(order(Q_list),
-          function(Q_rank) {
-            this_control <- control
-            if(length(this_control$clustering_init) > 1){
-              this_control$clustering_init <- control$clustering_init[[Q_rank]]
-            }
+      this_control <- control
+      self$models <- map(rank(Q_list),
+          function(r) {
+            this_control$clustering_init <- control$clustering_init[[r]]
             model <- get_model(data,
-                               Q_list[[Q_rank]],
+                               Q_list[r],
                                sparsity = penalty,
                                zero_inflation = zero_inflation,
                                control = this_control)
@@ -59,9 +51,9 @@ NB_unknown_Q <- R6::R6Class(
 
     #' @description optimizes an NB_fixed_Q object for each value of Q
     #' @param control optimization parameters (niter and threshold)
-    optimize = function(control = list(niter = 100, threshold = 1e-4)) {
+    optimize = function(control = list(niter = 100, threshold = 1e-4, verbose=TRUE)) {
       self$models <- map(self$models, function(model) {
-        if(self$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
+        if(control$verbose) cat("\tnumber of blocks =", model$Q, "          \r")
         flush.console()
         model$optimize(control)
         model
@@ -72,11 +64,8 @@ NB_unknown_Q <- R6::R6Class(
     #' @param Q number of blocks asked by user
     #' @return A NB_fixed_Q object with given value Q
     get_model = function(Q) {
-      if(!(Q %in% private$Q_list)) {
-        stop("No such model in the collection. Acceptable parameter values can be found via $Q")
-      }
-      Q_rank <- which(sort(private$Q_list) == Q)
-      self$models[[Q_rank]]
+      stopifnot("No such model in the collection. Acceptable values can be found via $Q" = Q %in% self$Q_list)
+      self$models[[which(self$Q_list == Q)]]
     },
 
     #' @description Extract best model in the collection
@@ -106,7 +95,6 @@ NB_unknown_Q <- R6::R6Class(
         dplyr::select(dplyr::all_of(c("Q", criteria))) %>%
         tidyr::gather(key = "criterion", value = "value", -Q) %>%
         dplyr::group_by(criterion)
-      if("loglik" %in% criteria){dplot[dplot$criterion == "loglik",]$value <- - dplot[dplot$criterion == "loglik",]$value}
       p <- ggplot2::ggplot(dplot, ggplot2::aes(x = Q, y = value, group = criterion, colour = criterion)) +
         ggplot2::geom_line() + ggplot2::geom_point() +
         ggplot2::ggtitle(label    = "Model selection criteria",
@@ -117,29 +105,14 @@ NB_unknown_Q <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  ## PRIVATE MEMBERS ----
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  private = list(
-    Q_list            = NA # list of Q values (number of groups) in the collection
-  ),
-
-  ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field Q number of blocks
-    Q = function(value) private$Q_list,
-    #' @field n number of samples
-    n = function() self$data$n,
-    #' @field p number of responses per sample
-    p = function() self$data$p,
-    #' @field d number of variables (dimensions in X)
-    d = function() self$data$d,
-    #' @field get_res_covariance whether the residual covariance is diagonal or spherical
-    get_res_covariance = function(value) self$models[[1]]$get_res_covariance,
+    #' @field Q_list number of blocks
+    Q_list = function(value) map_dbl(self$models, "Q"),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
     criteria = function() purrr::map(self$models, "criteria") %>% purrr::reduce(rbind),
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(value){paste0(self$noise_cov, " normal-block model with unknown Q")}
+    who_am_I  = function(value){paste0(self$control$noise_covariance, " normal-block model with unknown Q")}
   )
 )
