@@ -22,19 +22,22 @@
 #' plot(data$Y, Y_hat); abline(0,1)
 #' }
 #' @export
-normal_block <- function(data , blocks,
+normal_block <- function(data,
+                         blocks,
                          sparsity = 0,
                          zero_inflation = FALSE,
                          control = NB_control()) {
+
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
-  if(!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
-  if(!is.null(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))
+  if (!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
+  if (!is.null(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))
 
   model <- get_model(data, blocks, sparsity = sparsity,
                      zero_inflation = zero_inflation,
                      control = control)
+
   ## Estimation/optimization
   if(control$verbose) cat("Fitting a", model$who_am_I, "\n")
 
@@ -81,6 +84,10 @@ NB_control <- function(
     heuristic         = FALSE,
     noise_covariance  = c("diagonal", "spherical"),
     clustering_approx = c("residuals", "covariance")) {
+
+  if (!is.null(sparsity_weights))
+    stopifnot(all(is.matrix(sparsity_weights), isSymmetric(sparsity_weights)))
+
   structure(list(niter            = niter            ,
                  threshold        = threshold        ,
                  sparsity_weights = sparsity_weights ,

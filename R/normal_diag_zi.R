@@ -102,7 +102,7 @@ normal_diag_zi <- R6::R6Class(
       par
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
-    fitted = function() (1 - private$rho) * (self$X %*% private$B),
+    fitted = function() (1 - private$rho) * (self$data$X %*% private$B),
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(value){"zero-inflated diagonal normal model"}
   )
