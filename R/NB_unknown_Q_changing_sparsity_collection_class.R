@@ -90,7 +90,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @param n_intervals number of intervals into which the penalties range should be splitted
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] heatmap
-    plot = function(criterion = c("deviance", "ICL", "BIC", "EBIC", ),
+    plot = function(criterion = c("deviance", "ICL", "BIC", "EBIC"),
                     n_intervals = NULL) {
       criterion   <- match.arg(criterion)
       if(is.null(n_intervals)) n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
