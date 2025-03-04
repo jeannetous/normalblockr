@@ -197,7 +197,6 @@ NB <- R6::R6Class(
       kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster |>
         as_indicator()
     }
-
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -226,7 +225,7 @@ NB <- R6::R6Class(
     #' @field loglik (or its variational lower bound)
     loglik = function(value) if (private$approx) NA else super$loglik + self$penalty_term,
     #' @field EBIC variational lower bound of the EBIC
-    EBIC      = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0),
+    EBIC      = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(self$Q), 0),
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function(value) c(Q = self$Q, n_edges = self$n_edges, penalty = self$penalty, super$criteria, EBIC = self$EBIC),
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical

@@ -95,12 +95,7 @@ normal_diag_zi <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters:
     #' B (regression coefficients), dm1 (species variance),
     #' kappa (zero-inflation probas)), rho (zero-inflation posterior proba)
-    model_par  = function() {
-      par       <- super$model_par
-      par$kappa <- private$kappa
-      par$rho   <- private$rho
-      par
-    },
+    model_par  = function() c(super$model_par, list(kappa = private$kappa, rho = private$rho)),
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function() (1 - private$rho) * (self$data$X %*% private$B),
     #' @field who_am_I a method to print what model is being fitted

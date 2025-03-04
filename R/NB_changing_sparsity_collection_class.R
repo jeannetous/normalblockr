@@ -90,9 +90,9 @@ NB_changing_sparsity <- R6::R6Class(
     #' @description Extract best model in the collection
     #' @param crit a character for the criterion used to performed the selection.
     #' @param stability if criterion = "StARS" gives level of stability required.
-    #' Either "BIC", "EBIC", "AIC", "ICL" or "StARS". Default is BIC
+    #' Either "BIC", "EBIC", "ICL" or "StARS". Default is BIC
     #' @return a [`NB_fixed_Q`] object
-    get_best_model = function(crit = c("BIC", "EBIC", "AIC", "ICL", "StARS"),
+    get_best_model = function(crit = c("BIC", "EBIC", "ICL", "StARS"),
                               stability = 0.9) {
       stopifnot("Log-likelihood based criteria do not apply to the heuristic method" = (self$models[[1]]$inference_method == "integrated" | crit == "StARS" ))
       crit <- match.arg(crit)
@@ -170,8 +170,8 @@ NB_changing_sparsity <- R6::R6Class(
         cat("\nStability Selection for NB_fixed_blocks_sparse: \nsubsampling: ")
 
       stabs_out <- lapply(subsamples, function(subsample) {
-        mydata <- normal_data$new(Y  = self$data$Y  [subsample, , drop = FALSE],
-                                X  = self$data$X  [subsample, , drop = FALSE])
+        mydata <- normal_data$new(Y = self$data$Y[subsample, , drop = FALSE],
+                                  X = self$data$X[subsample, , drop = FALSE])
         myNB <- NB_changing_sparsity$new(
           mydata, blocks, self$zero_inflation, control_stabs)
         myNB$optimize(control_stabs)
