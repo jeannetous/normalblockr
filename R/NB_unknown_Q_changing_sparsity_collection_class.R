@@ -19,7 +19,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     control = NA,
 
     #' @description Create a new [`NB_unknown_Q_changing_sparsity`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @param mydata object of normal_data class, with responses and design matrix
     #' @param Q_list list of Q values (number of groups) in the collection
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
@@ -30,10 +30,12 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
       ## Store user-defined fields
       self$control <- control
       self$control$zero_inflation <- zero_inflation
-
-      self$models <- map(Q_list, function(Q)
-        model <- NB_changing_sparsity$new(mydata, Q, zero_inflation, control)
-      )
+      control_ <- control
+      self$models <- purrr::map(seq_along(Q_list), function(rank) {
+        if (!is.null(control$clustering_init))
+          control_$clustering_init <- control$clustering_init[[rank]]
+        model <- NB_changing_sparsity$new(mydata, Q_list[rank], zero_inflation, control_)
+      })
     },
 
     #' @description optimizes an NB_changing_sparsity object for each penalty value
@@ -114,7 +116,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
   active = list(
     #' @field Q_list  number of blocks
     Q_list = function(value) map_dbl(self$models, "Q"),
-    #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
+    #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, ICL) for the collection of models
     criteria = function() map_df(self$models, "criteria") ,
     #' @field penalties_list list of penalties used for each Q
     penalties_list = function(){

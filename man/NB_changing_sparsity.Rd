@@ -30,7 +30,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{penalties_details}}{list of information about model's penalties}
 
-\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
+\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC) for the collection of models}
 
 \item{\code{stability_path}}{measure of edges stability based on StARS method}
 
@@ -59,7 +59,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 Create a new [`NB_changing_sparsity`] object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$new(
-  data,
+  mydata,
   blocks,
   zero_inflation = FALSE,
   control = NB_control()
@@ -69,7 +69,7 @@ Create a new [`NB_changing_sparsity`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
+\item{\code{mydata}}{object of normal_data class, with responses and design matrix}
 
 \item{\code{blocks}}{group matrix or number of blocks.}
 
@@ -129,7 +129,7 @@ A NB_fixed_blocks_sparse object with given value penalty
 Extract best model in the collection
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$get_best_model(
-  crit = c("BIC", "EBIC", "AIC", "ICL", "StARS"),
+  crit = c("BIC", "EBIC", "ICL", "StARS"),
   stability = 0.9
 )}\if{html}{\out{</div>}}
 }
@@ -140,7 +140,7 @@ Extract best model in the collection
 \item{\code{crit}}{a character for the criterion used to performed the selection.}
 
 \item{\code{stability}}{if criterion = "StARS" gives level of stability required.
-Either "BIC", "EBIC", "AIC", "ICL" or "StARS". Default is BIC}
+Either "BIC", "EBIC", "ICL" or "StARS". Default is BIC}
 }
 \if{html}{\out{</div>}}
 }
@@ -155,7 +155,7 @@ a [`NB_fixed_Q`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$plot(
-  criteria = c("deviance", "BIC", "EBIC", "ICL", "AIC"),
+  criteria = c("deviance", "BIC", "EBIC", "ICL"),
   log.x = TRUE
 )}\if{html}{\out{</div>}}
 }
@@ -163,7 +163,7 @@ Display various outputs (goodness-of-fit criteria, robustness, diagnostic) assoc
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults to all of them.}
+\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", BIC", "EBIC", "ICL")`. Defaults to all of them.}
 
 \item{\code{log.x}}{logical: should the x-axis be represented in log-scale? Default is `TRUE`.}
 }

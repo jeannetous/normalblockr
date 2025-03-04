@@ -22,7 +22,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 \describe{
 \item{\code{Q_list}}{number of blocks}
 
-\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
+\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, ICL) for the collection of models}
 
 \item{\code{who_am_I}}{a method to print what model is being fitted}
 }
@@ -46,7 +46,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 Create a new [`NB_unknown_Q`] object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$new(
-  data,
+  mydata,
   Q_list,
   zero_inflation = FALSE,
   penalty = 0,
@@ -57,7 +57,7 @@ Create a new [`NB_unknown_Q`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
+\item{\code{mydata}}{object of normal_data class, with responses and design matrix}
 
 \item{\code{Q_list}}{list of Q values (number of groups) in the collection}
 
@@ -118,14 +118,14 @@ A NB_fixed_Q object with given value Q
 \subsection{Method \code{get_best_model()}}{
 Extract best model in the collection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$get_best_model(crit = c("ICL", "BIC", "AIC"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$get_best_model(crit = c("ICL", "BIC"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{crit}}{a character for the criterion used to performed the selection.
-Either "ICL", "BIC" or AIC". "ICL" is the default criterion}
+Either "ICL" or "BIC". "ICL" is the default criterion}
 }
 \if{html}{\out{</div>}}
 }
@@ -139,13 +139,13 @@ a [`NB_fixed_Q`] object
 \subsection{Method \code{plot()}}{
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$plot(criteria = c("deviance", "BIC", "AIC", "ICL"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q$plot(criteria = c("deviance", "ICL", "BIC", "EBIC"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", "BIC", "AIC", "ICL")`. Defaults to all of them.}
+\item{\code{criteria}}{vector of characters. The criteria to plot in `c("deviance", "BIC", "ICL")`. Defaults to all of them.}
 }
 \if{html}{\out{</div>}}
 }

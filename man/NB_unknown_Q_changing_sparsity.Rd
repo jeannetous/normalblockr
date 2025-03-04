@@ -23,7 +23,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 \describe{
 \item{\code{Q_list}}{number of blocks}
 
-\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models}
+\item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, ICL) for the collection of models}
 
 \item{\code{penalties_list}}{list of penalties used for each Q}
 
@@ -49,7 +49,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 Create a new [`NB_unknown_Q_changing_sparsity`] object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$new(
-  data,
+  mydata,
   Q_list,
   zero_inflation = FALSE,
   control = NB_control()
@@ -59,7 +59,7 @@ Create a new [`NB_unknown_Q_changing_sparsity`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
+\item{\code{mydata}}{object of normal_data class, with responses and design matrix}
 
 \item{\code{Q_list}}{list of Q values (number of groups) in the collection}
 
@@ -121,16 +121,14 @@ either a NB_changing_sparsity or a NB_fixed_Q object
 \subsection{Method \code{get_best_model()}}{
 Extract best model in the collection
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$get_best_model(
-  crit = c("BIC", "EBIC", "AIC", "ICL")
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$get_best_model(crit = c("ICL", "BIC", "EBIC"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{crit}}{a character for the criterion used to performed the selection.
-Either "BIC", "EBIC", "AIC". "BIC" is the default criterion}
+Either "BIC", "EBIC" or "ICL. "ICL" is the default criterion}
 }
 \if{html}{\out{</div>}}
 }
@@ -145,7 +143,7 @@ a [`NB_unknown`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$plot(
-  criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL"),
+  criterion = c("deviance", "ICL", "BIC", "EBIC", ),
   n_intervals = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -153,7 +151,7 @@ Display various outputs (goodness-of-fit criteria, robustness, diagnostic) assoc
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{criterion}}{The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults deviance.}
+\item{\code{criterion}}{The criteria to plot in `c("deviance", BIC", "EBIC", "ICL")`. Defaults deviance.}
 
 \item{\code{n_intervals}}{number of intervals into which the penalties range should be splitted}
 }

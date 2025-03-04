@@ -22,7 +22,7 @@ NB_changing_sparsity <- R6::R6Class(
     data   = NA,
 
     #' @description Create a new [`NB_changing_sparsity`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @param mydata object of normal_data class, with responses and design matrix
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_changing_sparsity`] object
@@ -57,6 +57,7 @@ NB_changing_sparsity <- R6::R6Class(
         max_pen   <- max(abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)]))
         penalties <- 10^seq(log10(max_pen), log10(max_pen * control$min_ratio), len = control$n_penalties)
       }
+
       private$penalties <- sort(penalties, decreasing = TRUE)
       ## Instantiation of the models in the collection
       self$models <- map(private$penalties, function(penalty)
@@ -120,11 +121,11 @@ NB_changing_sparsity <- R6::R6Class(
     },
 
     #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
-    #' @param criteria vector of characters. The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults to all of them.
+    #' @param criteria vector of characters. The criteria to plot in `c("deviance", BIC", "EBIC", "ICL")`. Defaults to all of them.
     #' @param log.x logical: should the x-axis be represented in log-scale? Default is `TRUE`.
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] graph
-    plot = function(criteria = c("deviance", "BIC", "EBIC", "ICL", "AIC"), log.x = TRUE) {
+    plot = function(criteria = c("deviance", "BIC", "EBIC", "ICL"), log.x = TRUE) {
       vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$penalty)
       stopifnot(!is.null(self$criteria[criteria]))
 
@@ -220,7 +221,7 @@ NB_changing_sparsity <- R6::R6Class(
     penalties_details = function()
       list("n_penalties" = length(self$penalties_list), "min_ratio" = min(self$penalties_list)/max(self$penalties_list),
            "min_penalty" = min(self$penalties_list), "max_penalty" = max(self$penalties_list)),
-    #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
+    #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC) for the collection of models
     criteria = function() map_df(self$models, "criteria") %>% mutate(stability = self$stability),
     #' @field stability_path measure of edges stability based on StARS method
     stability_path = function() private$stab_path,

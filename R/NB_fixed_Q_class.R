@@ -80,7 +80,7 @@ NB_fixed_Q <- R6::R6Class(
         clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
         if(length(unique(clustering)) < self$Q){
           # We try to ensure the optimization does not start with an empty cluster
-          clustering <- cutree(ClustOfVar::hclustvar(t(R)), Q)
+          clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
         }
         tau <- as_indicator(clustering)
         if (min(colSums(tau)) < 1) warning("Initialization failed to place elements in each cluster")

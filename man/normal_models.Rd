@@ -36,8 +36,6 @@ R6 class for a generic normal_fixed_sparsity model
 
 \item{\code{BIC}}{(or its variational lower bound)}
 
-\item{\code{AIC}}{(or its variational lower bound)}
-
 \item{\code{ICL}}{variational lower bound of the ICL}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
