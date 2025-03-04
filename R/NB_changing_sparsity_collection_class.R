@@ -14,23 +14,23 @@ NB_changing_sparsity <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field data object of normal_data class, with responses and design matrix
-    data   = NA,
     #' @field models list of NB_fixed_Q models corresponding to each nb_block value
     models = NA,
     #' @field control store the list of user-defined model settings and optimization parameters
     control = NA,
+    #' @field data object of normal_data class, with responses and design matrix
+    data   = NA,
 
     #' @description Create a new [`NB_changing_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_changing_sparsity`] object
-    initialize = function(data, blocks, zero_inflation = FALSE,
+    initialize = function(mydata, blocks, zero_inflation = FALSE,
                           control = NB_control()) {
 
       ## Store user-defined fields
-      self$data   <- data
+      self$data    <- mydata
       self$control <- control
       self$control$zero_inflation <- zero_inflation
       private$blocks_ <- blocks
@@ -43,14 +43,13 @@ NB_changing_sparsity <- R6::R6Class(
           stop("No penalty can be applied with one cluster as there is no network.")
         }
       }
-
       ## extract a collection of sparsifying penalties
       if (!is.null(control$penalties)){
         stopifnot("All penalties must be strictly positive" =
                     (min(control$penalties) > 0))
         penalties <- control$penalties
       } else {
-        init_model <- get_model(data, blocks, 0, zero_inflation, control)
+        init_model <- get_model(mydata, blocks, 0, zero_inflation, control)
         init_model$optimize(control = list(niter=5, threshold=1e-4, verbose=FALSE))
         SigmaQ    <- solve(init_model$model_par$OmegaQ)
         diag_pen  <- max(diag(init_model$penalty_weights)) > 0
@@ -61,7 +60,7 @@ NB_changing_sparsity <- R6::R6Class(
       private$penalties <- sort(penalties, decreasing = TRUE)
       ## Instantiation of the models in the collection
       self$models <- map(private$penalties, function(penalty)
-        model <- get_model(data, blocks, penalty, zero_inflation, control)
+        model <- get_model(mydata, blocks, penalty, zero_inflation, control)
       )
     },
 
@@ -171,10 +170,10 @@ NB_changing_sparsity <- R6::R6Class(
         cat("\nStability Selection for NB_fixed_blocks_sparse: \nsubsampling: ")
 
       stabs_out <- lapply(subsamples, function(subsample) {
-        data <- normal_data$new(Y  = self$data$Y  [subsample, , drop = FALSE],
+        mydata <- normal_data$new(Y  = self$data$Y  [subsample, , drop = FALSE],
                                 X  = self$data$X  [subsample, , drop = FALSE])
         myNB <- NB_changing_sparsity$new(
-          data, blocks, self$zero_inflation, control_stabs)
+          mydata, blocks, self$zero_inflation, control_stabs)
         myNB$optimize(control_stabs)
 
         upper_tri <- upper.tri(diag(self$Q))
@@ -222,11 +221,7 @@ NB_changing_sparsity <- R6::R6Class(
       list("n_penalties" = length(self$penalties_list), "min_ratio" = min(self$penalties_list)/max(self$penalties_list),
            "min_penalty" = min(self$penalties_list), "max_penalty" = max(self$penalties_list)),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function(){
-        crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
-        crit$stability <- self$stability
-        crit
-      },
+    criteria = function() map_df(self$models, "criteria") %>% mutate(stability = self$stability),
     #' @field stability_path measure of edges stability based on StARS method
     stability_path = function() private$stab_path,
     #' @field stability mean edge stability along the penalty path

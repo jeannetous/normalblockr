@@ -152,17 +152,15 @@ normal_models <- R6::R6Class(
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() 0,
     #' @field deviance (or its variational lower bound)
-    deviance = function() - 2 * self$loglik,
+    deviance = function() -2 * self$loglik,
     #' @field BIC (or its variational lower bound)
     BIC = function() self$deviance + log(self$n) * self$nb_param,
-    #' @field AIC (or its variational lower bound)
-    AIC = function() self$deviance + 2 * self$nb_param,
     #' @field ICL variational lower bound of the ICL
     ICL        = function() self$BIC + 2 * self$entropy,
     #' @field criteria a vector with loglik, BIC and number of parameters
     criteria   = function() {
       data.frame(nb_param = self$nb_param, loglik = self$loglik,
-                 deviance = self$deviance, BIC = self$BIC, AIC = self$AIC, ICL = self$ICL)
+                 deviance = self$deviance, BIC = self$BIC, ICL = self$ICL)
     },
     #' @field objective evolution of the objective function during (V)EM algorithm
     objective = function() private$ll_list[-1]

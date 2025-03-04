@@ -2,7 +2,7 @@
 ##  CLASS NB ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic Normal Block model
+#' R6 class for a generic sparse Normal Block model
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
 #' @param control structured list of more specific parameters, to generate with NB_control
@@ -152,7 +152,7 @@ NB <- R6::R6Class(
         glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$penalty_weights)
         if (anyNA(glasso_out$wi)) {
           warning(
-            "Glasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
+            "GLasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
             rcond(Sigma), "\n We send back the original matrix and its inverse (unpenalized)."
           )
           Omega <- solve(Sigma)
@@ -169,8 +169,7 @@ NB <- R6::R6Class(
 
     heuristic_optimize = function(control){
       parameters <- private$get_heuristic_parameters()
-      ll_list    <- do.call(private$heuristic_loglik, parameters)
-      c(parameters, list(ll_list = ll_list))
+      c(parameters, list(ll_list = NA))
     },
 
     heuristic_SigmaQ_from_Sigma = function(Sigma){
@@ -197,18 +196,6 @@ NB <- R6::R6Class(
     heuristic_cluster_residuals = function(R){
       kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster |>
         as_indicator()
-    },
-
-    heuristic_loglik = function(B, OmegaQ, rho = NA){
-      Sigma_tilde <- private$C %*% solve(OmegaQ) %*% t(private$C) + diag(1e-6, self$p)
-      log_det_Sigma_tilde <- as.numeric(determinant(Sigma_tilde, logarithm = TRUE)$modulus)
-      R <- self$data$Y - self$data$X %*% B
-      ### what is this threshold??
-      if (!anyNA(rho)) R[rho > 0.7] <- 0
-      J <- -.5 * self$p * log(2 * pi)
-      J <- J + .5 * self$n  * log_det_Sigma_tilde
-      J <- J - .5 * sum(diag((R %*% solve(Sigma_tilde) %*% t(R))))
-      J
     }
 
   ),
@@ -229,11 +216,7 @@ NB <- R6::R6Class(
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function(value) {
-      par <- super$model_par
-      par$OmegaQ <- private$OmegaQ
-      par
-    },
+    model_par = function(value) c(super$model_par, list(OmegaQ = private$OmegaQ)),
     #' @field penalty (overall sparsity parameter)
     penalty = function(value) private$lambda,
     #' @field penalty_weights (weights associated to each pair of groups)
@@ -241,20 +224,11 @@ NB <- R6::R6Class(
     #' @field penalty_term (penalty term in log-likelihood due to sparsity)
     penalty_term = function(value) self$penalty * sum(abs(self$penalty_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
-    loglik = function(value){
-      if(self$inference_method == "integrated"){super$loglik + self$penalty_term
-        }else{NA}},
+    loglik = function(value) if (private$approx) NA else super$loglik + self$penalty_term,
     #' @field EBIC variational lower bound of the EBIC
-    EBIC      = function(value) {self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0)},
+    EBIC      = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(.5 * self$Q*(self$Q - 1)/self$n_edges), 0),
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function(value) {
-      res   <- super$criteria
-      res$Q <- self$Q
-      res$n_edges <- self$n_edges
-      res$penalty <- self$penalty
-      res$EBIC    <- self$EBIC
-      res
-    },
+    criteria   = function(value) c(Q = self$Q, n_edges = self$n_edges, penalty = self$penalty, super$criteria, EBIC = self$EBIC),
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical
     get_res_covariance = function(value) private$res_covariance,
     #' @field clustering given as the list of elements contained in each cluster

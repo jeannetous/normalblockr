@@ -11,11 +11,11 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
-
 \item{\code{models}}{list of NB_fixed_Q models corresponding to each nb_block value}
 
 \item{\code{control}}{store the list of user-defined model settings and optimization parameters}
+
+\item{\code{data}}{object of normal_data class, with responses and design matrix}
 }
 \if{html}{\out{</div>}}
 }

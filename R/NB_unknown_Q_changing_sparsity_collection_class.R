@@ -24,7 +24,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_unknown_Q_changing_sparsity`] object
-    initialize = function(data, Q_list, zero_inflation = FALSE,
+    initialize = function(mydata, Q_list, zero_inflation = FALSE,
                           control = NB_control()) {
 
       ## Store user-defined fields
@@ -32,7 +32,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
       self$control$zero_inflation <- zero_inflation
 
       self$models <- map(Q_list, function(Q)
-        model <- NB_changing_sparsity$new(data, Q, zero_inflation, control)
+        model <- NB_changing_sparsity$new(mydata, Q, zero_inflation, control)
       )
     },
 
@@ -68,9 +68,9 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
 
     #' @description Extract best model in the collection
     #' @param crit a character for the criterion used to performed the selection.
-    #' Either "BIC", "EBIC", "AIC". "BIC" is the default criterion
+    #' Either "BIC", "EBIC" or "ICL. "ICL" is the default criterion
     #' @return a [`NB_unknown`] object
-    get_best_model = function(crit = c("BIC", "EBIC", "AIC", "ICL")) {
+    get_best_model = function(crit = c("ICL", "BIC", "EBIC")) {
       crit <- match.arg(crit)
       stopifnot(!anyNA(self$criteria[[crit]]))
       id <- 1
@@ -84,11 +84,11 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     },
 
     #' @description Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
-    #' @param criterion The criteria to plot in `c("deviance", BIC", "AIC", "ICL")`. Defaults deviance.
+    #' @param criterion The criteria to plot in `c("deviance", BIC", "EBIC", "ICL")`. Defaults deviance.
     #' @param n_intervals number of intervals into which the penalties range should be splitted
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] heatmap
-    plot = function(criterion = c("deviance", "BIC", "EBIC", "AIC", "ICL"),
+    plot = function(criterion = c("deviance", "ICL", "BIC", "EBIC", ),
                     n_intervals = NULL) {
       criterion   <- match.arg(criterion)
       if(is.null(n_intervals)) n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
@@ -115,9 +115,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @field Q_list  number of blocks
     Q_list = function(value) map_dbl(self$models, "Q"),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, AIC) for the collection of models
-    criteria = function(){
-      crit <- purrr::map(self$models, "criteria") %>% purrr::reduce(rbind)
-      crit},
+    criteria = function() map_df(self$models, "criteria") ,
     #' @field penalties_list list of penalties used for each Q
     penalties_list = function(){
       self$criteria %>%

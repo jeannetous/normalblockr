@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_class.R
 \name{NB}
 \alias{NB}
-\title{R6 class for a generic Normal Block model}
+\title{R6 class for a generic sparse Normal Block model}
 \description{
-R6 class for a generic Normal Block model
+R6 class for a generic sparse Normal Block model
 
-R6 class for a generic Normal Block model
+R6 class for a generic sparse Normal Block model
 }
 \section{Super class}{
 \code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{NB}
