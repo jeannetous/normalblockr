@@ -216,7 +216,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       private$tau <- private$clustering_approx(R)
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list("B" = B, "OmegaQ" = OmegaQ, rho = rho)
+      list("B" = B, "OmegaQ" = OmegaQ, rho = rho, kappa = kappa)
     }
   ),
 

@@ -167,7 +167,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       Sigma  <- (t(R) %*% R) / model$n
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list(B = B, OmegaQ = OmegaQ, rho = rho)
+      list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = kappa)
     }
   ),
 
