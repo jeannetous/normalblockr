@@ -23,7 +23,7 @@ test_that("normal block with diagonal residual covariance and unknown Q", {
 
 test_that("normal block with unknown Q, heuristic", {
   data  <- normal_data$new(Y, X)
-  model <- normalblockr:::NB_unknown_Q$new(data, c(2, 3, 4), penalty = 0.05,
+  model <- normalblockr:::NB_unknown_Q$new(data, c(2, 3, 4), sparsity = 0.05,
                             control = NB_control(heuristic = TRUE))
   model$optimize()
   model_3 <- model$get_model(3)

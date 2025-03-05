@@ -49,7 +49,7 @@ Create a new [`NB_unknown_Q`] object.
   mydata,
   Q_list,
   zero_inflation = FALSE,
-  penalty = 0,
+  sparsity = 0,
   control = NB_control()
 )}\if{html}{\out{</div>}}
 }
@@ -63,7 +63,7 @@ Create a new [`NB_unknown_Q`] object.
 
 \item{\code{zero_inflation}}{whether the models in the collection should be zero-inflated or not}
 
-\item{\code{penalty}}{penalty on the network density}
+\item{\code{sparsity}}{sparsity penalty on the network density}
 
 \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }

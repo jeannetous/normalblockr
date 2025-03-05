@@ -25,7 +25,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC, ICL) for the collection of models}
 
-\item{\code{penalties_list}}{list of penalties used for each Q}
+\item{\code{sparsity}}{list of penalties used for each Q}
 
 \item{\code{who_am_I}}{a method to print what model is being fitted}
 }
@@ -99,7 +99,7 @@ optimizes an NB_changing_sparsity object for each penalty value
 returns a collection of NB_unknown models corresponding to given Q
 or one single model if penalty is also given
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$get_model(Q, penalty = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$get_model(Q, sparsity = NA)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -107,7 +107,7 @@ or one single model if penalty is also given
 \describe{
 \item{\code{Q}}{number of blocks asked by user.}
 
-\item{\code{penalty}}{penalty asked by user}
+\item{\code{sparsity}}{sparsity penalty penalty asked by user}
 }
 \if{html}{\out{</div>}}
 }

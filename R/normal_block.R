@@ -4,8 +4,8 @@
 #' @param data contains the matrix of responses (Y, n x p) and the design matrix (X, n x d)."
 #' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
 #'  or a p * Q matrix (for indicating block membership when its known)
-#' @param sparsity either TRUE to run the optimization for different penalty values
-#' OR float to run model with a single penalty value
+#' @param sparsity either TRUE to run the optimization for different sparsity penalty values
+#' OR float to run model with a single sparsity penalty value
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with NB_control().
@@ -55,13 +55,13 @@ normal_block <- function(data,
 #'
 #' @param niter number of iterations in model optimization
 #' @param threshold loglikelihood / elbo threshold under which optimization stops
-#' @param sparsity_weights weights with which penalty should be applied in case
+#' @param sparsity_weights weights with which the penalty should be applied in case
 #' sparsity is required, non-0 values on the diagonal mean diagonal shall be
 #' penalized too (default is non-penalized diagonal and 1s off-diagonal)
-#' @param penalties list of penalties the user wants to test, other parameters
+#' @param sparsity_penalties list of penalties the user wants to test, other parameters
 #' are only used if penalties is not specified
-#' @param n_penalties number of penalties to test.
-#' @param min_ratio ratio between max penalty (0 edge penalty) and min penalty to test
+#' @param n_sparsity_penalties number of penalties to test.
+#' @param min_ratio ratio for sparsity between max penalty (0 edge penalty) and min penalty to test
 #' @param fixed_tau whether tau should be fixed at clustering_init during optimization
 #' useful for calls to fixed_Q models in stability_selection
 #' @param clustering_init proposal of initial value for clustering, when Q is
@@ -72,34 +72,34 @@ normal_block <- function(data,
 #' @param clustering_approx to use for clustering with heuristic inference method
 #' @export
 NB_control <- function(
-    niter             = 100,
-    threshold         = 1e-4,
-    sparsity_weights  = NULL,
-    penalties         = NULL,
-    n_penalties       = 30,
-    min_ratio         = 0.01,
-    fixed_tau         = FALSE,
-    clustering_init   = NULL,
-    verbose           = TRUE,
-    heuristic         = FALSE,
-    noise_covariance  = c("diagonal", "spherical"),
-    clustering_approx = c("residuals", "covariance")) {
+    niter                = 100,
+    threshold            = 1e-4,
+    sparsity_weights     = NULL,
+    sparsity_penalties   = NULL,
+    n_sparsity_penalties = 30,
+    min_ratio            = 0.01,
+    fixed_tau            = FALSE,
+    clustering_init      = NULL,
+    verbose              = TRUE,
+    heuristic            = FALSE,
+    noise_covariance     = c("diagonal", "spherical"),
+    clustering_approx    = c("residuals", "covariance")) {
 
   if (!is.null(sparsity_weights))
     stopifnot(all(is.matrix(sparsity_weights), isSymmetric(sparsity_weights)))
 
-  structure(list(niter            = niter            ,
-                 threshold        = threshold        ,
-                 sparsity_weights = sparsity_weights ,
-                 penalties        = penalties        ,
-                 n_penalties      = n_penalties      ,
-                 min_ratio        = min_ratio        ,
-                 fixed_tau        = fixed_tau        ,
-                 clustering_init  = clustering_init  ,
-                 verbose          = verbose          ,
-                 heuristic        = heuristic        ,
-                 noise_covariance = match.arg(noise_covariance),
-                 clustering_approx = match.arg(clustering_approx)))
+  structure(list(niter                = niter                ,
+                 threshold            = threshold            ,
+                 sparsity_weights     = sparsity_weights     ,
+                 sparsity_penalties   = sparsity_penalties   ,
+                 n_sparsity_penalties = n_sparsity_penalties ,
+                 min_ratio            = min_ratio            ,
+                 fixed_tau            = fixed_tau            ,
+                 clustering_init      = clustering_init      ,
+                 verbose              = verbose              ,
+                 heuristic            = heuristic            ,
+                 noise_covariance     = match.arg(noise_covariance),
+                 clustering_approx    = match.arg(clustering_approx)))
 }
 
 

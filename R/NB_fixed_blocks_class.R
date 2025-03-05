@@ -5,7 +5,7 @@
 #' R6 class for a generic normal model
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-#' @param penalty to apply on variance matrix when calling GLASSO
+#' @param sparsity sparsity penalty to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
@@ -17,13 +17,13 @@ NB_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_fixed_blocks`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-    #' @param penalty to apply on variance matrix when calling GLASSO
+    #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB_fixed_blocks`] object
-    initialize = function(data, C, penalty = 0, control = NB_control()) {
+    initialize = function(data, C, sparsity = 0, control = NB_control()) {
       stopifnot("C must be a matrix" = is.matrix(C))
       stopifnot("There cannot be empty clusters" = min(colSums(C)) > 0)
-      super$initialize(data, ncol(C), penalty, control)
+      super$initialize(data, ncol(C), sparsity, control)
       private$C <- C
     }
   ),
@@ -40,10 +40,10 @@ NB_fixed_blocks <- R6::R6Class(
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
       J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_OmegaQ
       J <- J + .5 * self$n * log_det_gamma
-      if (self$penalty > 0) {
+      if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + t(mu) %*% mu)))
-        J <- J - self$penalty * sum(abs(self$penalty_weights * OmegaQ))
+        J <- J - self$sparsity * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
     },

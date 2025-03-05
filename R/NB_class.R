@@ -16,10 +16,10 @@ NB <- R6::R6Class(
 
     #' @description Create a new [`NB`] object.
     #' @param data object of normal_data class, with responses and design matrix
-    #' @param penalty penalty on the network density
+    #' @param sparsity sparsity penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB`] object
-    initialize = function(data, Q, penalty = 0, control = NB_control()) {
+    initialize = function(data, Q, sparsity = 0, control = NB_control()) {
       super$initialize(data, control)
       private$C <- matrix(NA, self$data$n, Q)
 
@@ -38,7 +38,7 @@ NB <- R6::R6Class(
                "covariance" = private$heuristic_cluster_sigma
         )
       ## penalty mask
-      private$lambda <- penalty
+      private$sparsity_ <- sparsity
       weights <- matrix(1, self$Q, self$Q)
       diag(weights) <- 0
       if (!is.null(control$sparsity_weights)) {
@@ -139,17 +139,17 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    lambda            = NA, # scalar controlling the overall sparsity
+    sparsity_         = NA, # scalar controlling the overall sparsity
     weights           = NA, # sparsity weights specific to each pairs of group
     res_covariance    = NA, # shape of the residuals covariance (diagonal or)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
 
     get_OmegaQ = function(Sigma) {
-      if (self$penalty == 0) {
+      if (private$sparsity_ == 0) {
         Omega <- solve(Sigma)
       } else {
-        glasso_out <- glassoFast::glassoFast(Sigma, rho = self$penalty * self$penalty_weights)
+        glasso_out <- glassoFast::glassoFast(Sigma, rho = private$sparsity_ * self$sparsity_weights)
         if (anyNA(glasso_out$wi)) {
           warning(
             "GLasso fails, the penalty is probably too small and the system badly conditionned \n reciprocal condition number =",
@@ -216,18 +216,18 @@ NB <- R6::R6Class(
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
     model_par = function(value) c(super$model_par, list(OmegaQ = private$OmegaQ)),
-    #' @field penalty (overall sparsity parameter)
-    penalty = function(value) private$lambda,
-    #' @field penalty_weights (weights associated to each pair of groups)
-    penalty_weights = function(value) private$weights,
-    #' @field penalty_term (penalty term in log-likelihood due to sparsity)
-    penalty_term = function(value) self$penalty * sum(abs(self$penalty_weights * private$OmegaQ)),
+    #' @field sparsity (overall sparsity parameter)
+    sparsity = function(value) private$sparsity_,
+    #' @field sparsity_weights (weights associated to each pair of groups)
+    sparsity_weights = function(value) private$weights,
+    #' @field sparsity_term (sparsity_term term in log-likelihood due to sparsity)
+    sparsity_term = function(value) self$sparsity * sum(abs(self$sparsity_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
-    loglik = function(value) if (private$approx) NA else super$loglik + self$penalty_term,
+    loglik = function(value) if (private$approx) NA else super$loglik + self$sparsity_term,
     #' @field EBIC variational lower bound of the EBIC
     EBIC      = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(self$Q), 0),
     #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria   = function(value) c(Q = self$Q, n_edges = self$n_edges, penalty = self$penalty, super$criteria, EBIC = self$EBIC),
+    criteria   = function(value) c(Q = self$Q, n_edges = self$n_edges, sparsity = self$sparsity, super$criteria, EBIC = self$EBIC),
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical
     get_res_covariance = function(value) private$res_covariance,
     #' @field clustering given as the list of elements contained in each cluster

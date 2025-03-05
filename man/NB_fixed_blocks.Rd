@@ -48,7 +48,7 @@ R6 class for a generic normal model
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(data, C, penalty = 0, control = NB_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(data, C, sparsity = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -58,7 +58,7 @@ Create a new [`NB_fixed_blocks`] object.
 
 \item{\code{C}}{clustering matrix C_jq = 1 if species j belongs to cluster q}
 
-\item{\code{penalty}}{to apply on variance matrix when calling GLASSO}
+\item{\code{sparsity}}{to apply on variance matrix when calling GLASSO}
 
 \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }

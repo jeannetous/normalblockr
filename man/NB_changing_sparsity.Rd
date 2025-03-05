@@ -26,15 +26,15 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{blocks}}{group matrix or number of blocks.}
 
-\item{\code{penalties_list}}{list of lambda values for sparsity penalties}
+\item{\code{sparsity}}{list of sparsity penalties}
 
-\item{\code{penalties_details}}{list of information about model's penalties}
+\item{\code{sparsity_details}}{list of information about model's penalties}
 
 \item{\code{criteria}}{a data frame with the values of some criteria ((approximated) log-likelihood, BIC) for the collection of models}
 
 \item{\code{stability_path}}{measure of edges stability based on StARS method}
 
-\item{\code{stability}}{mean edge stability along the penalty path}
+\item{\code{stability}}{mean edge stability along the sparsity penalties path}
 
 \item{\code{who_am_I}}{a method to print what model is being fitted}
 }
@@ -108,13 +108,13 @@ optimizes a model for each penalty
 \subsection{Method \code{get_model()}}{
 returns the NB_fixed_block model corresponding to given penalty
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$get_model(penalty)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_changing_sparsity$get_model(sparsity)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{penalty}}{penalty asked by user}
+\item{\code{sparsity}}{sparsity penalty asked by user}
 }
 \if{html}{\out{</div>}}
 }

@@ -5,7 +5,7 @@
 #' R6 class for a generic normal model
 #' @param data object of normal_data class, with responses and design matrix
 #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-#' @param penalty to apply on variance matrix when calling GLASSO
+#' @param sparsity to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB_zi_fixed_blocks <- R6::R6Class(
   classname = "NB_zi_fixed_blocks",
@@ -20,13 +20,13 @@ NB_zi_fixed_blocks <- R6::R6Class(
     #' @description Create a new [`NB_zi_fixed_blocks_fixed_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-    #' @param penalty to apply on variance matrix when calling GLASSO
+    #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB_zi_fixed_blocks_fixed_sparsity`] object
-    initialize = function(data, C, penalty = 0, control = NB_control()) {
+    initialize = function(data, C, sparsity = 0, control = NB_control()) {
       stopifnot("C must be a matrix" = is.matrix(C))
       stopifnot("There cannot be empty clusters" = min(colSums(C)) > 0)
-      super$initialize(data, ncol(C), penalty, control = control)
+      super$initialize(data, ncol(C), sparsity, control = control)
       private$C  <- C
       self$zeros <- 1 * (data$Y == 0)
     }
@@ -47,10 +47,10 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J <- J  + .5 * sum(log(S))
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      if (self$penalty > 0) {
+      if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
+        J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
     },

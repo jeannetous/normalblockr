@@ -44,24 +44,24 @@ NB_changing_sparsity <- R6::R6Class(
         }
       }
       ## extract a collection of sparsifying penalties
-      if (!is.null(control$penalties)){
+      if (!is.null(control$sparsity_penalties)){
         stopifnot("All penalties must be strictly positive" =
-                    (min(control$penalties) > 0))
-        penalties <- control$penalties
+                    (min(control$sparsity_penalties) > 0))
+        sparsity <- control$sparsity_penalties
       } else {
         init_model <- get_model(mydata, blocks, 0, zero_inflation, control)
         init_model$optimize(control = list(niter=5, threshold=1e-4, verbose=FALSE))
         SigmaQ    <- solve(init_model$model_par$OmegaQ)
-        diag_pen  <- max(diag(init_model$penalty_weights)) > 0
-        weights   <- init_model$penalty_weights ; weights[weights == 0] <- 1
+        diag_pen  <- max(diag(init_model$sparsity_weights)) > 0
+        weights   <- init_model$sparsity_weights ; weights[weights == 0] <- 1
         max_pen   <- max(abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)]))
-        penalties <- 10^seq(log10(max_pen), log10(max_pen * control$min_ratio), len = control$n_penalties)
+        sparsity  <- 10^seq(log10(max_pen), log10(max_pen * control$min_ratio), len = control$n_sparsity_penalties)
       }
 
-      private$penalties <- sort(penalties, decreasing = TRUE)
+      private$sparsity_ <- sort(sparsity, decreasing = TRUE)
       ## Instantiation of the models in the collection
-      self$models <- map(private$penalties, function(penalty)
-        model <- get_model(mydata, blocks, penalty, zero_inflation, control)
+      self$models <- map(private$sparsity_, function(lambda)
+        model <- get_model(mydata, blocks, lambda, zero_inflation, control)
       )
     },
 
@@ -69,7 +69,7 @@ NB_changing_sparsity <- R6::R6Class(
     #' @param control optimization parameters (niter and threshold)
     optimize = function(control = list(niter=100, threshold=1e-4, verbose=TRUE)) {
       self$models <- lapply(self$models, function(model) {
-        if (control$verbose) cat("\t penalty =", model$penalty, "          \r")
+        if (control$verbose) cat("\t penalty =", model$sparsity, "          \r")
         flush.console()
         model$optimize(control)
         model
@@ -77,15 +77,15 @@ NB_changing_sparsity <- R6::R6Class(
     },
 
     #' @description returns the NB_fixed_block model corresponding to given penalty
-    #' @param penalty penalty asked by user
+    #' @param sparsity sparsity penalty asked by user
     #' @return A NB_fixed_blocks_sparse object with given value penalty
-    get_model = function(penalty) {
-      if (!(penalty %in% private$penalties)) {
-        penalty <-  private$penalties[[which.min(abs(private$penalties - penalty))]]
+    get_model = function(sparsity) {
+      if (!(sparsity %in% private$sparsity_)) {
+        sparsity <-  private$sparsity_[[which.min(abs(private$sparsity_ - sparsity))]]
         cat(paste0("No model with this penalty in the collection. Returning model with closest penalty: ",
-                   penalty,  " Collection penalty values can be found via $penalties_list \n"))
+                   sparsity,  " Collection penalty values can be found via $sparsity \n"))
       }
-      self$models[[which(private$penalties == penalty)]]
+      self$models[[which(private$sparsity_ == sparsity)]]
     },
 
     #' @description Extract best model in the collection
@@ -105,9 +105,9 @@ NB_changing_sparsity <- R6::R6Class(
           stability <- max_stab
         }
         id_stars <- self$criteria %>%
-          dplyr::select(penalty, stability) %>% dplyr::rename(Stability = stability) %>%
+          dplyr::select(sparsity, stability) %>% dplyr::rename(Stability = stability) %>%
           dplyr::filter(Stability >= stability) %>%
-          dplyr::pull(penalty) %>% min() %>% match(private$penalties)
+          dplyr::pull(sparsity) %>% min() %>% match(private$sparsity_)
         model <- self$models[[id_stars]]$clone()
       } else {
         stopifnot(!anyNA(self$criteria[[crit]]))
@@ -126,14 +126,14 @@ NB_changing_sparsity <- R6::R6Class(
     #' @importFrom tidyr gather
     #' @return a [`ggplot`] graph
     plot = function(criteria = c("deviance", "BIC", "EBIC", "ICL"), log.x = TRUE) {
-      vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$penalty)
+      vlines <- sapply(intersect(criteria, c("BIC")) , function(crit) self$get_best_model(crit)$sparsity)
       stopifnot(!is.null(self$criteria[criteria]))
 
       dplot <- self$criteria %>%
-        dplyr::select(dplyr::all_of(c("penalty", criteria))) %>%
-        tidyr::gather(key = "criterion", value = "value", -penalty) %>%
+        dplyr::select(dplyr::all_of(c("sparsity", criteria))) %>%
+        tidyr::gather(key = "criterion", value = "value", -sparsity) %>%
         dplyr::group_by(criterion)
-      p <- ggplot2::ggplot(dplot, ggplot2::aes(x = penalty, y = value, group = criterion, colour = criterion)) +
+      p <- ggplot2::ggplot(dplot, ggplot2::aes(x = sparsity, y = value, group = criterion, colour = criterion)) +
         ggplot2::geom_line() + ggplot2::geom_point() +
         ggplot2::ggtitle(label    = "Model selection criteria",
                          subtitle = "Lower is better" ) +
@@ -156,14 +156,14 @@ NB_changing_sparsity <- R6::R6Class(
 
       ## retrieve all the appropriate control parameters for calling stabselection
       control_stabs <- self$control
-      control_stabs$penalties <- private$penalties
+      control_stabs$sparsity <- private$sparsity_
       control_stabs$verbose <- FALSE
       control_stabs$fixed_tau <- TRUE
       blocks  <- private$blocks_
       if (is.matrix(blocks)){
         control_stabs$clustering_init <- blocks
       } else {
-        control_stabs$clustering_init <- self$get_model(min(private$penalties))$var_par$tau
+        control_stabs$clustering_init <- self$get_model(min(private$sparsity_))$var_par$tau
       }
 
       ## got for stability selection
@@ -187,7 +187,7 @@ NB_changing_sparsity <- R6::R6Class(
       prob <- Reduce("+", stabs_out, accumulate = FALSE) / length(subsamples)
       ## formatting/tyding
       node_set <- lapply(1:self$Q, f <- function(g){paste0("group_", g)})
-      colnames(prob) <- private$penalties
+      colnames(prob) <- private$sparsity_
       private$stab_path <- prob %>%
         as.data.frame() %>%
         dplyr::mutate(Edge = 1:dplyr::n()) %>%
@@ -203,9 +203,9 @@ NB_changing_sparsity <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
-    stab_path  = NULL, # a field to store the stability path,
-    penalties  = NA  , # penalty values in the collection for sparsity (lambda)
-    blocks_    = NA    # blocks (either a scalar or an indicator matrix)
+    stab_path    = NULL, # a field to store the stability path,
+    sparsity_    = NA,   # penalty values in the collection for sparsity (lambda)
+    blocks_      = NA    # blocks (either a scalar or an indicator matrix)
   ),
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
@@ -215,17 +215,17 @@ NB_changing_sparsity <- R6::R6Class(
     Q = function(value) ifelse(is.matrix(private$blocks_), ncol(private$blocks_), private$blocks_),
     #' @field blocks group matrix or number of blocks.
     blocks = function(value) private$blocks_,
-    #' @field penalties_list list of lambda values for sparsity penalties
-    penalties_list = function() private$penalties,
-    #' @field penalties_details list of information about model's penalties
-    penalties_details = function()
-      list("n_penalties" = length(self$penalties_list), "min_ratio" = min(self$penalties_list)/max(self$penalties_list),
-           "min_penalty" = min(self$penalties_list), "max_penalty" = max(self$penalties_list)),
+    #' @field sparsity list of sparsity penalties
+    sparsity = function() private$sparsity_,
+    #' @field sparsity_details list of information about model's penalties
+    sparsity_details = function()
+      list("n_penalties" = length(self$sparsity), "min_ratio" = min(self$sparsity)/max(self$sparsity),
+           "min_sparsity" = min(self$sparsity), "max_sparsity" = max(self$sparsity)),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC) for the collection of models
     criteria = function() map_df(self$models, "criteria") %>% mutate(stability = self$stability),
     #' @field stability_path measure of edges stability based on StARS method
     stability_path = function() private$stab_path,
-    #' @field stability mean edge stability along the penalty path
+    #' @field stability mean edge stability along the sparsity penalties path
     stability = function() {
       if (!is.null(private$stab_path)) {
         stability <- self$stability_path %>%
@@ -235,7 +235,7 @@ NB_changing_sparsity <- R6::R6Class(
           dplyr::arrange(desc(Penalty)) %>%
           dplyr::pull(Stability)
       } else {
-        stability <- rep(NA, length(private$penalties))
+        stability <- rep(NA, length(private$sparsity_))
       }
       stability
     },

@@ -6,7 +6,7 @@
 #' R6 class for normal-block model with fixed Q (number of groups)
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param Q number of clusters
-#' @param penalty to add on blocks precision matrix for sparsity
+#' @param sparsity sparsity penalty to add on blocks precision matrix for sparsity
 #' @param control structured list for specific parameters (including initial clustering proposal)
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
@@ -25,8 +25,8 @@ NB_fixed_Q <- R6::R6Class(
     #' @param Q required number of groups
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
-    initialize = function(data, Q, penalty = 0, control = NB_control()) {
-      super$initialize(data, Q, penalty, control)
+    initialize = function(data, Q, sparsity = 0, control = NB_control()) {
+      super$initialize(data, Q, sparsity, control)
       stopifnot("There cannot be more blocks than there are entities to cluster" = Q <= ncol(self$data$Y))
       self$fixed_tau <- control$fixed_tau
       clustering_init <- control$clustering_init
@@ -65,10 +65,10 @@ NB_fixed_Q <- R6::R6Class(
       J <- J + sum(tau %*% log(alpha))
       J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
 
-      if (self$penalty > 0) {
+      if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
         J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (crossprod(M) + self$n * diag(S, self$Q, self$Q))))
-        J <- J - self$penalty * sum(abs(self$penalty_weights * OmegaQ))
+        J <- J - private$sparsity_ * sum(abs(private$sparsity__weights * OmegaQ))
       }
       J
     },

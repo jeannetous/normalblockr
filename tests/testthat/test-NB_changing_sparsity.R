@@ -21,9 +21,10 @@ test_that("normal block with changing sparsity, integrated inference", {
 
 
 test_that("normal block with fixed clusters, spherical residual covariance and heuristuic inference", {
-  model <- normalblockr:::NB_changing_sparsity$new(data, C, control = NB_control(noise_covariance = "spherical",
-                                                                  heuristic = TRUE,
-                                                                  verbose = FALSE))
+  model <- normalblockr:::NB_changing_sparsity$new(data, C,
+                                                   control = NB_control(noise_covariance = "spherical",
+                                                                        heuristic = TRUE,
+                                                                        verbose = FALSE))
   model$optimize()
   model$stability_selection()
   model_StARS <- model$get_best_model("StARS")

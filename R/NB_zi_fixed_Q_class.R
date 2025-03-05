@@ -5,7 +5,7 @@
 #' R6 class for a generic normal model
 #' @param data object of normal_data class, with responses and design matrix
 #' @param Q number of clusters
-#' @param penalty to apply on variance matrix when calling GLASSO
+#' @param sparsity to apply on variance matrix when calling GLASSO
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB_zi_fixed_Q <- R6::R6Class(
   classname = "NB_zi_fixed_Q",
@@ -26,11 +26,11 @@ NB_zi_fixed_Q <- R6::R6Class(
     #' @param C block matrix C_jq = 1 if species j belongs to block q
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_zi_fixed_Q`] object
-    initialize = function(data, Q, penalty = 0, control = NB_control()) {
+    initialize = function(data, Q, sparsity = 0, control = NB_control()) {
       if (Q > ncol(data$Y)) stop("There cannot be more blocks than there are entities to cluster.")
       self$fixed_tau  <- control$fixed_tau
       clustering_init <- control$clustering_init
-      super$initialize(data, Q, penalty = penalty, control = control)
+      super$initialize(data, Q, sparsity = sparsity, control = control)
       self$zeros <- 1 * (data$Y == 0)
       if (!is.null(clustering_init)) {
         if (!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
@@ -70,10 +70,10 @@ NB_zi_fixed_Q <- R6::R6Class(
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
-      if (self$penalty > 0) {
+      if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n *self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
-        J <- J - self$penalty * sum(abs(self$sparsity_weights * OmegaQ))
+        J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
     },

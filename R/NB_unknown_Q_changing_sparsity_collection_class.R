@@ -52,18 +52,18 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     #' @description returns a collection of NB_unknown models corresponding to given Q
     #' or one single model if penalty is also given
     #' @param Q number of blocks asked by user.
-    #' @param penalty penalty asked by user
+    #' @param sparsity sparsity penalty penalty asked by user
     #' @return either a NB_changing_sparsity or a NB_fixed_Q object
-    get_model = function(Q, penalty = NA) {
+    get_model = function(Q, sparsity = NA) {
       stopifnot("No such model in the collection. Acceptable values can be found via $Q" = Q %in% self$Q_list)
       model <- self$models[[which(self$Q_list == Q)]]
-      if (!is.na(penalty)) {
-        if (!(penalty %in% model$penalties_list)) {
-          penalty <-  model$penalties_list[[which.min(abs(model$penalties_list - penalty))]]
+      if (!is.na(sparsity)) {
+        if (!(sparsity %in% model$sparsity)) {
+          sparsity <-  model$sparsity[[which.min(abs(model$sparsity - sparsity))]]
           cat(paste0("No model with this penalty in the collection. Returning model with closest penalty: ",
-                     penalty,  " Collection penalty values can be found via $penalties_list \n"))
+                     sparsity,  " Collection penalty values can be found via $sparsity \n"))
         }
-        model <- model$models[[which(model$penalties_list == penalty)]]
+        model <- model$models[[which(model$sparsity == sparsity)]]
       }
       model
     },
@@ -78,7 +78,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
       id <- 1
       if (length(self$criteria[[crit]]) > 1) {
         id       <- which.min(self$criteria[[crit]])
-        best_pen <- self$criteria$penalty[[id]]
+        best_pen <- self$criteria$sparsity[[id]]
         best_Q   <- self$criteria$Q[[id]]
       }
       model <- self$get_model(best_Q, best_pen)$clone()
@@ -118,16 +118,16 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     Q_list = function(value) map_dbl(self$models, "Q"),
     #' @field criteria a data frame with the values of some criteria ((approximated) log-likelihood, BIC, ICL) for the collection of models
     criteria = function() map_df(self$models, "criteria") ,
-    #' @field penalties_list list of penalties used for each Q
-    penalties_list = function(){
+    #' @field sparsity list of penalties used for each Q
+    sparsity = function(){
       self$criteria %>%
         dplyr::group_by(Q) %>%
-        dplyr::summarize(penalties = paste(round(penalty, 2), collapse = ", "))
+        dplyr::summarize(sparsity = paste(round(sparsity, 2), collapse = ", "))
     },
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(value){
       paste("Collection of ",
-            ifelse(self$control$zero_inflation, " zero-inflated ", ""),
+            ifelse(self$control$zero_inflation, " zero-inflated", ""),
             self$control$noise_covariance,
             "normal-block models with different values of Q and different penalties.")
     }

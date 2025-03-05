@@ -63,7 +63,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_Q`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(data, Q, penalty = 0, control = NB_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_Q$new(data, Q, sparsity = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -73,7 +73,7 @@ Create a new [`NB_fixed_Q`] object.
 
 \item{\code{Q}}{required number of groups}
 
-\item{\code{penalty}}{to add on blocks precision matrix for sparsity}
+\item{\code{sparsity}}{sparsity penalty to add on blocks precision matrix for sparsity}
 
 \item{\code{control}}{structured list for specific parameters}
 }

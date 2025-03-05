@@ -16,7 +16,7 @@ test_that("normal block with diagonal residual covariance and known clusters", {
   expect_gt(model$loglik, -2600)
   expect_lt(Metrics::rmse(model$fitted, Y), 1)
 
-  model <- NB_fixed_blocks$new(data, C, penalty = 0.05)
+  model <- NB_fixed_blocks$new(data, C, sparsity = 0.05)
   model$optimize()
   expect_gt(model$loglik, -2600)
   expect_lt(Metrics::rmse(model$fitted, Y), 1)
@@ -33,7 +33,7 @@ test_that("normal block with spherical residual covariance and known clusters", 
   expect_gt(model$loglik, -2630)
   expect_lt(Metrics::rmse(model$fitted, Y), 1)
 
-  model <- NB_fixed_blocks$new(data, C, penalty = 0.01, control = ctrl)
+  model <- NB_fixed_blocks$new(data, C, sparsity = 0.01, control = ctrl)
   model$optimize()
   expect_gt(model$loglik, -2630)
   expect_lt(Metrics::rmse(model$fitted, Y), 1)
@@ -41,7 +41,7 @@ test_that("normal block with spherical residual covariance and known clusters", 
 
 test_that("normal block with known clusters, heuristic", {
   data <- normal_data$new(Y, X)
-  model <- NB_fixed_blocks$new(data, C, penalty = 0.05,
+  model <- NB_fixed_blocks$new(data, C, sparsity = 0.05,
                                               control = NB_control(heuristic = TRUE))
   model$optimize()
   expect_lt(Metrics::rmse(model$fitted, Y), 2.4)

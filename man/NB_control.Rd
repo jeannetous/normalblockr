@@ -8,8 +8,8 @@ NB_control(
   niter = 100,
   threshold = 1e-04,
   sparsity_weights = NULL,
-  penalties = NULL,
-  n_penalties = 30,
+  sparsity_penalties = NULL,
+  n_sparsity_penalties = 30,
   min_ratio = 0.01,
   fixed_tau = FALSE,
   clustering_init = NULL,
@@ -24,16 +24,16 @@ NB_control(
 
 \item{threshold}{loglikelihood / elbo threshold under which optimization stops}
 
-\item{sparsity_weights}{weights with which penalty should be applied in case
+\item{sparsity_weights}{weights with which the penalty should be applied in case
 sparsity is required, non-0 values on the diagonal mean diagonal shall be
 penalized too (default is non-penalized diagonal and 1s off-diagonal)}
 
-\item{penalties}{list of penalties the user wants to test, other parameters
+\item{sparsity_penalties}{list of penalties the user wants to test, other parameters
 are only used if penalties is not specified}
 
-\item{n_penalties}{number of penalties to test.}
+\item{n_sparsity_penalties}{number of penalties to test.}
 
-\item{min_ratio}{ratio between max penalty (0 edge penalty) and min penalty to test}
+\item{min_ratio}{ratio for sparsity between max penalty (0 edge penalty) and min penalty to test}
 
 \item{fixed_tau}{whether tau should be fixed at clustering_init during optimization
 useful for calls to fixed_Q models in stability_selection}

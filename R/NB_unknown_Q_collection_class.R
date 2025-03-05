@@ -23,11 +23,11 @@ NB_unknown_Q <- R6::R6Class(
     #' @param mydata object of normal_data class, with responses and design matrix
     #' @param Q_list list of Q values (number of groups) in the collection
     #' @param zero_inflation whether the models in the collection should be zero-inflated or not
-    #' @param penalty penalty on the network density
+    #' @param sparsity sparsity penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB_unknown_Q`] object
     initialize = function(mydata, Q_list, zero_inflation = FALSE,
-                          penalty = 0, control = NB_control()) {
+                          sparsity = 0, control = NB_control()) {
       stopifnot("each nb_blocks value can only be present once in nb_blocks" =
                   length(Q_list) == length(unique(Q_list)))
       stopifnot("There cannot be more blocks than there are entities to cluster." =
@@ -43,7 +43,7 @@ NB_unknown_Q <- R6::R6Class(
             this_control$clustering_init <- control$clustering_init[[r]]
             model <- get_model(mydata,
                                Q_list[r],
-                               sparsity = penalty,
+                               sparsity = sparsity,
                                zero_inflation = zero_inflation,
                                control = this_control)
         })

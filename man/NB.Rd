@@ -24,11 +24,11 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
 
-\item{\code{penalty}}{(overall sparsity parameter)}
+\item{\code{sparsity}}{(overall sparsity parameter)}
 
-\item{\code{penalty_weights}}{(weights associated to each pair of groups)}
+\item{\code{sparsity_weights}}{(weights associated to each pair of groups)}
 
-\item{\code{penalty_term}}{(penalty term in log-likelihood due to sparsity)}
+\item{\code{sparsity_term}}{(sparsity_term term in log-likelihood due to sparsity)}
 
 \item{\code{loglik}}{(or its variational lower bound)}
 
@@ -68,7 +68,7 @@ R6 class for a generic sparse Normal Block model
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(data, Q, penalty = 0, control = NB_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(data, Q, sparsity = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -78,7 +78,7 @@ Create a new [`NB`] object.
 
 \item{\code{Q}}{number of clusters}
 
-\item{\code{penalty}}{penalty on the network density}
+\item{\code{sparsity}}{sparsity penalty on the network density}
 
 \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }

@@ -18,8 +18,8 @@ normal_block(
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
 
-\item{sparsity}{either TRUE to run the optimization for different penalty values
-OR float to run model with a single penalty value}
+\item{sparsity}{either TRUE to run the optimization for different sparsity penalty values
+OR float to run model with a single sparsity penalty value}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
 
