@@ -231,8 +231,8 @@ NB <- R6::R6Class(
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical
     get_res_covariance = function(value) private$res_covariance,
     #' @field clustering given as the list of elements contained in each cluster
-    clustering = function(value) get_clusters(private$C),
-    #' @field elements_per_cluster given as the list of elements contained in each cluster
-    elements_per_cluster = function(value) split(names(self$clustering), self$clustering)
+    clustering = function(value) get_clusters(private$C)
+    #' #' @field elements_per_cluster given as the list of elements contained in each cluster
+    #' elements_per_cluster = function(value) split(names(self$clustering), self$clustering)
   )
 )
