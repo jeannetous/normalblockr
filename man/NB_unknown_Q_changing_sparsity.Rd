@@ -143,7 +143,7 @@ a [`NB_unknown`] object
 Display various outputs (goodness-of-fit criteria, robustness, diagnostic) associated with a collection of network fits (a [`Networkfamily`])
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB_unknown_Q_changing_sparsity$plot(
-  criterion = c("deviance", "ICL", "BIC", "EBIC", ),
+  criterion = c("deviance", "ICL", "BIC", "EBIC"),
   n_intervals = NULL
 )}\if{html}{\out{</div>}}
 }

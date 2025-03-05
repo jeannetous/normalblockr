@@ -201,13 +201,19 @@ NB_zi_fixed_Q <- R6::R6Class(
       newB
     },
 
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for heuristic inference -----------------------
     get_heuristic_parameters = function() {
       model <- normal_diag_zi$new(self$data) ; model$optimize()
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
       rho    <- model$model_par$rho
       R      <- self$data$Y - self$data$X %*% B ; R[self$rho > 0.7] <- 0
       Sigma  <- (t(R) %*% R) / model$n
-      private$C <- private$clustering_approx(R)
+      # C and tau play the same role here, but they're used in different
+      # parts of the model: tau is used in $clustering bc we're in a fixed_Q context
+      # and C is used in generic heuristic methods
+      private$C   <- private$clustering_approx(R)
+      private$tau <- private$clustering_approx(R)
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list("B" = B, "OmegaQ" = OmegaQ, rho = rho)

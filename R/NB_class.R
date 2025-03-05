@@ -204,7 +204,7 @@ NB <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field inference_method inference procedure used (heuristic or integrated with EM)
-    inference_method = function(value) ifelse(private$approx, "heuristical", "integrated"),
+    inference_method = function(value) ifelse(private$approx, "heuristic", "integrated"),
     #' @field Q number of blocks
     Q = function(value) as.integer(ncol(private$C)),
     #' @field nb_param number of parameters in the model
