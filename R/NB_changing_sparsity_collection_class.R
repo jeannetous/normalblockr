@@ -38,11 +38,6 @@ NB_changing_sparsity <- R6::R6Class(
       ## Check block format
       stopifnot("blocks must be either a clustering matrix or a fixed number of blocks" =
                   is.matrix(blocks) | length(blocks) == 1)
-      # if (!is.matrix(blocks)) {
-      #   if (blocks == 1) {
-      #     stop("No penalty can be applied with one cluster as there is no network.")
-      #   }
-      # }
 
       ## extract a collection of sparsifying penalties
       if (!is.null(control$sparsity_penalties)){

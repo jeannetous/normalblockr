@@ -21,9 +21,11 @@ NB <- R6::R6Class(
     #' @return A new [`NB`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
       super$initialize(data, control)
-      private$C <- matrix(NA, self$data$n, Q)
 
-      ## variant (either diaongal or spherical residuals covariance)
+      private$C <- matrix(NA, self$data$n, Q)
+      stopifnot("There cannot be more blocks than there are entities to cluster" = Q <= ncol(self$data$Y))
+
+      ## variant (either diagonal or spherical residuals covariance)
       private$res_covariance <- control$noise_covariance
 
       ## pointer to the chosen optimization function
@@ -46,6 +48,27 @@ NB <- R6::R6Class(
       }
       private$weights <- weights
 
+      cl0 <- control$clustering_init
+      if (!is.null(cl0)) {
+        if (!is.vector(cl0) & !is.matrix(cl0)) stop("Labels must be encoded in vector of labels or indicator matrix")
+        if (is.vector(cl0)) {
+          if (any(cl0 < 1 | cl0 > self$Q))
+            stop("Cluster labels must be between 1 and Q")
+          if (length(cl0) != self$p)
+            stop("Cluster labels must match the number of Y's columns")
+          if (length(unique(cl0)) != self$Q)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
+          cl0 <- as_indicator(cl0)
+        } else {
+          if (nrow(cl0) != self$p)
+            stop("Cluster-indicating matrix must have as many rows as Y has columns")
+          if (ncol(cl0) != self$Q)
+            stop("Cluster-indicating matrix must have Q columns")
+          if ((min(colSums(cl0)) < 1) & !self$Q)
+            stop("The number of clusters in the initial clustering must be equal to Q.")
+        }
+      }
+      private$cl0 <- cl0
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -144,6 +167,7 @@ NB <- R6::R6Class(
     res_covariance    = NA, # shape of the residuals covariance (diagonal or)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
+    cl0               = NA, # initial clustering
 
     get_OmegaQ = function(Sigma) {
       if (private$sparsity_ == 0) {

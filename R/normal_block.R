@@ -32,7 +32,7 @@ normal_block <- function(data,
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
   if (!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
-  if (!is.null(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))
+  if (is.list(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))
 
   model <- get_model(data, blocks, sparsity = sparsity,
                      zero_inflation = zero_inflation,

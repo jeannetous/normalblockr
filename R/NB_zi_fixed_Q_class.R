@@ -14,8 +14,6 @@ NB_zi_fixed_Q <- R6::R6Class(
   ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field clustering_init model initial clustering
-    clustering_init = NULL,
     #' @field fixed_tau whether tau should be fixed at clustering_init during optimization, useful for stability selection
     fixed_tau = NULL,
     #' @field zeros indicator matrix of zeros in Y
@@ -27,30 +25,9 @@ NB_zi_fixed_Q <- R6::R6Class(
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_zi_fixed_Q`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
-      if (Q > ncol(data$Y)) stop("There cannot be more blocks than there are entities to cluster.")
+      super$initialize(data, Q, sparsity, control)
       self$fixed_tau  <- control$fixed_tau
-      clustering_init <- control$clustering_init
-      super$initialize(data, Q, sparsity = sparsity, control = control)
       self$zeros <- 1 * (data$Y == 0)
-      if (!is.null(clustering_init)) {
-        if (!is.vector(clustering_init) & !is.matrix(clustering_init)) stop("Labels must be encoded in list of labels or indicator matrix")
-        if (is.vector(clustering_init)) {
-          if (any(clustering_init < 1 | clustering_init > Q))
-            stop("Cluster labels must be between 1 and Q")
-          if (length(clustering_init) != ncol(Y))
-            stop("Cluster labels must match the number of Y's columns")
-          if (length(unique(clustering_init)) != Q)
-            stop("The number of clusters in the initial clustering must be equal to Q.")
-        } else {
-          if (nrow(clustering_init) != ncol(Y))
-            stop("Cluster-indicating matrix must have as many rows as Y has columns")
-          if (ncol(clustering_init) != Q)
-            stop("Cluster-indicating matrix must have Q columns")
-          if ((min(colSums(clustering_init)) < 1) & !self$fixed_tau)
-            stop("The number of clusters in the initial clustering must be equal to Q.")
-        }
-      }
-      self$clustering_init <- clustering_init
     }
   ),
 
@@ -91,17 +68,16 @@ NB_zi_fixed_Q <- R6::R6Class(
                     "spherical" = rep(1/mean(ddiag), self$p))
       R          <- self$data$Y - self$data$X %*% B
       R[self$data$Y == 0]  <- 0 # improve final value of objective
-      if(is.null(self$clustering_init)){
+      if (is.null(private$cl0)) {
         clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-        if(length(unique(clustering)) < self$Q){
+        if (length(unique(clustering)) < self$Q){
           # We try to ensure the optimization does not start with an empty cluster
           clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
         }
-        tau     <- as_indicator(clustering)
-        if(min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
-      }else{
-        if(is.vector(self$clustering_init)){tau <- as_indicator(self$clustering_init)
-        }else{ tau <- self$clustering_init}
+        tau <- as_indicator(clustering)
+        if (min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
+      } else {
+        tau <- private$cl0
       }
       tau     <- check_one_boundary(check_zero_boundary(tau))
       alpha      <- colMeans(tau)
