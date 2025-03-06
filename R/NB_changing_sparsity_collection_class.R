@@ -38,11 +38,12 @@ NB_changing_sparsity <- R6::R6Class(
       ## Check block format
       stopifnot("blocks must be either a clustering matrix or a fixed number of blocks" =
                   is.matrix(blocks) | length(blocks) == 1)
-      if (!is.matrix(blocks)) {
-        if (blocks == 1) {
-          stop("No penalty can be applied with one cluster as there is no network.")
-        }
-      }
+      # if (!is.matrix(blocks)) {
+      #   if (blocks == 1) {
+      #     stop("No penalty can be applied with one cluster as there is no network.")
+      #   }
+      # }
+
       ## extract a collection of sparsifying penalties
       if (!is.null(control$sparsity_penalties)){
         stopifnot("All penalties must be strictly positive" =
@@ -51,11 +52,16 @@ NB_changing_sparsity <- R6::R6Class(
       } else {
         init_model <- get_model(mydata, blocks, 0, zero_inflation, control)
         init_model$optimize(control = list(niter=5, threshold=1e-4, verbose=FALSE))
-        SigmaQ    <- solve(init_model$model_par$OmegaQ)
-        diag_pen  <- max(diag(init_model$sparsity_weights)) > 0
-        weights   <- init_model$sparsity_weights ; weights[weights == 0] <- 1
-        max_pen   <- max(abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)]))
-        sparsity  <- 10^seq(log10(max_pen), log10(max_pen * control$min_ratio), len = control$n_sparsity_penalties)
+        SigmaQ   <- solve(init_model$model_par$OmegaQ)
+        diag_pen <- max(diag(init_model$sparsity_weights)) > 0
+        weights  <- init_model$sparsity_weights
+        weights  <- abs((SigmaQ / weights)[upper.tri(SigmaQ, diag = diag_pen)])
+        if (length(weights) > 0) {
+          max_pen  <- max(weights)
+          sparsity <- 10^seq(log10(max_pen), log10(max_pen * control$min_ratio), len = control$n_sparsity_penalties)
+        } else {
+          sparsity <- rep(0, len = control$n_sparsity_penalties)
+        }
       }
 
       private$sparsity_ <- sort(sparsity, decreasing = TRUE)
