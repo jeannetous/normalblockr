@@ -93,8 +93,8 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     plot = function(criterion = c("deviance", "ICL", "BIC", "EBIC"),
                     n_intervals = NULL) {
       criterion   <- match.arg(criterion)
-      if(is.null(n_intervals)) n_intervals <- round(0.1 * length(unique(self$criteria$penalty )))
-      df <- self$criteria %>% mutate(pen_binned = cut(penalty, breaks = n_intervals)) %>%
+      if(is.null(n_intervals)) n_intervals <- round(0.1 * length(unique(self$criteria$sparsity )))
+      df <- self$criteria %>% mutate(pen_binned = cut(sparsity, breaks = n_intervals)) %>%
         group_by(pen_binned, Q) %>% summarize(avg_crit = mean(.data[[criterion]]), .groups = "drop")
       p  <- ggplot2::ggplot(df, aes(x = pen_binned, y = Q, fill = avg_crit)) +
         ggplot2::geom_tile() +
