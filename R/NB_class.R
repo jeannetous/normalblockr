@@ -127,7 +127,7 @@ NB <- R6::R6Class(
         ## Nice nodes
         V.deg <- igraph::degree(G)/sum(igraph::degree(G))
         igraph::V(G)$label.cex <- V.deg / max(V.deg) + .5
-        igraph::V(G)$size <- V.deg * 100
+        igraph::V(G)$size <- table(self$clustering) * 100 / self$p
         igraph::V(G)$label.color <- rgb(0, 0, .2, .8)
         igraph::V(G)$frame.color <- NA
         ## Nice edges
