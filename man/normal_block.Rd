@@ -5,53 +5,42 @@
 \title{Normal-block model}
 \usage{
 normal_block(
-  Y,
-  X,
+  data,
   blocks,
-  sparsity = FALSE,
+  sparsity = 0,
   zero_inflation = FALSE,
-  noise_cov = c("diagonal", "spherical"),
-  niter = 100,
-  threshold = 1e-04,
-  control = normal_block_control()
+  control = NB_control()
 )
 }
 \arguments{
-\item{Y}{observations data, n observations of p categories, dim n*p.}
-
-\item{X}{covariates data, n observations of d covariates, dim n*d.}
+\item{data}{contains the matrix of responses (Y, n x p) and the design matrix (X, n x d)."}
 
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
 
-\item{sparsity}{boolean to say whether the model should be sparsified (several penalties tested)
-OR float to run model with a single penalty value}
+\item{sparsity}{either TRUE to run the optimization for different sparsity penalty values
+OR float to run model with a single sparsity penalty value}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
 
-\item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
-
-\item{niter}{number of iterations in model optimization}
-
-\item{threshold}{loglikelihood / elbo threshold under which optimization stops}
-
 \item{control}{a list-like structure for detailed control on parameters should be
-generated with normal_block_control() for collections of sparse models}
+generated with NB_control().}
 }
 \value{
-an R6 object with class [`NB`] or [`NB_unknown`] or [`NB_unknown_ZI`]
+an R6 object with one of the NB classes
 }
 \description{
-Fit a normal-block model with a variational algorithm
+Fit a normal-block model with a variational or heuristic algorithm
 }
 \examples{
-data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
-my_normal_block <- normal_block(data$Y, data$X, blocks = 1:6)
+ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
+data <- normal_data$new(ex_data$Y, ex_data$X)
+my_normal_block <- normal_block(data, blocks = 1:6)
 \dontrun{
-my_normal_block$plot_criterion("loglik")
-my_normal_block$plot_criterion("BIC")
-my_normal_block$plot_criterion("ICL")
+my_normal_block$plot("deviance")
+my_normal_block$plot("BIC")
+my_normal_block$plot("ICL")
 Y_hat <- my_normal_block$get_best_model()$fitted
-plot(Y, Y_hat); abline(0,1)
+plot(data$Y, Y_hat); abline(0,1)
 }
 }

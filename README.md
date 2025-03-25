@@ -5,7 +5,9 @@
   [![R-CMD-check](https://github.com/jeannetous/normalblockr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jeannetous/normalblockr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of normalblockr is to ...
+Normal-Block is a graphical model designed for the multivariate analysis of continuous data.
+It clusters variables and builds on Graphical-Lasso to infer a network of statistical dependencies 
+between clusters.
 
 ## Installation
 
@@ -16,12 +18,36 @@ You can install the development version of normalblockr from [GitHub](https://gi
 pak::pak("jeannetous/normalblockr")
 ```
 
-## Example
+## Usage 
 
-This is a basic example which shows you how to solve a common problem:
+All fitting is done using the function normal_block. An object of the class
+normal_data must be created (using observations Y and covariates X) and used as 
+an input to normal_block. normal_block parameters allow to choose between sparse
+/ not sparse models, fixed or unknown blocks... 
 
-``` r
-library(normalblockr)
-## basic example code
+
+The package comes with a small artificial data set simulated under the model.
+
+```r
+testdata <- readRDS("testdata/testdata_normal.RDS")
+Y        <- testdata$Y ; X <- testdata$X
+C        <- testdata$parameters$C ; Q <- ncol(C)
+data     <- normal_data$new(Y, X)
+model    <- normal_block(data, blocks = C)
 ```
+
+### Sparse model
+
+```r
+model    <- normal_block(data, blocks = C, sparsity = TRUE)
+```
+
+### With unobserved clustering
+
+```r
+model    <- normal_block(data, blocks = 2:5, sparsity = TRUE)
+model$plot_criteria()
+model_BIC <- model$get_best_model("BIC")
+```
+
 

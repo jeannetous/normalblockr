@@ -2,25 +2,25 @@
 % Please edit documentation in R/NB_fixed_blocks_class.R
 \name{NB_fixed_blocks}
 \alias{NB_fixed_blocks}
-\title{R6 class for normal-block model with fixed groups}
+\title{R6 class for a generic normal model}
 \description{
-R6 class for normal-block model with fixed groups
+R6 class for a generic normal model
 
-R6 class for normal-block model with fixed groups
+R6 class for a generic normal model
 }
 \section{Super classes}{
-\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_blocks}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_blocks}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
-\item{\code{clustering}}{given as a list of labels}
-
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model}
+
+\item{\code{who_am_I}}{a method to print what model is being fitted}
 }
 \if{html}{\out{</div>}}
 }
@@ -28,15 +28,15 @@ R6 class for normal-block model with fixed groups
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-NB_fixed_blocks-new}{\code{NB_fixed_blocks$new()}}
-\item \href{#method-NB_fixed_blocks-update}{\code{NB_fixed_blocks$update()}}
 \item \href{#method-NB_fixed_blocks-clone}{\code{NB_fixed_blocks$clone()}}
 }
 }
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
 </ul>
@@ -48,63 +48,24 @@ R6 class for normal-block model with fixed groups
 \subsection{Method \code{new()}}{
 Create a new [`NB_fixed_blocks`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(Y, X, C, penalty = 0, control = normal_block_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$new(data, C, sparsity = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Y}}{the matrix of responses (called Y in the model).}
+\item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{X}}{design matrix (called X in the model).}
+\item{\code{C}}{clustering matrix C_jq = 1 if species j belongs to cluster q}
 
-\item{\code{C}}{group matrix C_jq = 1 if species j belongs to group q}
+\item{\code{sparsity}}{to apply on variance matrix when calling GLASSO}
 
-\item{\code{penalty}}{to add on blocks precision matrix for sparsity}
-
-\item{\code{control}}{structured list of more specific parameters, to generate with NB_param()}
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 A new [`NB_fixed_blocks`] object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB_fixed_blocks-update"></a>}}
-\if{latex}{\out{\hypertarget{method-NB_fixed_blocks-update}{}}}
-\subsection{Method \code{update()}}{
-Update a [`NB_fixed_blocks`] object
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB_fixed_blocks$update(
-  B = NA,
-  dm1 = NA,
-  omegaQ = NA,
-  gamma = NA,
-  mu = NA,
-  ll_list = NA
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{regression matrix}
-
-\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
-
-\item{\code{omegaQ}}{groups inverse variance matrix}
-
-\item{\code{gamma}}{variance of  posterior distribution of W}
-
-\item{\code{mu}}{mean for posterior distribution of W}
-
-\item{\code{ll_list}}{log-likelihood during optimization}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Update the current [`zi_normal`] object
 }
 }
 \if{html}{\out{<hr>}}

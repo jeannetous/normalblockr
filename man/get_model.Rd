@@ -5,29 +5,23 @@
 \title{Creates appropriate new normal block model depending on the parametrization}
 \usage{
 get_model(
-  Y,
-  X,
+  data,
   blocks,
-  sparsity = FALSE,
+  sparsity = 0,
   zero_inflation = FALSE,
-  noise_cov = c("diagonal", "spherical"),
-  control = NULL
+  control = NB_control()
 )
 }
 \arguments{
-\item{Y}{response matrix}
+\item{data}{contains the matrix of responses (Y) and the design matrix (X).}
 
-\item{X}{design matrix}
-
-\item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
+\item{blocks}{either an integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
 
-\item{sparsity}{boolean to say whether the model should be sparsified (several penalties tested)
+\item{sparsity}{boolean to say whether the model should have a changing penalty
 OR float to run model with a single penalty value}
 
 \item{zero_inflation}{boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence}
-
-\item{noise_cov}{character the type of covariance for the noise: either diagonal of spherical}
 
 \item{control}{a list-like structure for detailed control on parameters should be
 generated with normal_block_control() for collections of sparse models}

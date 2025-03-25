@@ -1,39 +1,49 @@
 ###############################################################################
 ###############################################################################
-
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
-C <- testdata$parameters$C
-Q <- ncol(C)
+C <- testdata$parameters$C ; Q <- ncol(C)
+
 
 ###############################################################################
 ###############################################################################
 
-test_that("NB_fixed_Q: check dimensions, optimization and field access", {
-  expect_true(inherits(model <- normal_block(Y, X, Q), "NB_fixed_Q"))
-  expect_silent(model$optimize(niter = 60))
-  params <- model$model_par
-  expect_equal(model$n, nrow(Y))
-  expect_equal(model$p, ncol(Y))
-  expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 5442)
-  expect_gt(model$loglik, -2616)
+test_that("normal block with diagonal residual covariance and unknown clusters", {
+  data <- normal_data$new(Y, X)
+
+  model <- NB_fixed_Q$new(data, Q)
+  model$optimize()
+  expect_gt(model$loglik, -2620)
+  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_equal(matching_group_scores(model$clustering, get_clusters(C)), 1)
+  model <- NB_fixed_Q$new(data, Q, sparsity = 0.05)
+  model$optimize()
 })
 
-test_that("NB_fixed_Q: sparsity works", {
-  expect_true(inherits(model_sparse <- normal_block(Y, X, Q, sparsity = 0.05), "NB_fixed_Q"))
-  expect_silent(model_sparse$optimize(niter = 60))
+
+test_that("normal block with spherical residual covariance and unknown clusters", {
+  data <- normal_data$new(Y, X)
+
+  ctrl <- NB_control(noise_covariance = "spherical")
+  model <- NB_fixed_Q$new(data, Q, control = ctrl)
+  model$optimize()
+  expect_gt(model$loglik, -2650)
+  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_equal(matching_group_scores(model$clustering, get_clusters(C)), 1)
+
+  model <- NB_fixed_Q$new(data, Q, sparsity = 0.05, control = ctrl)
+  model$optimize()
+
 })
 
-test_that("NB_fixed_Q: works with Q=1", {
-  expect_true(inherits(model <- normal_block(Y, X, 1), "NB_fixed_Q"))
-  expect_silent(model$optimize(niter = 60))
-})
+test_that("normal block with unknown clusters, heuristic", {
 
-test_that("NB_fixed_Q: works with spherical cov", {
-  expect_true(inherits(model <- normal_block(Y, X, Q, noise_cov = "spherical"), "NB_fixed_Q"))
-  expect_silent(model$optimize(niter = 60))
-  expect_equal(length(unique(model$model_par$dm1)), 1)
+  data <- normal_data$new(Y, X)
+  model <- NB_fixed_Q$new(data, Q, sparsity = 0.05,
+                          control = NB_control(heuristic = TRUE))
+  model$optimize()
+  expect_lt(Metrics::rmse(model$fitted, Y), 2.4)
+  expect_equal(matching_group_scores(model$clustering, get_clusters(C)), 1)
 })

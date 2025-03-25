@@ -2,42 +2,45 @@
 % Please edit documentation in R/NB_class.R
 \name{NB}
 \alias{NB}
-\title{R6 generic class for normal-block models}
+\title{R6 class for a generic sparse Normal Block model}
 \description{
-R6 generic class for normal-block models
+R6 class for a generic sparse Normal Block model
 
-R6 generic class for normal-block models
+R6 class for a generic sparse Normal Block model
 }
 \section{Super class}{
-\code{\link[normalblockr:MVEM]{normalblockr::MVEM}} -> \code{NB}
-}
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{penalty}}{penalty on the network density}
-
-\item{\code{sparsity_weights}}{distribution of sparsity on the elements of the network}
-
-\item{\code{Q}}{number of blocks}
-}
-\if{html}{\out{</div>}}
+\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{NB}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
+
+\item{\code{Q}}{number of blocks}
+
 \item{\code{nb_param}}{number of parameters in the model}
 
 \item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
 
-\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), omegaQ (groups precision matrix))}
+\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
 
-\item{\code{penalty_term}}{(penalty term in log-likelihood due to sparsity)}
+\item{\code{sparsity}}{(overall sparsity parameter)}
+
+\item{\code{sparsity_weights}}{(weights associated to each pair of groups)}
+
+\item{\code{sparsity_term}}{(sparsity_term term in log-likelihood due to sparsity)}
+
+\item{\code{loglik}}{(or its variational lower bound)}
 
 \item{\code{EBIC}}{variational lower bound of the EBIC}
 
 \item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 
-\item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
+\item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
+
+\item{\code{clustering}}{given as the list of elements contained in each cluster
+#' @field elements_per_cluster given as the list of elements contained in each cluster
+elements_per_cluster = function(value) split(names(self$clustering), self$clustering)}
 }
 \if{html}{\out{</div>}}
 }
@@ -45,7 +48,6 @@ R6 generic class for normal-block models
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
-\item \href{#method-NB-update}{\code{NB$update()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
@@ -54,8 +56,9 @@ R6 generic class for normal-block models
 \if{html}{\out{
 <details open><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="optimize"><a href='../../normalblockr/html/MVEM.html#method-MVEM-optimize'><code>normalblockr::MVEM$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="MVEM" data-id="plot_loglik"><a href='../../normalblockr/html/MVEM.html#method-MVEM-plot_loglik'><code>normalblockr::MVEM$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -65,52 +68,24 @@ R6 generic class for normal-block models
 \subsection{Method \code{new()}}{
 Create a new [`NB`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$new(Y, X, Q, penalty = 0, control = normal_block_control())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$new(data, Q, sparsity = 0, control = NB_control())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{Y}}{the matrix of responses (called Y in the model).}
+\item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{X}}{design matrix (called X in the model).}
+\item{\code{Q}}{number of clusters}
 
-\item{\code{Q}}{number of groups}
+\item{\code{sparsity}}{sparsity penalty on the network density}
 
-\item{\code{penalty}}{penalty on the network density}
-
-\item{\code{control}}{structured list of parameters, including sparsity_weights}
+\item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A new [`nb_fixed`] object
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-update"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-update}{}}}
-\subsection{Method \code{update()}}{
-Update a [`NB`] object
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$update(B = NA, dm1 = NA, omegaQ = NA, ll_list = NA)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{B}}{regression matrix}
-
-\item{\code{dm1}}{diagonal vector of species inverse variance matrix}
-
-\item{\code{omegaQ}}{groups inverse variance matrix}
-
-\item{\code{ll_list}}{log-likelihood during optimization}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Update the current [`NB`] object
+A new [`NB`] object
 }
 }
 \if{html}{\out{<hr>}}

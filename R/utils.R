@@ -38,19 +38,12 @@ softmax <- function(x) {
 
 # computes ARI between two clusterings
 matching_group_scores <- function(groups1, groups2) {
-  ari <- pdfCluster::adj.rand.index(groups1, groups2)
-  # If ari is na, we want to see if a relabeling can change that
-  if (is.na(ari)) {
-    if((length(unique(groups1)) == 1) && (length(unique(groups2)) == 1)){
-      return(1)
-      }
-    }
-  return(ari)
+  aricode::ARI(groups1, groups2)
 }
 
 # gets cluster labels from probability matrix
 get_clusters <- function(tau) {
-  return(apply(tau, 1, which.max))
+  apply(tau, 1, which.max)
 }
 
 # for a list of edges, give corresponding (node1, node2) list.
@@ -61,5 +54,5 @@ edge_to_node <- function(x, n = max(x)) {
   j <- findInterval(x, vec = j.grid)
   i <- x - j.grid[j]
   ## Renumber i and j starting from 1 to stick with R convention
-  return(data.frame(node1 = i + 1, node2 = j + 1))
+  data.frame(node1 = i + 1, node2 = j + 1)
 }
