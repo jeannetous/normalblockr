@@ -56,39 +56,39 @@ NB_zi_fixed_Q <- R6::R6Class(
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for integrated inference ------------------------
+    ## Methods for heuristic inference -----------------------
 
-    EM_initialize = function() {
-      init_model <- normal_diag_zi$new(self$data)
+    get_heuristic_parameters = function() {
+      init_model  <- normal_diag_zi$new(self$data)
       init_model$optimize()
-      B          <- init_model$model_par$B
+      B      <- init_model$model_par$B
+      kappa  <- init_model$model_par$kappa
+      rho    <- init_model$model_par$rho
       ddiag      <- 1/init_model$model_par$dm1
       dm1 <- switch(private$res_covariance,
                     "diagonal"  = 1 / as.vector(ddiag),
                     "spherical" = rep(1/mean(ddiag), self$p))
-      R          <- self$data$Y - self$data$X %*% B
-      R[self$data$Y == 0]  <- 0 # improve final value of objective
-      if (anyNA(private$C)) {
-        clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-        if (length(unique(clustering)) < self$Q) {
-          # We try to ensure the optimization does not start with an empty cluster
-          clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
-        }
-        C <- as_indicator(clustering)
-        if (min(colSums(C)) < 0.5) warning("Initialization failed to place elements in each cluster")
-      } else {
-        C <- private$C
-      }
-      C     <- check_one_boundary(check_zero_boundary(C))
-      alpha   <- colMeans(C)
-      OmegaQ  <- t(C) %*% diag(dm1) %*% C
-      kappa   <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho     <- init_model$model_par$rho
-      G       <- solve(diag(colSums(dm1 * C), self$Q, self$Q) + OmegaQ)
-      M       <- R %*% (dm1 * C) %*% G
-      S       <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, alpha = alpha, kappa = kappa,
-           M = M, S = S, C = C, rho = rho)
+      R <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
+      if (anyNA(private$C))
+        private$C <- private$clustering_approx(R)
+      private$C <- check_one_boundary(check_zero_boundary(private$C))
+      SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(R))
+      OmegaQ <- private$get_OmegaQ(SigmaQ)
+      list(B = B, OmegaQ = OmegaQ, dm1 = dm1, kappa = kappa,
+           C = private$C, alpha = colMeans(private$C), rho = rho)
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for integrated inference ------------------------
+
+    EM_initialize = function() {
+      # G       <- solve(diag(colSums(dm1 * C), self$Q, self$Q) + OmegaQ)
+      # M       <- R %*% (dm1 * C) %*% G
+      c(private$get_heuristic_parameters(),  list(
+          M = matrix(rep(0, self$n * self$Q), nrow = self$n),
+          S = matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+        )
+      )
     },
 
     EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
@@ -175,21 +175,8 @@ NB_zi_fixed_Q <- R6::R6Class(
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
-    },
-
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for heuristic inference -----------------------
-    get_heuristic_parameters = function() {
-      model <- normal_diag_zi$new(self$data) ; model$optimize()
-      B      <- model$model_par$B ; kappa <- model$model_par$kappa
-      rho    <- model$model_par$rho
-      R      <- self$data$Y - self$data$X %*% B ; R[self$rho > 0.7] <- 0
-      Sigma  <- (t(R) %*% R) / model$n
-      private$C   <- private$clustering_approx(R)
-      SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
-      OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list("B" = B, "OmegaQ" = OmegaQ, rho = rho, kappa = kappa)
     }
+
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

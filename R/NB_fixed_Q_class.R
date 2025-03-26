@@ -50,31 +50,33 @@ NB_fixed_Q <- R6::R6Class(
       J
     },
 
-    EM_initialize = function() {
-      B <- self$data$XtXm1 %*% self$data$XtY
-      R <- self$data$Y - self$data$X %*% B
-      if (anyNA(private$C)) {
-        clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-        if (length(unique(clustering)) < self$Q) {
-          # We try to ensure the optimization does not start with an empty cluster
-          clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
-        }
-        C <- as_indicator(clustering)
-        if (min(colSums(C)) < 1) warning("Initialization failed to place elements in each cluster")
-      } else {
-        C <- private$C
-      }
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for heuristic inference -----------------------
 
-      C     <- check_one_boundary(check_zero_boundary(C))
-      alpha <- colMeans(C)
-      S     <- rep(0.1, self$Q)
-      M     <- matrix(rep(0, self$n * self$Q), nrow = self$n)
-      ddiag <- colMeans((self$data$Y - self$data$X %*% B)^2)
+    get_heuristic_parameters = function(){
+      reg_res   <- private$multivariate_normal_inference()
+      if (anyNA(private$C))
+        private$C <- private$clustering_approx(reg_res$R)
+      private$C <- check_one_boundary(check_zero_boundary(private$C))
+      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
+      OmegaQ    <- private$get_OmegaQ(SigmaQ)
+      ddiag <- colMeans(reg_res$R^2)
       dm1   <- switch(private$res_covariance,
                       "diagonal"  = 1 / as.vector(ddiag),
                       "spherical" = rep(1/mean(ddiag), self$p))
-      OmegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
-      list(B = B, OmegaQ = OmegaQ, dm1 = dm1,  alpha = alpha, C = C, M = M, S = S)
+      list(B = reg_res$B, OmegaQ = OmegaQ, dm1 = dm1,
+           C = private$C, alpha = colMeans(private$C))
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for integrated inference ------------------------
+
+    EM_initialize = function() {
+      c(private$get_heuristic_parameters(),  list(
+            M = matrix(rep(0, self$n * self$Q), nrow = self$n),
+            S = rep(0.1, self$Q)
+          )
+      )
     },
 
     EM_step = function(B, OmegaQ, dm1, alpha, C, M, S) {
@@ -104,14 +106,6 @@ NB_fixed_Q <- R6::R6Class(
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
 
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, alpha = alpha, C = C, M = M, S = S)
-    },
-
-    get_heuristic_parameters = function(){
-      reg_res   <- private$multivariate_normal_inference()
-      private$C <- private$clustering_approx(reg_res$R)
-      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
-      OmegaQ    <- private$get_OmegaQ(SigmaQ)
-      list(B = reg_res$B, OmegaQ = OmegaQ)
     }
   ),
 

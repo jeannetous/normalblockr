@@ -235,8 +235,13 @@ NB <- R6::R6Class(
     },
 
     heuristic_cluster_residuals = function(R){
-      kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster |>
-        as_indicator()
+      clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+      if (length(unique(clustering)) < self$Q) {
+        clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
+      }
+      C <- as_indicator(clustering)
+      if (min(colSums(C)) < 1) warning("Initialization failed to place elements in each cluster")
+      C
     }
   ),
 
