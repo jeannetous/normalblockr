@@ -21,7 +21,7 @@ NB_zi_fixed_Q <- R6::R6Class(
 
     #' @description Create a new [`NB_zi_fixed_Q`] object.
     #' @param data object of normal_data class, with responses and design matrix
-    #' @param C block matrix C_jq = 1 if species j belongs to block q
+    #' @param Q required number of groups
     #' @param control structured list of more specific parameters
     #' @return A new [`NB_zi_fixed_Q`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
@@ -36,17 +36,17 @@ NB_zi_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, tau, rho) {
+    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
       rho_bar <- 1 - rho
       R <- self$data$Y - self$data$X %*% B
-      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
       J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
       J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
-      J <- J + .5 * self$n * log_det_OmegaQ + sum(tau %*% log(alpha))
+      J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
       J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
+      J <- J  + .5 * sum(log(S)) - sum(C * log(C))
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
@@ -74,51 +74,51 @@ NB_zi_fixed_Q <- R6::R6Class(
           # We try to ensure the optimization does not start with an empty cluster
           clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
         }
-        tau <- as_indicator(clustering)
-        if (min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
+        C <- as_indicator(clustering)
+        if (min(colSums(C)) < 0.5) warning("Initialization failed to place elements in each cluster")
       } else {
-        tau <- private$C
+        C <- private$C
       }
-      tau     <- check_one_boundary(check_zero_boundary(tau))
-      alpha      <- colMeans(tau)
-      OmegaQ     <- t(tau) %*% diag(dm1) %*% tau
-      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * tau), self$Q, self$Q) + OmegaQ)
-      M          <- R %*% (dm1 * tau) %*% G
-      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
+      C     <- check_one_boundary(check_zero_boundary(C))
+      alpha   <- colMeans(C)
+      OmegaQ  <- t(C) %*% diag(dm1) %*% C
+      kappa   <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
+      rho     <- init_model$model_par$rho
+      G       <- solve(diag(colSums(dm1 * C), self$Q, self$Q) + OmegaQ)
+      M       <- R %*% (dm1 * C) %*% G
+      S       <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
       list(B = B, dm1 = dm1, OmegaQ = OmegaQ, alpha = alpha, kappa = kappa,
-           M = M, S = S, tau = tau, rho = rho)
+           M = M, S = S, C = C, rho = rho)
     },
 
-    EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, tau, rho) {
+    EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
       R <- self$data$Y - self$data$X %*% B
       ones <- as.vector(rep(1, self$n))
 
       # E step
-      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, B, dm1, OmegaQ, tau, rho)
-      S <-  1 / sweep((1 - rho) %*% (dm1 * tau), 2, diag(OmegaQ), "+")
+      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, B, dm1, OmegaQ, C, rho)
+      S <-  1 / sweep((1 - rho) %*% (dm1 * C), 2, diag(OmegaQ), "+")
       if (self$Q > 1 & !self$fixed_tau) {
         eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
         eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
-        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+        C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
-      A <- R^2 - 2 * R * tcrossprod(M,tau) + tcrossprod(M^2 + S, tau)
+      A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
       nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
       rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
       rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       # M step
-      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1, OmegaQ, M, tau, rho)
+      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1, OmegaQ, M, C, rho)
       dm1  <- switch(private$res_covariance,
                      "diagonal"  = colSums(1 - rho) / colSums((1 - rho) * A),
                      "spherical" = rep(sum(1 - rho) / sum((1 - rho) * A), self$p))
-      alpha <- colMeans(tau)
+      alpha <- colMeans(C)
       kappa <- colMeans(rho)
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 
       list(B = B, dm1 = dm1, alpha = alpha, OmegaQ = OmegaQ, kappa = kappa,
-           M = M, S = S, tau = tau, rho = rho)
+           M = M, S = S, C = C, rho = rho)
     },
 
     zi_NB_fixed_Q_obj_grad_M = function(M_vec, R, dm1T, OmegaQ, rho) {
@@ -132,7 +132,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       res
     },
 
-    zi_NB_fixed_Q_nlopt_optim_M = function(M0, B, dm1, OmegaQ, tau, rho) {
+    zi_NB_fixed_Q_nlopt_optim_M = function(M0, B, dm1, OmegaQ, C, rho) {
       M0_vec <- as.vector(M0)
       res <- nloptr::nloptr(
         x0 = M0_vec,
@@ -143,7 +143,7 @@ NB_zi_fixed_Q <- R6::R6Class(
           maxeval = 1000
         ),
         R = self$data$Y - self$data$X %*% B,
-        dm1T    = dm1 * tau,
+        dm1T    = dm1 * C,
         OmegaQ = OmegaQ,
         rho    = rho
       )
@@ -151,16 +151,16 @@ NB_zi_fixed_Q <- R6::R6Class(
       newM
     },
 
-    zi_NB_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, Mtau) {
+    zi_NB_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, MC) {
       R    <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      grad <- crossprod(self$data$X, dm1_1mrho * (R - Mtau))
-      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * Mtau))
+      grad <- crossprod(self$data$X, dm1_1mrho * (R - MC))
+      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MC))
 
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
-    zi_NB_fixed_Q_nlopt_optim_B = function(B0, dm1, OmegaQ, M, tau, rho) {
+    zi_NB_fixed_Q_nlopt_optim_B = function(B0, dm1, OmegaQ, M, C, rho) {
       dm1_1mrho <- t(dm1 * t(1 - rho))
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
@@ -171,7 +171,7 @@ NB_zi_fixed_Q <- R6::R6Class(
           maxeval = 1000
         ),
         dm1_1mrho = t(dm1 * t(1 - rho)),
-        Mtau = tcrossprod(M, tau)
+        MC = tcrossprod(M, C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -185,11 +185,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       rho    <- model$model_par$rho
       R      <- self$data$Y - self$data$X %*% B ; R[self$rho > 0.7] <- 0
       Sigma  <- (t(R) %*% R) / model$n
-      # C and tau play the same role here, but they're used in different
-      # parts of the model: tau is used in $clustering bc we're in a fixed_Q context
-      # and C is used in generic heuristic methods
       private$C   <- private$clustering_approx(R)
-      private$tau <- private$clustering_approx(R)
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list("B" = B, "OmegaQ" = OmegaQ, rho = rho, kappa = kappa)
@@ -204,7 +200,7 @@ NB_zi_fixed_Q <- R6::R6Class(
     nb_param = function() super$nb_param + self$p + self$Q - 1, # adding kappa and alpha
     #' @field var_par a list with variational parameters
     var_par  = function() {list(M = private$M, S = private$S,
-                                rho = private$rho, tau = private$tau)},
+                                rho = private$rho, tau = private$C)},
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (blocks precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par
@@ -212,14 +208,12 @@ NB_zi_fixed_Q <- R6::R6Class(
       par$alpha <- private$alpha
       par
     },
-    #' @field clustering a list of labels giving the clustering obtained in the model
-    clustering = function() get_clusters(private$tau),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
         res <- res - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
-        res <- res - sum(xlogx(private$tau))
+        res <- res - sum(xlogx(private$C))
       } else {res <- NA}
       res
     },
@@ -228,7 +222,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
       } else {
-        res <- (1 - private$rho) * (self$data$X %*% private$B + private$M %*% t(private$tau))
+        res <- (1 - private$rho) * (self$data$X %*% private$B + private$M %*% t(private$C))
       }
       res
     },

@@ -78,7 +78,7 @@ NB <- R6::R6Class(
     split = function(index) {
       myNB <- self$clone()
       ## update private fields related to group parameters
-      ## C, tau, M, S
+      ## C, M, S
     },
 
     #' @description Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`

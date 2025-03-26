@@ -34,13 +34,13 @@ NB_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, dm1, OmegaQ, alpha, tau, M, S) {
+    compute_loglik  = function(B, dm1, OmegaQ, alpha, C, M, S) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
 
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1)) + .5 * self$n * sum(log(dm1))
       J <- J  + .5 * self$n * log_det_OmegaQ
-      J <- J + sum(tau %*% log(alpha))
-      J <- J - sum(xlogx(tau)) + .5 * self$n * sum(log(S))
+      J <- J + sum(C %*% log(alpha))
+      J <- J - sum(xlogx(C)) + .5 * self$n * sum(log(S))
 
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat and simplifies
@@ -59,56 +59,56 @@ NB_fixed_Q <- R6::R6Class(
           # We try to ensure the optimization does not start with an empty cluster
           clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
         }
-        tau <- as_indicator(clustering)
-        if (min(colSums(tau)) < 1) warning("Initialization failed to place elements in each cluster")
+        C <- as_indicator(clustering)
+        if (min(colSums(C)) < 1) warning("Initialization failed to place elements in each cluster")
       } else {
-        tau <- private$C
+        C <- private$C
       }
 
-      tau     <- check_one_boundary(check_zero_boundary(tau))
-      alpha   <- colMeans(tau)
-      S       <- rep(0.1, self$Q)
-      M       <- matrix(rep(0, self$n * self$Q), nrow = self$n)
+      C     <- check_one_boundary(check_zero_boundary(C))
+      alpha <- colMeans(C)
+      S     <- rep(0.1, self$Q)
+      M     <- matrix(rep(0, self$n * self$Q), nrow = self$n)
       ddiag <- colMeans((self$data$Y - self$data$X %*% B)^2)
       dm1   <- switch(private$res_covariance,
                       "diagonal"  = 1 / as.vector(ddiag),
                       "spherical" = rep(1/mean(ddiag), self$p))
       OmegaQ  <- diag(rep(1, self$Q), self$Q, self$Q)
-      list(B = B, OmegaQ = OmegaQ, dm1 = dm1,  alpha = alpha, tau = tau, M = M, S = S)
+      list(B = B, OmegaQ = OmegaQ, dm1 = dm1,  alpha = alpha, C = C, M = M, S = S)
     },
 
-    EM_step = function(B, OmegaQ, dm1, alpha, tau, M, S) {
+    EM_step = function(B, OmegaQ, dm1, alpha, C, M, S) {
 
       ## Auxiliary variables
       R     <- self$data$Y - self$data$X %*% B
-      Gamma <- solve(OmegaQ + diag(colSums(dm1 * tau), self$Q, self$Q))
+      Gamma <- solve(OmegaQ + diag(colSums(dm1 * C), self$Q, self$Q))
 
       # E step
-      M <- R %*% (dm1 * tau) %*% Gamma
+      M <- R %*% (dm1 * C) %*% Gamma
       S <- diag(Gamma)
 
       if (self$Q > 1 & !self$fixed_tau) {
         eta <- dm1 * (t(R) %*% M) - .5 * outer(dm1,  colSums(M^2) + self$n * S)
         eta <- eta + outer(rep(1, self$p), log(alpha)) - 1
-        tau <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
+        C   <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
 
       # M step
-      MtauT <- M %*% t(tau)
-      B     <- self$data$XtXm1 %*% t(self$data$X) %*% (self$data$Y - MtauT)
-      ddiag  <- colMeans(R^2 - 2 * R * MtauT + (M^2 + outer(rep(1, self$n), S)) %*% t(tau))
+      MCT <- M %*% t(C)
+      B     <- self$data$XtXm1 %*% t(self$data$X) %*% (self$data$Y - MCT)
+      ddiag  <- colMeans(R^2 - 2 * R * MCT + (M^2 + outer(rep(1, self$n), S)) %*% t(C))
       dm1  <- switch(private$res_covariance,
                      "diagonal"  = 1 / as.vector(ddiag),
                      "spherical" = rep(1/mean(ddiag), self$p))
-      alpha <- colMeans(tau)
+      alpha <- colMeans(C)
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
 
-      list(B = B, OmegaQ = OmegaQ, dm1 = dm1, alpha = alpha, tau = tau, M = M, S = S)
+      list(B = B, OmegaQ = OmegaQ, dm1 = dm1, alpha = alpha, C = C, M = M, S = S)
     },
 
     get_heuristic_parameters = function(){
       reg_res   <- private$multivariate_normal_inference()
-      private$C <- private$tau <- private$clustering_approx(reg_res$R)
+      private$C <- private$clustering_approx(reg_res$R)
       SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
       OmegaQ    <- private$get_OmegaQ(SigmaQ)
       list(B = reg_res$B, OmegaQ = OmegaQ)
@@ -127,14 +127,12 @@ NB_fixed_Q <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function() {as.integer(super$nb_param + self$Q - 1)}, # adding alpha
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
-    var_par    = function() list(M = private$M,  S = private$S, tau = private$tau),
-    #' @field clustering a list of labels giving the clustering obtained in the model
-    clustering = function() get_clusters(private$tau),
+    var_par    = function() list(M = private$M,  S = private$S, tau = private$C),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
       if (!private$approx){
         res <- .5 * self$n * self$Q * log(2 * pi * exp(1)) +
-          .5 * self$n * sum(log(private$S)) - sum(xlogx(private$tau))
+          .5 * self$n * sum(log(private$S)) - sum(xlogx(private$C))
       } else {res <- NA}
       res
     },
@@ -143,7 +141,7 @@ NB_fixed_Q <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B
       } else {
-        res <- self$data$X %*% private$B + private$M %*% t(private$tau)
+        res <- self$data$X %*% private$B + private$M %*% t(private$C)
       }
     },
     #' @field who_am_I a method to print what model is being fitted

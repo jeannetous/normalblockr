@@ -29,8 +29,6 @@ R6 class for a generic normal model
 
 \item{\code{model_par}}{a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (blocks precision matrix), kappa (zero-inflation probabilities)}
 
-\item{\code{clustering}}{a list of labels giving the clustering obtained in the model}
-
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
@@ -73,13 +71,11 @@ Create a new [`NB_zi_fixed_Q`] object.
 \describe{
 \item{\code{data}}{object of normal_data class, with responses and design matrix}
 
-\item{\code{Q}}{number of clusters}
+\item{\code{Q}}{required number of groups}
 
 \item{\code{sparsity}}{to apply on variance matrix when calling GLASSO}
 
 \item{\code{control}}{structured list of more specific parameters}
-
-\item{\code{C}}{block matrix C_jq = 1 if species j belongs to block q}
 }
 \if{html}{\out{</div>}}
 }
