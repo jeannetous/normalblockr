@@ -1,0 +1,124 @@
+---
+title: "MICROCOSM analysis (Mariadassou et al., 2023).,"
+format: html
+editor: visual
+---
+
+## Useful libraries & functions
+
+```{r, useful-libraries}
+library(tidyverse)
+library(normalblockr)
+library(aricode)
+library(ClustOfVar)
+set.seed(1)
+```
+
+```{r, clustering-indicator-function}
+as_indicator <- function(clustering) {
+  Q <- max(clustering)
+  N <- length(clustering)
+  Z <- matrix(0, N, Q)
+  Z[cbind(seq.int(N), clustering)] <- 1
+  Z
+}
+```
+
+## Loading & formatting data
+
+Data are derived from sequence data available in the Sequence Read Archive of the National Center for Biotechnology Information under the accession number PRJNA 875059 and processed as detailed in doi:10.1186/s42523-023-00252-w.
+
+```{r, load-filter-data}
+microcosm <- readRDS("microcosm_reduced.rds")
+microcosm$Abundance <- microcosm$Abundance[, colMeans(microcosm$Abundance > 0) > 0.05]
+microcosm <- microcosm[rowSums(microcosm$Abundance) > 0, ]
+microcosm$site_time <- droplevels(microcosm$site_time)
+```
+
+```{r, load-taxonomy-data}
+taxonomy <- read_tsv("affiliations.tsv")
+taxo_reference <- taxonomy[match(colnames(microcosm$Abundance),taxonomy$ASV), ]
+```
+
+```{r, data-formatting}
+Y <- scale(log(1 + microcosm$Abundance), FALSE, TRUE) %>% as.matrix()
+X <- model.matrix(~ 0 + microcosm$site_time)
+data <- normalblockr:::normal_data$new(Y, X)
+```
+
+## Getting a good initial clustering
+
+Based on previous analysis, we use hclust to get a good initial clustering for the model.
+
+```{r, initial-clustering}
+zimvn <- normal_diag_zi$new(data) ; zimvn$optimize()
+R <- data$Y - zimvn$fitted ; Rho <- zimvn$model_par$rho
+cl0_hclust       <- cutree(hclust(dist(1-cor(R)), method="ward.D2"), 10)
+zimvnb_hclust    <- normal_block(data, blocks = 10, zero_inflation = TRUE,
+                                 control = NB_control(clustering_init = cl0_hclust,
+                                                      verbose = TRUE))
+```
+
+## Running ZI-Normal-Block on the data with the selected clustering
+
+```{r, running-zimvnb}
+zimvnb <- normal_block(data, blocks = 10, zero_inflation = TRUE,
+                       control = NB_control(clustering_init = zimvnb_hclust$clustering,
+                                            threshold = 1e-6, niter = 300,                    
+                                            verbose = TRUE))
+```
+
+### Fitting quality
+
+```{r zimvn-icl-fit)}
+data.frame(
+  data  = as.vector(Y),
+  zimvn = as.vector(zimvnb$fitted)
+) %>%
+  ggplot(aes(x = data, y = zimvn)) +
+    geom_point(size = .5, alpha =.25 ) +
+    theme_bw()
+```
+
+### Comparison with phylogeny
+
+#### ZI-MVNB clustering
+
+```{r, mvnb-clustering-phylogeny}
+ARI_zimvnb <- data.frame(
+    Phylum  = ARI(zimvnb$clustering,taxo_reference$Phylum),
+    Class   = ARI(zimvnb$clustering, taxo_reference$Class),
+    Order   = ARI(zimvnb$clustering, taxo_reference$Order),
+    Family  = ARI(zimvnb$clustering, taxo_reference$Family),
+    Genus   = ARI(zimvnb$clustering, taxo_reference$Genus),
+    Species = ARI(zimvnb$clustering, taxo_reference$Species)
+  )
+ARI_zimvnb
+```
+
+#### Clustering on the ZI-component of the model
+
+```{r, zi-clustering}
+cl_rho_hcvar <- cutree(hclustvar(zimvnb$var_par$rho), 10)
+ARI_rho <- data.frame(
+    Phylum  = ARI(cl_rho_hcvar,taxo_reference$Phylum),
+    Class   = ARI(cl_rho_hcvar, taxo_reference$Class),
+    Order   = ARI(cl_rho_hcvar, taxo_reference$Order),
+    Family  = ARI(cl_rho_hcvar, taxo_reference$Family),
+    Genus   = ARI(cl_rho_hcvar, taxo_reference$Genus),
+    Species = ARI(cl_rho_hcvar, taxo_reference$Species)
+  )
+ARI_rho
+```
+
+### Network
+
+```{r, sparse-network}
+zimvnb_sparse <- normal_block(data, blocks = as_indicator(zimvnb$clustering), zero_inflation = TRUE,
+                              sparsity = 0.005,
+                              control = NB_control(threshold = 1e-6, niter = 300, verbose = TRUE))
+```
+
+```{r, plot}
+zimvnb_sparse$plot_network()
+```

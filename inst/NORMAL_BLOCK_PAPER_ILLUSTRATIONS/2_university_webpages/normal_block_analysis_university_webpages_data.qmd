@@ -1,0 +1,98 @@
+---
+title: "University webpages analysis - The 4 universities dataset"
+format: html
+editor: visual
+---
+
+## Useful libraries and functions
+
+### Libraries
+
+```{r, useful-libraries}
+library(tm)
+library(normalblockr)
+library(tidyverse)
+set.seed(1)
+```
+
+### Functions for text processing
+
+```{r, text-processing-function}
+text_preprocessing <- function(x) {
+  x <- gsub('http\\S+\\s*','',x) # remove URLs
+  x <- gsub("<.*?>", "", x)
+  x <- gsub('#\\S+','',x) # remove hashtags
+  x <- gsub('[[:cntrl:]]','',x) # remove controls and special characters
+  x <- gsub("^[[:space:]]*","",x) # remove leading whitespaces
+  x <- gsub("[[:space:]]*$","",x) # remove trailing whitespaces
+  x <- gsub(' +', ' ', x) # remove extra whitespaces
+  x
+}
+
+```
+
+```{r, xlogx}
+xlogx <- function(x) ifelse(x < .Machine$double.eps, 0, x * log(x))
+```
+
+## Loading & formatting data
+
+```{r, data-path}
+path_to_univ <- "student_webpages/"
+```
+
+```{r, loading-data}
+corpus <- Corpus(DirSource(path_to_univ, recursive = TRUE)) %>%
+  tm_map(tolower) %>%
+  tm_map(text_preprocessing) %>%
+  tm_map(stripWhitespace) %>%
+  tm_map(removeWords, stopwords("english"))  %>%
+  tm_map(removePunctuation) %>%
+  tm_map(removeNumbers)
+```
+
+```{r, formatting}
+dtm  <- DocumentTermMatrix(corpus, control = list(bounds = list(local = c(2, Inf))))
+dtm
+## Convert Document-Term Matrix to simple matrix
+dtm <- as.matrix(dtm)
+dtm <- dtm[!(rowSums(dtm) == 0), ]
+```
+
+We transform the dataset the same way Tan et al. (2015) did.
+
+```{r, converting-data-to-frequencies}
+freq_mat <- sweep(dtm, 1, rowSums(dtm), "/")
+## entropies
+g <- sweep(freq_mat, 2, colSums(freq_mat), "/")
+entropies <- -colSums(xlogx(g)) / log(nrow(g))
+## selected terms
+terms <- colnames(freq_mat)[order(entropies, decreasing = TRUE)[1:100]]
+## Normalized data
+Y <- log(1 + freq_mat[, terms]) %>% scale() %>% as.matrix()
+```
+
+```{r, formatting-the-data-for-Normal-Block}
+data <- normal_data$new(Y,  X = matrix(1, nrow(Y), 1))
+```
+
+## Running Normal-Block on the dataset
+
+```{r, running-normal-block}
+nb_web_sparse <- normal_block(data = data, blocks = 15, sparsity = 0.005)
+```
+
+```{r, clustering-results}
+elements_per_cluster <- split(names(nb_web_sparse$clustering), nb_web_sparse$clustering)
+
+df <- tibble(
+    cluster = names(elements_per_cluster),
+    words = map_chr(elements_per_cluster, ~ paste(.x, collapse = ", "))
+) %>% mutate(cluster = paste("cluster", cluster))
+
+df
+```
+
+```{r, network-results}
+nb_web_sparse$plot_network()
+```
