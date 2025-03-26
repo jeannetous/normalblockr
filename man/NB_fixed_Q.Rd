@@ -27,8 +27,6 @@ R6 class for normal-block model with fixed Q (number of groups)
 
 \item{\code{var_par}}{a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)}
 
-\item{\code{clustering}}{a list of labels giving the clustering obtained in the model}
-
 \item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model}
@@ -45,13 +43,15 @@ R6 class for normal-block model with fixed Q (number of groups)
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="merge"><a href='../../normalblockr/html/NB.html#method-NB-merge'><code>normalblockr::NB$merge()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="split"><a href='../../normalblockr/html/NB.html#method-NB-split'><code>normalblockr::NB$split()</code></a></span></li>
 </ul>
 </details>
 }}

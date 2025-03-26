@@ -29,38 +29,38 @@ normal_models <- R6::R6Class(
     #' All possible parameters of the child classes
     #' @param B regression matrix
     #' @param dm1 diagonal vector of inverse variance matrix (variables level)
+    #' @param C the matrix of groups memberships (posterior probabilities)
     #' @param OmegaQ groups inverse variance matrix
     #' @param gamma  variance of  posterior distribution of W
     #' @param mu  mean for posterior distribution of W
     #' @param kappa vector of zero-inflation probabilities
     #' @param rho posterior probabilities of zero-inflation
     #' @param alpha vector of groups probabilities
-    #' @param tau posterior probabilities for group affectation
     #' @param M variational mean for posterior distribution of W
     #' @param S variational diagonal of variances for posterior distribution of W
     #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
     update = function(B = NA,
-                      OmegaQ = NA,
                       dm1 = NA,
+                      C = NA,
+                      OmegaQ = NA,
                       gamma = NA,
                       mu = NA,
                       kappa = NA,
                       rho = NA,
                       alpha = NA,
-                      tau = NA,
                       M = NA,
                       S = NA,
                       ll_list = NA) {
       if (!anyNA(B))       private$B       <- B
       if (!anyNA(dm1))     private$dm1     <- dm1
+      if (!anyNA(C))       private$C       <- C
       if (!anyNA(OmegaQ))  private$OmegaQ  <- OmegaQ
       if (!anyNA(gamma))   private$gamma   <- gamma
       if (!anyNA(kappa))   private$kappa   <- kappa
       if (!anyNA(rho))     private$rho     <- rho
       if (!anyNA(mu))      private$mu      <- mu
       if (!anyNA(alpha))   private$alpha   <- alpha
-      if (!anyNA(tau))     private$tau     <- tau
       if (!anyNA(M))       private$M       <- M
       if (!anyNA(S))       private$S       <- S
       if (!anyNA(ll_list)) private$ll_list <- ll_list
@@ -92,12 +92,11 @@ normal_models <- R6::R6Class(
   private = list(
     B         = NA, # regression matrix
     dm1       = NA, # diagonal vector of inverse variance matrix (variables level)
-    C         = NA, # the matrix of species groups
+    C         = NA, # the matrix of posterior probabilities (tau) or group affectation
     OmegaQ    = NA, # precision matrix for clusters
     kappa     = NA, # vector of zero-inflation probabilities
     alpha     = NA, # vector of groups probabilities
     rho       = NA, # posterior probabilities of zero-inflation
-    tau       = NA, # posterior probabilities for group affectation
     gamma     = NA, # variance of  posterior distribution of W
     mu        = NA, # mean for posterior distribution of W
     M         = NA, # variational mean for posterior distribution of W
@@ -129,7 +128,7 @@ normal_models <- R6::R6Class(
       }
       c(parameters, list(ll_list = ll_list))
     },
-    EM_step   = function() {},
+    EM_step = function() {},
     EM_initialize = function() {}
   ),
 

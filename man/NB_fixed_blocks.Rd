@@ -32,13 +32,15 @@ R6 class for a generic normal model
 }
 }
 \if{html}{\out{
-<details open><summary>Inherited methods</summary>
+<details><summary>Inherited methods</summary>
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="merge"><a href='../../normalblockr/html/NB.html#method-NB-merge'><code>normalblockr::NB$merge()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="split"><a href='../../normalblockr/html/NB.html#method-NB-split'><code>normalblockr::NB$split()</code></a></span></li>
 </ul>
 </details>
 }}

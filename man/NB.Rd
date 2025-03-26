@@ -48,6 +48,8 @@ R6 class for a generic sparse Normal Block model
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
+\item \href{#method-NB-split}{\code{NB$split()}}
+\item \href{#method-NB-merge}{\code{NB$merge()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
@@ -81,6 +83,46 @@ Create a new [`NB`] object.
 \item{\code{sparsity}}{sparsity penalty on the network density}
 
 \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new [`NB`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-split"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-split}{}}}
+\subsection{Method \code{split()}}{
+Create a clone of the current [`NB`] object after splitting cluster `cl`
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$split(index)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{index}}{index (integer) of the cluster to split}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A new [`NB`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-merge"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-merge}{}}}
+\subsection{Method \code{merge()}}{
+Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$merge(indices)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{indices}}{indices (couple of integer) of the clusters to merge}
 }
 \if{html}{\out{</div>}}
 }

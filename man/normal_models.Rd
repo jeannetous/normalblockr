@@ -86,14 +86,14 @@ All possible parameters of the child classes
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{normal_models$update(
   B = NA,
-  OmegaQ = NA,
   dm1 = NA,
+  C = NA,
+  OmegaQ = NA,
   gamma = NA,
   mu = NA,
   kappa = NA,
   rho = NA,
   alpha = NA,
-  tau = NA,
   M = NA,
   S = NA,
   ll_list = NA
@@ -105,9 +105,11 @@ All possible parameters of the child classes
 \describe{
 \item{\code{B}}{regression matrix}
 
-\item{\code{OmegaQ}}{groups inverse variance matrix}
-
 \item{\code{dm1}}{diagonal vector of inverse variance matrix (variables level)}
+
+\item{\code{C}}{the matrix of groups memberships (posterior probabilities)}
+
+\item{\code{OmegaQ}}{groups inverse variance matrix}
 
 \item{\code{gamma}}{variance of  posterior distribution of W}
 
@@ -118,8 +120,6 @@ All possible parameters of the child classes
 \item{\code{rho}}{posterior probabilities of zero-inflation}
 
 \item{\code{alpha}}{vector of groups probabilities}
-
-\item{\code{tau}}{posterior probabilities for group affectation}
 
 \item{\code{M}}{variational mean for posterior distribution of W}
 
