@@ -22,7 +22,6 @@ NB <- R6::R6Class(
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
       super$initialize(data, control)
 
-      private$C <- matrix(NA, self$data$n, Q)
       stopifnot("There cannot be more blocks than there are entities to cluster" = Q <= ncol(self$data$Y))
 
       ## variant (either diagonal or spherical residuals covariance)
@@ -41,7 +40,7 @@ NB <- R6::R6Class(
         )
       ## penalty mask
       private$sparsity_ <- sparsity
-      weights <- matrix(1, self$Q, self$Q)
+      weights <- matrix(1, Q, Q)
       diag(weights) <- 0
       if (!is.null(control$sparsity_weights)) {
         weights <- control$sparsity_weights
@@ -52,23 +51,42 @@ NB <- R6::R6Class(
       if (!is.null(cl0)) {
         if (!is.vector(cl0) & !is.matrix(cl0)) stop("Labels must be encoded in vector of labels or indicator matrix")
         if (is.vector(cl0)) {
-          if (any(cl0 < 1 | cl0 > self$Q))
+          if (any(cl0 < 1 | cl0 > Q))
             stop("Cluster labels must be between 1 and Q")
           if (length(cl0) != self$p)
             stop("Cluster labels must match the number of Y's columns")
-          if (length(unique(cl0)) != self$Q)
+          if (length(unique(cl0)) != Q)
             stop("The number of clusters in the initial clustering must be equal to Q.")
           cl0 <- as_indicator(cl0)
         } else {
           if (nrow(cl0) != self$p)
             stop("Cluster-indicating matrix must have as many rows as Y has columns")
-          if (ncol(cl0) != self$Q)
+          if (ncol(cl0) != Q)
             stop("Cluster-indicating matrix must have Q columns")
-          if ((min(colSums(cl0)) < 1) & !self$Q)
+          if ((min(colSums(cl0)) < 1) & !Q)
             stop("The number of clusters in the initial clustering must be equal to Q.")
         }
+        private$C <- cl0
+      } else {
+        private$C <- matrix(NA, self$data$n, Q)
       }
-      private$cl0 <- cl0
+    },
+
+    #' @description Create a clone of the current [`NB`] object after splitting cluster `cl`
+    #' @param index index (integer) of the cluster to split
+    #' @return A new [`NB`] object
+    split = function(index) {
+      myNB <- self$clone()
+      ## update private fields related to group parameters
+      ## C, tau, M, S
+    },
+
+    #' @description Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
+    #' @param indices indices (couple of integer) of the clusters to merge
+    #' @return A new [`NB`] object
+    merge = function(indices) {
+      myNB <- self$clone()
+      myNB
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -164,10 +182,9 @@ NB <- R6::R6Class(
   private = list(
     sparsity_         = NA, # scalar controlling the overall sparsity
     weights           = NA, # sparsity weights specific to each pairs of group
-    res_covariance    = NA, # shape of the residuals covariance (diagonal or)
+    res_covariance    = NA, # shape of the residuals covariance (diagonal or spherical)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
-    cl0               = NA, # initial clustering
 
     get_OmegaQ = function(Sigma) {
       if (private$sparsity_ == 0) {

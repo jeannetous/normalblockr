@@ -53,7 +53,7 @@ NB_fixed_Q <- R6::R6Class(
     EM_initialize = function() {
       B <- self$data$XtXm1 %*% self$data$XtY
       R <- self$data$Y - self$data$X %*% B
-      if (is.null(private$cl0)) {
+      if (anyNA(private$C)) {
         clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
         if (length(unique(clustering)) < self$Q) {
           # We try to ensure the optimization does not start with an empty cluster
@@ -62,7 +62,7 @@ NB_fixed_Q <- R6::R6Class(
         tau <- as_indicator(clustering)
         if (min(colSums(tau)) < 1) warning("Initialization failed to place elements in each cluster")
       } else {
-        tau <- private$cl0
+        tau <- private$C
       }
 
       tau     <- check_one_boundary(check_zero_boundary(tau))
@@ -140,7 +140,7 @@ NB_fixed_Q <- R6::R6Class(
     },
     #' @field fitted Y values predicted by the model
     fitted = function(){
-      if(private$approx) {
+      if (private$approx) {
         res <- self$data$X %*% private$B
       } else {
         res <- self$data$X %*% private$B + private$M %*% t(private$tau)

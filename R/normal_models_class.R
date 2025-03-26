@@ -29,6 +29,7 @@ normal_models <- R6::R6Class(
     #' All possible parameters of the child classes
     #' @param B regression matrix
     #' @param dm1 diagonal vector of inverse variance matrix (variables level)
+    #' @param C the matrix of species groups
     #' @param OmegaQ groups inverse variance matrix
     #' @param gamma  variance of  posterior distribution of W
     #' @param mu  mean for posterior distribution of W
@@ -41,8 +42,9 @@ normal_models <- R6::R6Class(
     #' @param ll_list  list of log-lik (elbo) values
     #' @return Update the current [`normal`] object
     update = function(B = NA,
-                      OmegaQ = NA,
                       dm1 = NA,
+                      C = NA,
+                      OmegaQ = NA,
                       gamma = NA,
                       mu = NA,
                       kappa = NA,
@@ -54,6 +56,7 @@ normal_models <- R6::R6Class(
                       ll_list = NA) {
       if (!anyNA(B))       private$B       <- B
       if (!anyNA(dm1))     private$dm1     <- dm1
+      if (!anyNA(C))       private$C       <- C
       if (!anyNA(OmegaQ))  private$OmegaQ  <- OmegaQ
       if (!anyNA(gamma))   private$gamma   <- gamma
       if (!anyNA(kappa))   private$kappa   <- kappa
@@ -129,7 +132,7 @@ normal_models <- R6::R6Class(
       }
       c(parameters, list(ll_list = ll_list))
     },
-    EM_step   = function() {},
+    EM_step = function() {},
     EM_initialize = function() {}
   ),
 

@@ -49,7 +49,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       J <- J  + .5 * sum(log(S)) - sum(tau * log(tau))
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n *self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
+        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
         J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
@@ -68,16 +68,16 @@ NB_zi_fixed_Q <- R6::R6Class(
                     "spherical" = rep(1/mean(ddiag), self$p))
       R          <- self$data$Y - self$data$X %*% B
       R[self$data$Y == 0]  <- 0 # improve final value of objective
-      if (is.null(private$cl0)) {
+      if (anyNA(private$C)) {
         clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-        if (length(unique(clustering)) < self$Q){
+        if (length(unique(clustering)) < self$Q) {
           # We try to ensure the optimization does not start with an empty cluster
           clustering <- cutree( ClustOfVar::hclustvar(t(R)), Q)
         }
         tau <- as_indicator(clustering)
         if (min(colSums(tau)) < 0.5) warning("Initialization failed to place elements in each cluster")
       } else {
-        tau <- private$cl0
+        tau <- private$C
       }
       tau     <- check_one_boundary(check_zero_boundary(tau))
       alpha      <- colMeans(tau)
@@ -128,7 +128,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       grad <- ((1 - rho) * R) %*% dm1T - ((1 - rho) %*% dm1T) * M - MO
       obj  <- sum((1 - rho) * (R * (M %*% t(dm1T)) - .5 * M^2 %*% t(dm1T))) - .5 * sum(MO * M)
 
-      res  <- list("objective" = - obj, "gradient"  = - grad)
+      res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
@@ -156,7 +156,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       grad <- crossprod(self$data$X, dm1_1mrho * (R - Mtau))
       obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * Mtau))
 
-      res  <- list("objective" = - obj, "gradient"  = - grad)
+      res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
@@ -216,7 +216,7 @@ NB_zi_fixed_Q <- R6::R6Class(
     clustering = function() get_clusters(private$tau),
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      if (!private$approx){
+      if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
         res <- res - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
         res <- res - sum(xlogx(private$tau))

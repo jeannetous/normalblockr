@@ -49,7 +49,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n *self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
+        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
         J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
@@ -137,7 +137,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       obj  <- -.5 * sum(dm1_1mrho * RmMC^2)
       grad <- crossprod(self$data$X, dm1_1mrho * RmMC)
 
-      res  <- list("objective" = - obj, "gradient"  = - grad)
+      res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
@@ -187,7 +187,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
     },
     #' @field entropy Entropy of the variational distribution when applicable
     entropy    = function() {
-      if (!private$approx){
+      if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
         res <- res - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
       } else {res <- NA}

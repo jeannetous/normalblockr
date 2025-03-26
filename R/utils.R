@@ -56,3 +56,4 @@ edge_to_node <- function(x, n = max(x)) {
   ## Renumber i and j starting from 1 to stick with R convention
   data.frame(node1 = i + 1, node2 = j + 1)
 }
+
