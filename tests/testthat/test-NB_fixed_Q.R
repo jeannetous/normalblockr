@@ -17,9 +17,17 @@ test_that("normal block with diagonal residual covariance and unknown clusters",
   model$optimize()
   expect_gt(model$loglik, -2620)
   expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_equal(model$sparsity, 0)
   expect_equal(matching_group_scores(model$clustering, get_clusters(C)), 1)
-  model <- NB_fixed_Q$new(data, Q, sparsity = 0.05)
+
+  model_sparse <- NB_fixed_Q$new(data, Q, sparsity = 0.05)
+  model_sparse$optimize()
+  expect_equal(model_sparse$sparsity, 0.05)
+
+  model$sparsity <- 0.05
+  expect_equal(model$sparsity, 0.05)
   model$optimize()
+  expect_equal(model_sparse$loglik, model$loglik, tolerance = 1e-2)
 })
 
 

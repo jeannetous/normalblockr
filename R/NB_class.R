@@ -241,9 +241,24 @@ NB <- R6::R6Class(
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
     model_par = function(value) c(super$model_par, list(OmegaQ = private$OmegaQ)),
     #' @field sparsity (overall sparsity parameter)
-    sparsity = function(value) private$sparsity_,
+    sparsity = function(value) {
+      if (missing(value)) {
+        private$sparsity_
+      } else {
+        stopifnot("must be a positive scale" = value >= 0)
+        private$sparsity_ <- value
+      }
+    },
     #' @field sparsity_weights (weights associated to each pair of groups)
-    sparsity_weights = function(value) private$weights,
+    sparsity_weights = function(value) {
+      if (missing(value)) {
+        private$weights
+      } else {
+        stopifnot("must be a Q x Q matrix" =
+          all(is.matrix(value), nrow(value) == ncol(value), ncol(value) == self$Q))
+        private$weights <- value
+      }
+    },
     #' @field sparsity_term (sparsity_term term in log-likelihood due to sparsity)
     sparsity_term = function(value) self$sparsity * sum(abs(self$sparsity_weights * private$OmegaQ)),
     #' @field loglik (or its variational lower bound)
