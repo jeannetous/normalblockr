@@ -64,11 +64,11 @@ NB_zi_fixed_Q <- R6::R6Class(
       B      <- init_model$model_par$B
       kappa  <- init_model$model_par$kappa
       rho    <- init_model$model_par$rho
-      ddiag      <- 1/init_model$model_par$dm1
+      ddiag  <- 1/init_model$model_par$dm1
       dm1 <- switch(private$res_covariance,
                     "diagonal"  = 1 / as.vector(ddiag),
                     "spherical" = rep(1/mean(ddiag), self$p))
-      R <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
+      R <- (1 - rho) * (self$data$Y - self$data$X %*% B)
       if (anyNA(private$C))
         private$C <- private$clustering_approx(R)
       private$C <- check_one_boundary(check_zero_boundary(private$C))
