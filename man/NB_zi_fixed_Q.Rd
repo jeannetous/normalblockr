@@ -14,8 +14,6 @@ R6 class for a generic normal model
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{clustering_init}}{model initial clustering}
-
 \item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
 
 \item{\code{zeros}}{indicator matrix of zeros in Y}

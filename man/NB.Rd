@@ -38,9 +38,9 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
-\item{\code{clustering}}{given as the list of elements contained in each cluster
-#' @field elements_per_cluster given as the list of elements contained in each cluster
-elements_per_cluster = function(value) split(names(self$clustering), self$clustering)}
+\item{\code{clustering}}{given as the list of elements contained in each cluster}
+
+\item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
 }
 \if{html}{\out{</div>}}
 }
