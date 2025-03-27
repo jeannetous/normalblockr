@@ -1,0 +1,24 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/LICENSE.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/NB.html</loc></url>
+<url><loc>/reference/NB_changing_sparsity.html</loc></url>
+<url><loc>/reference/NB_control.html</loc></url>
+<url><loc>/reference/NB_fixed_Q.html</loc></url>
+<url><loc>/reference/NB_fixed_blocks.html</loc></url>
+<url><loc>/reference/NB_unknown_Q.html</loc></url>
+<url><loc>/reference/NB_unknown_Q_changing_sparsity.html</loc></url>
+<url><loc>/reference/NB_zi_fixed_Q.html</loc></url>
+<url><loc>/reference/NB_zi_fixed_blocks.html</loc></url>
+<url><loc>/reference/generate_normal_block_data.html</loc></url>
+<url><loc>/reference/get_model.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/normal_block.html</loc></url>
+<url><loc>/reference/normal_data.html</loc></url>
+<url><loc>/reference/normal_diag_zi.html</loc></url>
+<url><loc>/reference/normal_models.html</loc></url>
+<url><loc>/reference/normalblockr-package.html</loc></url>
+</urlset>
+
