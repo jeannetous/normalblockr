@@ -1,0 +1,198 @@
+---
+title: "Simulations to test normalblockr"
+format: html
+editor: visual
+---
+
+## Useful libraries & functions
+
+```{r, useful-libraries}
+library(normalblockr)
+library(parallel)
+library(tibble)
+```
+
+```{r, simulations-functions}
+source("utils.R")
+source("data_generation.R")
+source("omega_generation.R")
+source("parameters_generation.R")
+source("measures.R")
+```
+
+## Function to run one simulation
+
+```{r, one-simulation}
+#' Function to generate data and assess the results of the inference methods once
+#' @param simu integer, rank of the simulations being run (useful when running multiple simulations)
+#' @param n number of individuals in the data
+#' @param p number of variables in the data 
+#' @param Q number of clusters in the model
+#' @param d dimension of the covariates
+#' @param kappa zero-inflation probabilities for each variable
+#' @param omega_structure network structure
+one_simulation <- function(simu, n, p, Q, d, kappa,
+                           omega_structure = c("erdos_reyni",
+                                               "preferential_attachment","community"),
+                           verbose = FALSE){
+  omega_structure <- match.arg(omega_structure)
+  ## -------------------------------------------------------------------------------------
+  ## Draw parameters and data according to the Normal-Block model
+  X          <- generate_X(n, d)
+  true_param <- generate_parameters(X, p, Q, kappa, omega_structure)
+  Y          <- normal_block_data(true_param, X)
+  data       <- normal_data$new(Y, X)
+
+  ## -------------------------------------------------------------------------------------
+  ## Arguments common to all function call
+  args_common <- list(data           = data,
+                      sparsity       = TRUE,
+                      zero_inflation = (min(kappa) > 0),
+                      control        = NB_control(verbose = FALSE))
+  
+  ## -------------------------------------------------------------------------------------
+  ## NORMAL BLOCKS WITH OBSERVED FIXED BLOCKS
+  ##
+  if (verbose) cat("\n V-EM Observed fixed blocks")
+
+  args_fixed_blocks    <- c(args_common, list(blocks = true_param$C))
+  myNB_fixed_blocks    <- do.call(normal_block, args_fixed_blocks)
+
+  res_fixed_blocks_BIC <- get_measures(myNB_fixed_blocks, true_param, "BIC", TRUE)
+  
+  ## -------------------------------------------------------------------------------------
+  ## NORMAL BLOCKS WITH UNOBSERVED BLOCKS BUT FIXED NUMBER OF BLOCKS
+  ##
+  if (verbose > 1) cat("\n V_EM Unobserved blocks")
+  args_fixed_Q <- c(args_common, list(blocks = Q))
+  myNB_fixed_Q <- do.call(normal_block, args_fixed_Q)
+
+  res_fixed_Q_BIC   <- get_measures(myNB_fixed_Q, true_param, "BIC")
+  
+  ## -------------------------------------------------------------------------------------
+  ## G-LASSO ON RESIDUALS OF NORMAL BLOCKS WITH KNOWN BLOCKS (heuristic method)
+  ##
+  if (verbose > 1) cat("\n 2-step Known blocks")
+  args_heuristic_fixed_blocks         <- args_fixed_blocks
+  args_heuristic_fixed_blocks$control <- NB_control(verbose = FALSE,
+                                                    heuristic = TRUE)
+  args_heuristic_fixed_blocks$sparsity <- NULL
+  
+  heuristic_fixed_blocks     <- do.call(normal_block, args_heuristic_fixed_blocks)
+  res_heuristic_fixed_blocks <- get_measures(heuristic_fixed_blocks, true_param,
+                                             observed_blocks = TRUE, heuristic = TRUE)
+  
+  ## -------------------------------------------------------------------------------------
+  ## G-LASSO ON RESIDUALS OF NORMAL BLOCKS WITH CLUSTERING ON SIGMA (heuristic method)
+  ##
+  if (verbose > 1) cat("\n 2-step Unknown blocks (cluster the means)")
+  args_heuristic_sigma_cl          <- args_fixed_Q
+  args_heuristic_sigma_cl$sparsity <- NULL
+  args_heuristic_sigma_cl$control  <- NB_control(verbose = FALSE,
+                                                heuristic = TRUE,
+                                                clustering_approx = "covariance")
+  
+  heuristic_sigma_cl      <- do.call(normal_block, args_heuristic_sigma_cl)
+
+  res_heuristic_sigma_cl  <- get_measures(heuristic_sigma_cl, true_param,
+                                                  observed_blocks = FALSE, heuristic = TRUE)
+
+  ## -------------------------------------------------------------------------------------
+  ## G-LASSO ON RESIDUALS OF NORMAL BLOCKS WITH CLUSTERING ON RESIDUALS (heuristic method)
+  ##
+  if (verbose > 1) cat("\n 2-step Unknown blocks (cluster the variance)")
+  args_heuristic_residuals_cl          <- args_fixed_Q
+  args_heuristic_residuals_cl$sparsity <- NULL
+  args_heuristic_residuals_cl$control  <- NB_control(verbose = FALSE,
+                                                     heuristic = TRUE,
+                                                     clustering_approx = "residuals")
+
+  heuristic_residuals_cl  <- do.call(normal_block, args_heuristic_residuals_cl)
+  res_heuristic_residuals_cl <- get_measures(heuristic_residuals_cl, true_param,
+                                             observed_blocks = FALSE, heuristic = TRUE)
+
+  res <- as.data.frame(
+    cbind(simu = simu, n = n, p = p, Q = Q,
+          zero_inflation = mean(kappa), omega_structure = omega_structure,
+          rbind(c(method = "NB", res_fixed_blocks_BIC),
+                c(method = "NB", res_fixed_Q_BIC),
+                c(method = "H_fixed", res_heuristic_fixed_blocks),
+                c(method = "H_sigma", res_heuristic_sigma_cl),
+                c(method = "H_residuals", res_heuristic_residuals_cl)
+          )))
+  return(res)
+}
+```
+
+## Function to run multiple simulations
+
+```{r, multiple-simulations}
+#' Function to run multiple simulations with one parametrization
+#' @param n_simu number of simulations to run
+#' @param n number of individuals in the data
+#' @param p number of variables in the data 
+#' @param Q number of clusters in the model
+#' @param kappa zero-inflation probabilities for each variable
+#' @param omega_structure network structure
+#' @param mc.cores number of cores to use for the execution
+multiple_simulations <- function(n_simu, n, p, Q, d, kappa,
+                                 omega_structure = c("erdos_reyni",
+                                                     "preferential_attachment","community"),
+                                 mc.cores = max(1, detectCores() - 2)){
+
+    cat("Settings: (n, p, Q, d, kappa) = (",n, p, Q, d, mean(kappa), ")\n")
+    omega_structure <- match.arg(omega_structure)
+    multiple_res    <- lapply(1:n_simu,
+                                one_simulation,
+                                n, p, Q, d, kappa, omega_structure, verbose = FALSE)
+    # multiple_res    <- mclapply(1:n_simu,
+    #                             one_simulation,
+    #                             n, p, Q, d, kappa, omega_structure, verbose = FALSE,
+    #                             mc.cores = mc.cores, total_simu = n_simu)
+    res <- do.call(rbind, multiple_res)
+    res
+}
+```
+
+## Functions to run a grid of simulations over a set of parameters
+
+```{r, simulations-grid}
+#' Function to run a grid of simulations with different parametrization
+#' @param n_simu number of simulations to run for each parametrization
+#' @param n_list list of values for n, number of individuals in the data
+#' @param p_list list of values for p, number of variables in the data 
+#' @param Q_list list of values for Q,number of clusters in the model
+#' @param kappa_list list of value for kappa, list of zero-inflation probabilities for each variable
+#' @param omega_structure_list list of values for the network structure
+#' @param mc.cores number of cores to use for the execution
+grid_simulations <- function(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
+                             omega_structure_list, saving_folder = NULL,
+                             mc.cores = max(1, detectCores() - 2)){
+
+  settings <- expand.grid(n = n_list,
+                          p = p_list,
+                          d = d_list,
+                          Q = Q_list,
+                          kappa = kappa_list,
+                          omega_structure = omega_structure_list,
+                          KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE) %>% as_tibble()
+  settings$n_simu <- n_simu
+
+  final_res <- purrr::pmap(settings, multiple_simulations, mc.cores = mc.cores)
+  final_res <- do.call(rbind, final_res) %>% as_tibble()
+  final_res
+}
+```
+
+```{r, example}
+n_simu = 3 ; n_list = c(50, 100) ; p_list = c(50) ; Q_list = c(3, 5) ; d_list = c(1) 
+
+kappa_list <- list(rep(0, 50),
+                   unlist(lapply(rnorm(50, 0.2, 0.05), f <- function(x){min(x, 0.9)})))
+
+omega_structure_list  <- c("preferential_attachment")
+
+res <- grid_simulations(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
+                        omega_structure_list, saving_folder = NULL,
+                        mc.cores = max(1, detectCores() - 2))
+```
