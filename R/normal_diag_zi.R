@@ -75,9 +75,8 @@ normal_diag_zi <- R6::R6Class(
         x0 = as.vector(B0),
         eval_f = private$normal_zi_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
         dm1_1mrho = dm1_1mrho
       )

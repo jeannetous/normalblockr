@@ -138,9 +138,8 @@ NB_zi_fixed_Q <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_NB_fixed_Q_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
         R = self$data$Y - self$data$X %*% B,
         dm1T    = dm1 * C,
@@ -166,9 +165,8 @@ NB_zi_fixed_Q <- R6::R6Class(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_Q_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
         dm1_1mrho = t(dm1 * t(1 - rho)),
         MC = tcrossprod(M, C)
