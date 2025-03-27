@@ -2,4 +2,7 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^\.github$
-inst/*
+^inst/onema
+^inst/itraq
+^inst/NORMAL_BLOCK_PAPER_ILLUSTRATIONS
+
