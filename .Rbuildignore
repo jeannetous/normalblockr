@@ -6,3 +6,6 @@
 ^inst/itraq
 ^inst/NORMAL_BLOCK_PAPER_ILLUSTRATIONS
 
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
