@@ -60,3 +60,4 @@ data-raw/*.RData
 README.html
 
 pkgdown
+docs

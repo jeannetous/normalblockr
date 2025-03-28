@@ -1,0 +1,75 @@
+---
+title: "Breast cancer proteomics data analysis [Brigham & Women's Hospital & Harvard Medical School (2012)]"
+format: html
+editor: visual
+---
+
+## Useful libraries
+
+```{r, useful-libraries}
+library(tidyverse)
+library(normalblockr)
+library(aricode)
+library(clusterProfiler)
+library(pathview)
+library(enrichplot)
+set.seed(1)
+```
+
+## Loading & formatting data
+
+Loading clinical data to get cancer subtypes as covariates.
+
+```{r, loading-clinical-data}
+clinical  <- read_rds("brca_clinical.rds")
+```
+
+Loading proteomics data to analyse.
+
+```{r}
+RPPA_expr <- read_rds("RPPA_expr.rds")
+RPPA_meta <- read_rds("RPPA_meta.rds")
+RPPA_clin <- clinical[match(rownames(RPPA_expr), clinical$sampleId), ]
+```
+
+Formatting data for Normal-Block.
+
+```{r, Normal-Block-formatting}
+Y            <- as.matrix(RPPA_expr) %>% scale()
+X_subtype    <- model.matrix(~ 0 + PAM50_SUBTYPE, data = RPPA_clin)
+data_subtype <- normal_data$new(Y, X_subtype)
+```
+
+## Applying Normal-Block to the data
+
+### Running the integrated inference procedure for 1 to 50 clusters.
+
+```{r, running-normal-block}
+NB_prot_subtype <- normal_block(data_subtype, blocks = 1:50)
+```
+
+### Model selection: criteria to fix the number of clusters
+
+<<<<<<< HEAD
+```{r, plotting-criteria}
+NB_prot_subtype$plot(c("BIC", "ICL"))
+=======
+```{r, plotting criteria}
+NB_prot_subtype$plot(c("deviance", "BIC", "ICL"))
+>>>>>>> b1aa640e96852ce025a4e129721f061a1b3c82b7
+```
+
+```{r, model-selection}
+selected_NB <- NB_prot_subtype$get_best_model("ICL")
+paste0("ICL selects ", selected_NB$Q, " clusters.")
+```
+
+## Enrichment analysis
+
+```{r, enrichment}
+EntrezGeneID <- str_remove_all(RPPA_meta["entrezGeneId", ], " ")
+df_inter <- data.frame(Entrez = EntrezGeneID, group  = selected_NB$clustering)
+inter_kegg <- compareCluster(Entrez~group, data = df_inter, fun='enrichKEGG', pvalueCutoff = 0.001)
+inter_kegg <- setReadable(inter_kegg, OrgDb = "org.Hs.eg.db", keyType="ENTREZID")
+dotplot(inter_kegg, font.size = 8)
+```

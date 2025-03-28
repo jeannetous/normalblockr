@@ -2,5 +2,10 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^\.github$
-inst/itraq/
-inst/onema/
+^inst/onema
+^inst/itraq
+^inst/NORMAL_BLOCK_PAPER_ILLUSTRATIONS
+
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
