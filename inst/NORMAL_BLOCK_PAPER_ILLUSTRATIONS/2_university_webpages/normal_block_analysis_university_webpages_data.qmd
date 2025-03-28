@@ -96,3 +96,19 @@ df
 ```{r, network-results}
 nb_web_sparse$plot_network()
 ```
+
+```{r}
+files <- list.files("student_webpages/wisconsin")
+# Loop through each file and rename it
+for (file in files) {
+  # Generate new file name by replacing "^" with "_"
+  new_name <- gsub("\\^", "_", file) 
+  
+  # Define the full path for the renamed file
+  new_path <- file.path(paste0("student_webpages/wisconsin"), new_name)
+  
+  # Rename the file
+  file.rename(paste0("student_webpages/wisconsin/",file), new_path)
+}
+
+```
