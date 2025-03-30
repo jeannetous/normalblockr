@@ -38,6 +38,8 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
+\item{\code{memberships}}{cluster memberships}
+
 \item{\code{clustering}}{given as the list of elements contained in each cluster}
 
 \item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
@@ -95,14 +97,18 @@ A new [`NB`] object
 \if{latex}{\out{\hypertarget{method-NB-split}{}}}
 \subsection{Method \code{split()}}{
 Create a clone of the current [`NB`] object after splitting cluster `cl`
+We split the cluster according to the species variances
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$split(index)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$split(index, in_place = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{index}}{index (integer) of the cluster to split}
+
+\item{\code{in_place}}{should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)}
 }
 \if{html}{\out{</div>}}
 }
@@ -116,13 +122,16 @@ A new [`NB`] object
 \subsection{Method \code{merge()}}{
 Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$merge(indices)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$merge(indices, in_place = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{indices}}{indices (couple of integer) of the clusters to merge}
+
+\item{\code{in_place}}{should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)}
 }
 \if{html}{\out{</div>}}
 }
