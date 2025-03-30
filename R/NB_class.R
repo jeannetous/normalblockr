@@ -138,12 +138,44 @@ NB <- R6::R6Class(
     #' @param in_place should the split applied to the object itself, or should a copy be sent?
     #' default FALSE (send a copy)
     #' @return A new [`NB`] object
-    merge = function(indices) {
+    merge = function(indices, in_place=FALSE) {
+
+      ## sorting by increasing group label
+      indices <- sort(indices)
+
+      ## Cluster merge
+      new_C <- private$C[, -indices[2]]
+      new_C[, indices[1]] <- private$C[, indices[1]] + private$C[, indices[2]]
+
+      ## Variational means
+      new_M <- private$M[, -indices[2]]
+      new_M[, indices[1]] <- .5 * (private$M[, indices[1]] + private$M[, indices[2]])
+
+      ## Variational variances
+      if (is.matrix(private$S)) {
+        new_S <- private$S[, -indices[2]]
+        new_S[, indices[1]] <- .5 * (private$S[, indices[1]] + private$S[, indices[2]])
+      } else {
+        new_S <- private$S[-indices[2]]
+        new_S[indices[1]] <- .5 * (private$S[indices[1]] + private$S[indices[2]])
+      }
+
+      ## Precision matrix
+      new_OmegaQ <- private$OmegaQ[-indices[2], -indices[2]]
+      new_OmegaQ[indices[1], indices[1]] <-
+        .5 * (private$OmegaQ[indices[1], indices[1]] + private$OmegaQ[indices[2], indices[2]])
+
+      ## Sparsity weights
+      new_weights <-  private$weights[-indices[2], -indices[2]]
 
       if (in_place) {
+        self$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        self$sparsity_weights <- new_weights
         return(self)
       } else {
         new_NB <- self$clone()
+        new_NB$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        new_NB$sparsity_weights <- new_weights
         return(new_NB)
       }
     },
