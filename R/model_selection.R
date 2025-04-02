@@ -8,6 +8,7 @@
 #' @param zero_inflation whether the models should be zero-inflated or not
 #' @param control structured list for specific parameters (including initial clustering proposal)
 #' @import tibble
+#' @export
 selection_n_clusters <- R6::R6Class(
   classname = "selection_n_clusters",
 
@@ -15,9 +16,9 @@ selection_n_clusters <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field models list of models explored so far indexed by the cluster sizes
+    #' @field best_models list of models explored so far indexed by the cluster sizes
     best_models = NULL,
-    #' @field ICL list of ICL reached so far, indexed by the cluster sizes
+    #' @field ICL_explored list of ICL reached so far, indexed by the cluster sizes
     ICL_explored = NULL,
     #' @field n_clusters_range the range of the cluster sizes to browse
     n_clusters_range = NULL,
@@ -61,7 +62,21 @@ selection_n_clusters <- R6::R6Class(
       self$ICL_explored <- data.frame(n_clusters = model0$Q, ICL = model0$ICL)
     },
 
-    train_best_candidates = function(model, strategy, max_training = 5) {
+    #' @description perform model selection with forward/backward exploration
+    #' with split and merge strategy
+    fit = function() {
+      self$explore_forward()
+      self$explore_backward()
+      invisible(self)
+    },
+
+    #' @description perform model selection with forward/backward exploration
+    #' with split and merge strategy
+    #' @param model a normal-block model
+    #' @param strategy a character, either "split" or "merge"
+    #' @param max_training maximal of model fully trained at each step
+    #' of the exploration
+    train_best_candidates = function(model, strategy, max_training = 3) {
       if (strategy == "merge")
         candidates <- model$candidates_merge()
       else
@@ -73,12 +88,10 @@ selection_n_clusters <- R6::R6Class(
       invisible(best_candidates)
     },
 
+    #' @description perform forward exploration with a split strategy
     explore_forward = function() {
 
-      cat("\n")
-      done <- FALSE
-      while (!done) {
-
+      while (1) {
         ## Select the model from which to split
         icurrent <- with(self$best_models, which(split_explored == FALSE))
 
@@ -86,8 +99,8 @@ selection_n_clusters <- R6::R6Class(
         if (length(icurrent) == 0) break
 
         ## Exit if maximum nb of clusters is reached
-        current <- self$best_models$model[[icurrent]]
-        self$best_models$split_explored[icurrent] <- TRUE
+        current <- self$best_models$model[[icurrent[1]]]
+        self$best_models$split_explored[icurrent[1]] <- TRUE
         if (current$Q >= self$n_clusters_range[2]) break
 
         ## Exit if no candidate is found
@@ -98,38 +111,40 @@ selection_n_clusters <- R6::R6Class(
         candidates_ICL <- map_dbl(candidates, "ICL")
         best_model <- candidates[[which.min(candidates_ICL)]]
 
-        self$best_models <- self$best_models %>% add_row(
-          n_clusters     = best_model$Q,
-          split_explored = FALSE,
-          merge_explored = FALSE,
-          ICL            = best_model$ICL,
-          model = list(best_model)
-        )
-        self$ICL_explored <- rbind(
-          self$ICL_explored,
-          data.frame(n_clusters = best_model$Q, ICL = candidates_ICL)
-        )
-
+        icurrent_best <- with(self$best_models, which(n_clusters == best_model$Q))
+        if (length(icurrent_best) == 0) {
+          self$best_models <- self$best_models %>% add_row(
+            n_clusters     = best_model$Q,
+            split_explored = FALSE,
+            merge_explored = FALSE,
+            ICL            = best_model$ICL,
+            model = list(best_model)
+          )
+          self$ICL_explored <- rbind(
+            self$ICL_explored,
+            data.frame(n_clusters = best_model$Q, ICL = candidates_ICL)
+          )
+        } else if (best_model$ICL < self$best_models[icurrent_best, "ICL"]) {
+          self$best_models$ICL[icurrent_best] <- best_model$ICL
+          self$best_models$model[[icurrent_best]] <- best_model
+        }
       }
-
       invisible(self)
     },
 
+    #' @description perform backward exploration with a merge strategy
     explore_backward = function() {
 
-      cat("\n")
-      done <- FALSE
-      while (!done) {
-
+      while (1) {
         ## Select the model from which to split
         ocurrent <- order(self$best_models$n_clusters, decreasing = TRUE)
         icurrent <- na.omit(with(self$best_models, which(merge_explored == FALSE))[ocurrent])
 
         ## Exit if all model explored
         if (length(icurrent) == 0) break
-
         current <- self$best_models$model[[icurrent[1]]]
         self$best_models$merge_explored[icurrent[1]] <- TRUE
+        cat("Explore by merging a model with", current$Q, "clusters \r")
 
         ## Exit if the minimum nb of clusters is reached
         if (current$Q <= 2) break
@@ -139,7 +154,6 @@ selection_n_clusters <- R6::R6Class(
         no_candidate <- length(candidates) == 0
         if (no_candidate) break
 
-        cat("Explore by merging a model with", current$Q, "clusters \r")
         candidates_ICL <- map_dbl(candidates, "ICL")
         best_model <- candidates[[which.min(candidates_ICL)]]
         icurrent_best <- with(self$best_models, which(n_clusters == best_model$Q))
@@ -152,9 +166,7 @@ selection_n_clusters <- R6::R6Class(
           self$ICL_explored,
           data.frame(n_clusters = best_model$Q, ICL = candidates_ICL)
         )
-
       }
-
       invisible(self)
     },
 
@@ -165,22 +177,21 @@ selection_n_clusters <- R6::R6Class(
       data_min <- self$ICL_explored %>% group_by(n_clusters) %>% summarise(min_ICL = min(ICL))
       vlines <- data_min$n_clusters[which.min(data_min$min_ICL)]
       p <- ggplot2::ggplot(self$ICL_explored) +
-        ggplot2::geom_point(ggplot2::aes(x = n_clusters, y = ICL)) +
+        ggplot2::geom_point(ggplot2::aes(x = n_clusters, y = ICL), alpha = .75) +
         ggplot2::geom_line(data = data_min, ggplot2::aes(x = n_clusters, y = min_ICL), color = "red") +
         ggplot2::ggtitle(label    = "Model selection criteria",
                          subtitle = "Lower is better" ) + xlab("number of clusters") +
-          ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
+        ggplot2::scale_x_continuous(breaks = scales::pretty_breaks()) +
         ggplot2::theme_bw() + ggplot2::geom_vline(xintercept = vlines, linetype = "dashed", alpha = 0.25)
       p
     }
   ),
 
-
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field Q_list number of blocks
+    #' @field best_model best model explored so far in term of ICL
     best_model = function(value) self$best_models$model[[which.min(self$best_models$ICL)]]
   )
 )

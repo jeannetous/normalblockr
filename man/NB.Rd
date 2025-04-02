@@ -124,6 +124,8 @@ A new [`NB`] object
 \if{html}{\out{<a id="method-NB-candidates_split"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-candidates_split}{}}}
 \subsection{Method \code{candidates_split()}}{
+generate and select a set of candidate models
+by splitting the clusters of the current model
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB$candidates_split()}\if{html}{\out{</div>}}
 }
@@ -133,6 +135,8 @@ A new [`NB`] object
 \if{html}{\out{<a id="method-NB-candidates_merge"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-candidates_merge}{}}}
 \subsection{Method \code{candidates_merge()}}{
+generate and select a set of candidate models
+by merging the clusters of the current model
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{NB$candidates_merge()}\if{html}{\out{</div>}}
 }

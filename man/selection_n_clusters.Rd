@@ -11,26 +11,20 @@ R6 class for normal-block model with unknown Q (number of groups)
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{models}}{list of models explored so far indexed by the cluster sizes}
+\item{\code{best_models}}{list of models explored so far indexed by the cluster sizes}
 
-\item{\code{ICL}}{list of ICL reached so far, indexed by the cluster sizes}
+\item{\code{ICL_explored}}{list of ICL reached so far, indexed by the cluster sizes}
 
 \item{\code{n_clusters_range}}{the range of the cluster sizes to browse}
 
 \item{\code{control}}{store the list of user-defined model settings and optimization parameters}
-
-\item{\code{Q_list}}{number of blocks}
 }
 \if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{models}}{list of models explored so far indexed by the cluster sizes}
-
-\item{\code{ICL}}{list of ICL reached so far, indexed by the cluster sizes}
-
-\item{\code{Q_list}}{number of blocks}
+\item{\code{best_model}}{best model explored so far in term of ICL}
 }
 \if{html}{\out{</div>}}
 }
@@ -38,6 +32,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-selection_n_clusters-new}{\code{selection_n_clusters$new()}}
+\item \href{#method-selection_n_clusters-fit}{\code{selection_n_clusters$fit()}}
 \item \href{#method-selection_n_clusters-train_best_candidates}{\code{selection_n_clusters$train_best_candidates()}}
 \item \href{#method-selection_n_clusters-explore_forward}{\code{selection_n_clusters$explore_forward()}}
 \item \href{#method-selection_n_clusters-explore_backward}{\code{selection_n_clusters$explore_backward()}}
@@ -80,18 +75,44 @@ The best model in the ICL sense
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-selection_n_clusters-fit"></a>}}
+\if{latex}{\out{\hypertarget{method-selection_n_clusters-fit}{}}}
+\subsection{Method \code{fit()}}{
+perform model selection with forward/backward exploration
+with split and merge strategy
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{selection_n_clusters$fit()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-selection_n_clusters-train_best_candidates"></a>}}
 \if{latex}{\out{\hypertarget{method-selection_n_clusters-train_best_candidates}{}}}
 \subsection{Method \code{train_best_candidates()}}{
+perform model selection with forward/backward exploration
+with split and merge strategy
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{selection_n_clusters$train_best_candidates(model, strategy, max_training = 5)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{selection_n_clusters$train_best_candidates(model, strategy, max_training = 3)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{model}}{a normal-block model}
+
+\item{\code{strategy}}{a character, either "split" or "merge"}
+
+\item{\code{max_training}}{maximal of model fully trained at each step
+of the exploration}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-selection_n_clusters-explore_forward"></a>}}
 \if{latex}{\out{\hypertarget{method-selection_n_clusters-explore_forward}{}}}
 \subsection{Method \code{explore_forward()}}{
+perform forward exploration with a split strategy
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{selection_n_clusters$explore_forward()}\if{html}{\out{</div>}}
 }
@@ -101,6 +122,7 @@ The best model in the ICL sense
 \if{html}{\out{<a id="method-selection_n_clusters-explore_backward"></a>}}
 \if{latex}{\out{\hypertarget{method-selection_n_clusters-explore_backward}{}}}
 \subsection{Method \code{explore_backward()}}{
+perform backward exploration with a merge strategy
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{selection_n_clusters$explore_backward()}\if{html}{\out{</div>}}
 }

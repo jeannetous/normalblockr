@@ -137,6 +137,8 @@ NB <- R6::R6Class(
       }
     },
 
+    #' @description generate and select a set of candidate models
+    #' by splitting the clusters of the current model
     candidates_split = function() {
       # do not split groups with less than 2 guys
       candidates <- map((1:self$Q)[self$cluster_sizes > 1], self$split)
@@ -147,15 +149,17 @@ NB <- R6::R6Class(
       candidates <- candidates[min_sizes > 1 & n_clusters == self$Q + 1]
 
       for (i in seq_along(candidates))
-        candidates[[i]]$optimize(list(niter = 1, threshold = 1e-4))
+        candidates[[i]]$optimize(list(niter = 5, threshold = 1e-4))
       candidates
     },
 
+    #' @description generate and select a set of candidate models
+    #' by merging the clusters of the current model
     candidates_merge = function() {
       stopifnot("need at least two clusters to merge them" = self$Q > 1)
       candidates <- map(combn(self$Q, 2, simplify = FALSE), self$merge)
       for (i in seq_along(candidates))
-        candidates[[i]]$optimize(list(niter = 1, threshold = 1e-4))
+        candidates[[i]]$optimize(list(niter = 5, threshold = 1e-4))
       candidates
     },
 
