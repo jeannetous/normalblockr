@@ -55,7 +55,7 @@ NB_fixed_Q <- R6::R6Class(
 
     get_heuristic_parameters = function(){
       reg_res   <- private$multivariate_normal_inference()
-      if (anyNA(private$C))
+      if (anyNA(private$C)) # if none initial clustering provided
         private$C <- private$clustering_approx(reg_res$R)
       private$C <- check_one_boundary(check_zero_boundary(private$C))
       SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
@@ -90,19 +90,19 @@ NB_fixed_Q <- R6::R6Class(
       S <- diag(Gamma)
 
       if (self$Q > 1 & !self$fixed_tau) {
-        eta <- dm1 * (t(R) %*% M) - .5 * outer(dm1,  colSums(M^2) + self$n * S)
+        eta <- dm1 * crossprod(R, M) - .5 * outer(dm1,  colSums(M^2) + self$n * S)
         eta <- eta + outer(rep(1, self$p), log(alpha)) - 1
         C   <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
 
       # M step
-      MCT <- M %*% t(C)
-      B     <- self$data$XtXm1 %*% t(self$data$X) %*% (self$data$Y - MCT)
-      ddiag  <- colMeans(R^2 - 2 * R * MCT + (M^2 + outer(rep(1, self$n), S)) %*% t(C))
-      dm1  <- switch(private$res_covariance,
+      MCT   <- tcrossprod(M, C)
+      B     <- self$data$XtXm1 %*% crossprod(self$data$X, self$data$Y - MCT)
+      ddiag <- colMeans(R^2 - 2 * R * MCT + tcrossprod(M^2 + outer(rep(1, self$n), S), C))
+      dm1   <- switch(private$res_covariance,
                      "diagonal"  = 1 / as.vector(ddiag),
                      "spherical" = rep(1/mean(ddiag), self$p))
-      alpha <- colMeans(C)
+      alpha  <- colMeans(C)
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n +  diag(S, self$Q, self$Q))
 
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, alpha = alpha, C = C, M = M, S = S)
@@ -135,7 +135,7 @@ NB_fixed_Q <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B
       } else {
-        res <- self$data$X %*% private$B + private$M %*% t(private$C)
+        res <- self$data$X %*% private$B + tcrossprod(private$M, private$C)
       }
     },
     #' @field who_am_I a method to print what model is being fitted
