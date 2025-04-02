@@ -96,14 +96,12 @@ NB <- R6::R6Class(
 
       ## Variational means
       new_M <- cbind(private$M, 0)
-      new_M[split1, index] <- new_M[split1, index]
-      new_M[split2, self$Q + 1] <- new_C[split2, index]
+      new_M[split2, self$Q + 1] <- new_M[split2, index]
       new_M[split2, index] <- 0
 
       ## Variational variances
       if (is.matrix(private$S)) {
         new_S <- cbind(private$S, 0.1)
-        new_S[split1, index] <- new_S[split1, index]
         new_S[split2, self$Q + 1] <- new_C[split2, index]
         new_S[split2, index] <- 0.1
       } else {
