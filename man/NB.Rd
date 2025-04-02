@@ -42,6 +42,8 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{clustering}}{given as the list of elements contained in each cluster}
 
+\item{\code{cluster_sizes}}{given as a vector of cluster sizes}
+
 \item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
 }
 \if{html}{\out{</div>}}
@@ -51,6 +53,8 @@ R6 class for a generic sparse Normal Block model
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-split}{\code{NB$split()}}
+\item \href{#method-NB-candidates_split}{\code{NB$candidates_split()}}
+\item \href{#method-NB-candidates_merge}{\code{NB$candidates_merge()}}
 \item \href{#method-NB-merge}{\code{NB$merge()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
@@ -115,6 +119,24 @@ default FALSE (send a copy)}
 \subsection{Returns}{
 A new [`NB`] object
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-candidates_split"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-candidates_split}{}}}
+\subsection{Method \code{candidates_split()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$candidates_split()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-candidates_merge"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-candidates_merge}{}}}
+\subsection{Method \code{candidates_merge()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$candidates_merge()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-merge"></a>}}

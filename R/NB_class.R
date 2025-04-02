@@ -82,10 +82,10 @@ NB <- R6::R6Class(
       ## update private fields related to group parameters
       ## C, OmegaQ, M, S, sparsity_weights
 
-      ## indices of individuals splitted within the cluster
-      var <- 1/private$dm1; var_median <- median(var)
+      ## indices of individuals split within the cluster
       cl  <- self$clustering == index
-      split1 <- (var  > var_median) & cl ;  split2 <- (var <= var_median) & cl
+      var <- 1/private$dm1; var_median <- median(var[cl])
+      split1 <- (var > var_median) & cl ;  split2 <- (var <= var_median) & cl
 
       ## Cluster split
       new_C <- cbind(private$C, .Machine$double.eps)
@@ -116,21 +116,47 @@ NB <- R6::R6Class(
       new_OmegaQ[self$Q + 1, self$Q + 1] <- private$OmegaQ[index, index]/2
 
       ## Sparsity weights
-      weights_cl <-  private$weights[index, setdiff(1:self$Q, index)]
-      weights_cl <-  c(weights_cl, mean(weights_cl))
-      new_weights <- cbind(rbind(private$weights, weights_cl, deparse.level = 0),
-                           c(weights_cl, 0))
+      if (self$Q == 1) {
+        new_weights <- matrix(c(0,1,1,0), 2, 2)
+      } else {
+        weights_cl <-  private$weights[index, setdiff(1:self$Q, index)]
+        weights_cl <-  c(weights_cl, mean(weights_cl))
+        new_weights <- cbind(rbind(private$weights, weights_cl, deparse.level = 0),
+                             c(weights_cl, 0))
+      }
 
       if (in_place) {
         self$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
         self$sparsity_weights <- new_weights
-        return(self)
+        return(invisible(self))
       } else {
         new_NB <- self$clone()
         new_NB$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
         new_NB$sparsity_weights <- new_weights
-        return(new_NB)
+        return(invisible(new_NB))
       }
+    },
+
+    candidates_split = function() {
+      # do not split groups with less than 2 guys
+      candidates <- map((1:self$Q)[self$cluster_sizes > 1], self$split)
+      # keep candidates with at least 2 guys per cluster and non empty split
+      clustering_sizes <- map(candidates, "clustering") %>% map(table)
+      min_sizes  <- clustering_sizes %>% map_dbl(min)
+      n_clusters <- clustering_sizes %>% map_dbl(length)
+      candidates <- candidates[min_sizes > 1 & n_clusters == self$Q + 1]
+
+      for (i in seq_along(candidates))
+        candidates[[i]]$optimize(list(niter = 1, threshold = 1e-4))
+      candidates
+    },
+
+    candidates_merge = function() {
+      stopifnot("need at least two clusters to merge them" = self$Q > 1)
+      candidates <- map(combn(self$Q, 2, simplify = FALSE), self$merge)
+      for (i in seq_along(candidates))
+        candidates[[i]]$optimize(list(niter = 1, threshold = 1e-4))
+      candidates
     },
 
     #' @description Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
@@ -386,6 +412,8 @@ NB <- R6::R6Class(
     memberships = function(value) private$C,
     #' @field clustering given as the list of elements contained in each cluster
     clustering = function(value) get_clusters(private$C),
+    #' @field cluster_sizes given as a vector of cluster sizes
+    cluster_sizes = function(value) table(self$clustering),
     #' @field elements_per_cluster given as the list of elements contained in each cluster
     elements_per_cluster = function(value) {
       if (is.null(names(self$clustering)))
