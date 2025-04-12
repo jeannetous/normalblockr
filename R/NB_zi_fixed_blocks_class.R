@@ -85,9 +85,10 @@ NB_zi_fixed_blocks <- R6::R6Class(
       M <- private$zi_NB_fixed_blocks_nlopt_optim_M(M, dm1, OmegaQ, B, rho)
       S <-  1 / sweep((1 - rho) %*% (dm1 * private$C), 2, diag(OmegaQ), "+")
       A <- (R - tcrossprod(M, private$C))^2 + tcrossprod(S, private$C)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      # nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      # rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      # rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros))
 
       # M step
       B <- private$zi_NB_fixed_blocks_nlopt_optim_B(B, dm1, OmegaQ, M, rho)

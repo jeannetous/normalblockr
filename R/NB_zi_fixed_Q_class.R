@@ -104,9 +104,10 @@ NB_zi_fixed_Q <- R6::R6Class(
         C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
       A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      # nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      # rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      # rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros))
 
       # M step
       B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1, OmegaQ, M, C, rho)

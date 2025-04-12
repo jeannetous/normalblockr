@@ -50,8 +50,8 @@ normal_diag_zi <- R6::R6Class(
     EM_step = function(B, dm1, kappa, rho) {
 
       ## E step
-      rho <- 1/(1 + outer(rep(1, self$n), (1 - kappa) / kappa) * dnorm(0, self$data$X %*% B, sqrt(1/dm1)))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      # rho <- 1/(1 + outer(rep(1, self$n), (1 - kappa) / kappa) * dnorm(0, self$data$X %*% B, sqrt(1/dm1)))
+      # rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
 
       ## M step
       B     <- private$normal_zi_optim_B(B, dm1, rho)
