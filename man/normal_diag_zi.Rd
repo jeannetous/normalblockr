@@ -15,6 +15,8 @@ R6 class for a generic normal_diag_zi model
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{zeros}}{indicator matrix of zeros in Y}
+
+\item{\code{nzeros}}{indicator matrix of non zeros in Y}
 }
 \if{html}{\out{</div>}}
 }
