@@ -26,6 +26,14 @@ normal_data <- R6::R6Class(
     XtXm1 = NULL,
     #' @field XtY useful for inference
     XtY = NULL,
+    #' @field npY total number of non zeros in Y
+    npY = NULL,
+    #' @field nY total number of non zeros for each column/variable in Y
+    nY = NULL,
+    #' @field zeros where are the zero in Y
+    zeros = NULL,
+    #' @field zeros_bar where are the non-zeros in Y
+    zeros_bar = NULL,
 
     #' @description Create a new [`normal_data`] object.
     #' @param Y the matrix of responses (called Y in the model).
@@ -40,6 +48,10 @@ normal_data <- R6::R6Class(
       self$d <- ncol(X)
       self$XtXm1 <- solve(crossprod(X))
       self$XtY   <- crossprod(X, Y)
+      self$zeros     <- 1 * (Y == 0)
+      self$zeros_bar <- 1 * (Y != 0)
+      self$npY <- sum(self$zeros_bar)
+      self$nY  <- colSums(self$zeros_bar)
     }
   )
 )

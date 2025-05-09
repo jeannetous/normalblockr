@@ -11,21 +11,12 @@ normal_diag_zi <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-
-    #' @field zeros indicator matrix of zeros in Y
-    zeros = NULL,
-
-    #' @field nzeros indicator matrix of non zeros in Y
-    nzeros = NULL,
-
     #' @description Create a new [`normal_diag_zi`] object.
     #' @param data contains the matrix of responses (Y) and the design matrix (X).
     #' @return A new [`normal_diag_zi`] object
     initialize = function(data) {
       super$initialize(data)
       private$optimizer <- private$EM_optimize
-      self$zeros  <- 1 * (data$Y == 0)
-      self$nzeros <- 1 * (data$Y >  0)
     }
   ),
 
@@ -35,23 +26,23 @@ normal_diag_zi <- R6::R6Class(
   private = list(
 
     compute_loglik  = function(B, dm1, kappa) {
-      J <- -.5 * sum(self$nzeros %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum(self$nzeros * t(t(self$data$Y - self$data$X %*% B)^2 * dm1))
-      J <- J + sum(self$zeros %*% log(kappa)) + sum(self$nzeros %*% log(1 - kappa))
+      J <- -.5 * sum(self$data$zeros_bar %*% (log(2 * pi) - log(dm1)))
+      J <- J - .5 * sum(self$data$zeros_bar * t(t(self$data$Y - self$data$X %*% B)^2 * dm1))
+      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
       J
     },
 
     EM_initialize = function() {
-      kappa <- colMeans(self$zeros)
-      B     <- self$data$XtXm1 %*% crossprod(self$data$X, self$data$Y)
-      dm1   <- 1 / check_one_boundary(check_zero_boundary(diag(cov(self$data$Y - self$data$X %*% B))))
+      kappa <- colMeans(self$data$zeros)
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      dm1   <- colSums(self$data$zeros_bar) / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
       list(B = B, dm1 = dm1, kappa = kappa)
     },
 
     EM_step = function(B, dm1, kappa) {
 
       B     <- private$normal_zi_optim_B(B, dm1)
-      dm1   <- colSums(self$nzeros) / colSums(self$nzeros * (self$data$Y - self$data$X %*% B)^2)
+      dm1   <- colSums(self$data$zeros_bar) / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
 
       list(B = B, dm1 = dm1, kappa = kappa)
     },
@@ -65,7 +56,7 @@ normal_diag_zi <- R6::R6Class(
     },
 
     normal_zi_optim_B = function(B0, dm1) {
-      dm1_ <- t(dm1 * t(self$nzeros))
+      dm1_ <- t(dm1 * t(self$data$zeros_bar))
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$normal_zi_obj_grad_B,

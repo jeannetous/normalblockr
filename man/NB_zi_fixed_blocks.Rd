@@ -11,13 +11,6 @@ R6 class for a generic normal model
 \section{Super classes}{
 \code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_zi_fixed_blocks}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{zeros}}{indicator matrix of zeros in Y}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
