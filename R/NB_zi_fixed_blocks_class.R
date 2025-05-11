@@ -43,6 +43,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J <- J + .5 * sum(self$data$nY * log(dm1)) + .5 * self$n * log_det_OmegaQ
       J <- J + .5 * sum(unlist(log_det_Gamma))
       J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
+      J <- J - self$data$n * sum(xlogx(kappa) - xlogx(1 - kappa))
 
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
@@ -90,9 +91,9 @@ NB_zi_fixed_blocks <- R6::R6Class(
       A     <- t(RmmuC^2  + CgC)
 
       dm1  <- switch(private$res_covariance,
-        "diagonal"  = colSums(self$data$zeros_bar ) / colSums(self$data$zeros_bar * A),
-        "spherical" = rep(sum(self$data$zeros_bar) / sum(self$data$zeros_bar * A), self$p))
-      OmegaQ <- private$get_OmegaQ(tcrossprod(mu)/self$n + reduce(gamma, `+`))
+        "diagonal"  = self$data$nY / colSums(self$data$zeros_bar * A),
+        "spherical" = rep(self$data$npY / sum(self$data$zeros_bar * A), self$p))
+      OmegaQ <- private$get_OmegaQ((tcrossprod(mu) + reduce(gamma, `+`))/self$n)
 
       list(B = B, dm1 = dm1, OmegaQ = OmegaQ,  kappa = kappa, gamma = gamma, mu = mu)
     },

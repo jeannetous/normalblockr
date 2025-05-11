@@ -8,7 +8,7 @@ C <- testdata$parameters$C
 test_that("zero inflated normal block with diagonal residual covariance and known clusters", {
   data <- normal_data$new(Y, X)
 
-  model <- NB_zi_fixed_blocks$new(data, C)
+  model <- normalblockr:::NB_zi_fixed_blocks$new(data, C)
   model$optimize()
   expect_lt(model$BIC, 5400)
   expect_gt(model$loglik, -2600)
