@@ -30,7 +30,7 @@ R6 class for a generic sparse Normal Block model"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>R6 class for a generic sparse Normal Block model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/jeannetous/normalblockr/blob/v0.1/R/NB_class.R" class="external-link"><code>R/NB_class.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/jeannetous/normalblockr/blob/master/R/NB_class.R" class="external-link"><code>R/NB_class.R</code></a></small>
       <div class="d-none name"><code>NB.Rd</code></div>
     </div>
 
@@ -94,8 +94,16 @@ R6 class for a generic sparse Normal Block model"></head><body>
 <dd><p>whether the residual covariance is diagonal or spherical</p></dd>
 
 
+<dt><code>memberships</code></dt>
+<dd><p>cluster memberships</p></dd>
+
+
 <dt><code>clustering</code></dt>
 <dd><p>given as the list of elements contained in each cluster</p></dd>
+
+
+<dt><code>cluster_sizes</code></dt>
+<dd><p>given as a vector of cluster sizes</p></dd>
 
 
 <dt><code>elements_per_cluster</code></dt>
@@ -112,6 +120,8 @@ R6 class for a generic sparse Normal Block model"></head><body>
 
 <ul><li><p><a href="#method-NB-new"><code>NB$new()</code></a></p></li>
 <li><p><a href="#method-NB-split"><code>NB$split()</code></a></p></li>
+<li><p><a href="#method-NB-candidates_split"><code>NB$candidates_split()</code></a></p></li>
+<li><p><a href="#method-NB-candidates_merge"><code>NB$candidates_merge()</code></a></p></li>
 <li><p><a href="#method-NB-merge"><code>NB$merge()</code></a></p></li>
 <li><p><a href="#method-NB-latent_network"><code>NB$latent_network()</code></a></p></li>
 <li><p><a href="#method-NB-plot_network"><code>NB$plot_network()</code></a></p></li>
@@ -153,15 +163,21 @@ R6 class for a generic sparse Normal Block model"></head><body>
 
 </div><p></p><hr><a id="method-NB-split"></a><div class="section">
 <h3 id="method-split-">Method <code><a href="https://rdrr.io/r/base/split.html" class="external-link">split()</a></code><a class="anchor" aria-label="anchor" href="#method-split-"></a></h3>
-<p>Create a clone of the current [`NB`] object after splitting cluster `cl`</p><div class="section">
+<p>Create a clone of the current [`NB`] object after splitting cluster `cl`
+We split the cluster according to the species variances</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">split</span><span class="op">(</span><span class="va">index</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">split</span><span class="op">(</span><span class="va">index</span>, in_place <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-1">Arguments<a class="anchor" aria-label="anchor" href="#arguments-1"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>index</code></dt>
 <dd><p>index (integer) of the cluster to split</p></dd>
+
+
+<dt><code>in_place</code></dt>
+<dd><p>should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)</p></dd>
 
 
 </dl><p></p></div>
@@ -171,17 +187,40 @@ R6 class for a generic sparse Normal Block model"></head><body>
 <p>A new [`NB`] object</p>
 </div>
 
+</div><p></p><hr><a id="method-NB-candidates_split"></a><div class="section">
+<h3 id="method-candidates-split-">Method <code>candidates_split()</code><a class="anchor" aria-label="anchor" href="#method-candidates-split-"></a></h3>
+<p>generate and select a set of candidate models
+by splitting the clusters of the current model</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">candidates_split</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+
+</div><p></p><hr><a id="method-NB-candidates_merge"></a><div class="section">
+<h3 id="method-candidates-merge-">Method <code>candidates_merge()</code><a class="anchor" aria-label="anchor" href="#method-candidates-merge-"></a></h3>
+<p>generate and select a set of candidate models
+by merging the clusters of the current model</p><div class="section">
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">candidates_merge</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+
 </div><p></p><hr><a id="method-NB-merge"></a><div class="section">
 <h3 id="method-merge-">Method <code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code><a class="anchor" aria-label="anchor" href="#method-merge-"></a></h3>
 <p>Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">merge</span><span class="op">(</span><span class="va">indices</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">merge</span><span class="op">(</span><span class="va">indices</span>, in_place <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>indices</code></dt>
 <dd><p>indices (couple of integer) of the clusters to merge</p></dd>
+
+
+<dt><code>in_place</code></dt>
+<dd><p>should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)</p></dd>
 
 
 </dl><p></p></div>
@@ -194,7 +233,7 @@ R6 class for a generic sparse Normal Block model"></head><body>
 </div><p></p><hr><a id="method-NB-latent_network"></a><div class="section">
 <h3 id="method-latent-network-">Method <code>latent_network()</code><a class="anchor" aria-label="anchor" href="#method-latent-network-"></a></h3>
 <p>Extract interaction network in the latent space</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">latent_network</span><span class="op">(</span>type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"partial_cor"</span>, <span class="st">"support"</span>, <span class="st">"precision"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -214,7 +253,7 @@ R6 class for a generic sparse Normal Block model"></head><body>
 </div><p></p><hr><a id="method-NB-plot_network"></a><div class="section">
 <h3 id="method-plot-network-">Method <code>plot_network()</code><a class="anchor" aria-label="anchor" href="#method-plot-network-"></a></h3>
 <p>plot the latent network.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">plot_network</span><span class="op">(</span></span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"partial_cor"</span>, <span class="st">"support"</span><span class="op">)</span>,</span>
 <span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"igraph"</span>, <span class="st">"corrplot"</span><span class="op">)</span>,</span>
@@ -262,7 +301,7 @@ R6 class for a generic sparse Normal Block model"></head><body>
 </div><p></p><hr><a id="method-NB-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NB</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
