@@ -46,8 +46,9 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J <- J - self$data$n * sum(xlogx(kappa) - xlogx(1 - kappa))
 
       if (private$sparsity_ > 0) {
+        gamma_bar <- reduce(gamma, `+`)
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (self$n * gamma + tcrossprod(mu))))
+        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (gamma_bar + crossprod(mu))))
         J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
@@ -82,18 +83,18 @@ NB_zi_fixed_blocks <- R6::R6Class(
       gamma <- apply(dm1C, 1, function(dm1C_) {
         solve(OmegaQ + diag(dm1C_, self$Q, self$Q))}, simplify = FALSE)
       Rdm1C <- (R * dm1_mat) %*% private$C
-      mu    <- sapply(1:length(gamma), function(i) Rdm1C[i, ] %*% gamma[[i]])
+      mu    <- t(sapply(1:length(gamma), function(i) Rdm1C[i, ] %*% gamma[[i]]))
 
       # M step
       B <- private$zi_NB_fixed_blocks_optim_B(B, dm1_mat, mu)
-      RmmuC <- t(R) - private$C %*% mu
-      CgC   <- sapply(gamma, function(gamma_) diag(gamma_)[self$clustering])
-      A     <- t(RmmuC^2  + CgC)
+      RmmuC <- R - mu %*% t(private$C)
+      CgC   <- t(sapply(gamma, function(gamma_) diag(gamma_)[self$clustering]))
+      A     <- RmmuC^2  + CgC
 
       dm1  <- switch(private$res_covariance,
         "diagonal"  = self$data$nY / colSums(self$data$zeros_bar * A),
         "spherical" = rep(self$data$npY / sum(self$data$zeros_bar * A), self$p))
-      OmegaQ <- private$get_OmegaQ((tcrossprod(mu) + reduce(gamma, `+`))/self$n)
+      OmegaQ <- private$get_OmegaQ((crossprod(mu) + reduce(gamma, `+`))/self$n)
 
       list(B = B, dm1 = dm1, OmegaQ = OmegaQ,  kappa = kappa, gamma = gamma, mu = mu)
     },
@@ -107,7 +108,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
     },
 
     zi_NB_fixed_blocks_optim_B = function(B0, dm1_mat, mu) {
-      muC <- t(private$C %*% mu)
+      muC <- mu %*% t(private$C)
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_blocks_obj_grad_B,
@@ -129,7 +130,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
       rho    <- model$model_par$rho
       R      <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
-      Sigma  <- (t(R) %*% R) / model$n
+      Sigma  <- crossprod(R) / model$n
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = kappa)
@@ -163,7 +164,8 @@ NB_zi_fixed_blocks <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
       } else {
-        res <- sweep(self$data$X %*% private$B, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
+        res <- self$data$X %*% private$B + private$mu %*% t(private$C)
+        res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       }
       res
     },
