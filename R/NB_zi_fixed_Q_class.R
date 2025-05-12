@@ -63,7 +63,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       init_model$optimize()
       B      <- init_model$model_par$B
       kappa  <- init_model$model_par$kappa
-      rho    <- init_model$model_par$rho
+      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
       ddiag  <- 1/init_model$model_par$dm1
       dm1 <- switch(private$res_covariance,
                     "diagonal"  = 1 / as.vector(ddiag),
@@ -104,9 +104,10 @@ NB_zi_fixed_Q <- R6::R6Class(
         C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
       A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      # nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
+      # rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
+      # rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      rho <- check_one_boundary(check_zero_boundary(self$zeros))
 
       # M step
       B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1, OmegaQ, M, C, rho)
@@ -138,9 +139,8 @@ NB_zi_fixed_Q <- R6::R6Class(
         x0 = M0_vec,
         eval_f = private$zi_NB_fixed_Q_obj_grad_M,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
         R = self$data$Y - self$data$X %*% B,
         dm1T    = dm1 * C,
@@ -166,9 +166,8 @@ NB_zi_fixed_Q <- R6::R6Class(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_Q_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
         dm1_1mrho = t(dm1 * t(1 - rho)),
         MC = tcrossprod(M, C)

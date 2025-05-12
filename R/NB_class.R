@@ -73,20 +73,139 @@ NB <- R6::R6Class(
     },
 
     #' @description Create a clone of the current [`NB`] object after splitting cluster `cl`
+    #' We split the cluster according to the species variances
     #' @param index index (integer) of the cluster to split
+    #' @param in_place should the split applied to the object itself, or should a copy be sent?
+    #' default FALSE (send a copy)
     #' @return A new [`NB`] object
-    split = function(index) {
-      myNB <- self$clone()
+    split = function(index, in_place = FALSE) {
       ## update private fields related to group parameters
-      ## C, M, S
+      ## C, OmegaQ, M, S, sparsity_weights
+
+      ## indices of individuals split within the cluster
+      cl  <- self$clustering == index
+      var <- 1/private$dm1; var_median <- median(var[cl])
+      split1 <- (var > var_median) & cl ;  split2 <- (var <= var_median) & cl
+
+      ## Cluster split
+      new_C <- cbind(private$C, .Machine$double.eps)
+      new_C[split1, index] <- new_C[split1, index] - .Machine$double.eps
+      new_C[split2, self$Q + 1] <- new_C[split2, index]
+      new_C[split2, index] <- .Machine$double.eps
+      new_C <- new_C / rowSums(new_C)
+
+      ## Variational means
+      new_M <- cbind(private$M, 0)
+      new_M[split2, self$Q + 1] <- new_M[split2, index]
+      new_M[split2, index] <- 0
+
+      ## Variational variances
+      if (is.matrix(private$S)) {
+        new_S <- cbind(private$S, 0.1)
+        new_S[split2, self$Q + 1] <- new_C[split2, index]
+        new_S[split2, index] <- 0.1
+      } else {
+        new_S <- c(private$S, mean(private$S))
+      }
+
+      ## Precision matrix
+      new_OmegaQ <- cbind(rbind(private$OmegaQ,  0), 0)
+      new_OmegaQ[index, index] <- private$OmegaQ[index, index]/2
+      new_OmegaQ[self$Q + 1, self$Q + 1] <- private$OmegaQ[index, index]/2
+
+      ## Sparsity weights
+      if (self$Q == 1) {
+        new_weights <- matrix(c(0,1,1,0), 2, 2)
+      } else {
+        weights_cl <-  private$weights[index, setdiff(1:self$Q, index)]
+        weights_cl <-  c(weights_cl, mean(weights_cl))
+        new_weights <- cbind(rbind(private$weights, weights_cl, deparse.level = 0),
+                             c(weights_cl, 0))
+      }
+
+      if (in_place) {
+        self$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        self$sparsity_weights <- new_weights
+        return(invisible(self))
+      } else {
+        new_NB <- self$clone()
+        new_NB$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        new_NB$sparsity_weights <- new_weights
+        return(invisible(new_NB))
+      }
+    },
+
+    #' @description generate and select a set of candidate models
+    #' by splitting the clusters of the current model
+    candidates_split = function() {
+      # do not split groups with less than 2 guys
+      candidates <- map((1:self$Q)[self$cluster_sizes > 1], self$split)
+      # keep candidates with at least 2 guys per cluster and non empty split
+      clustering_sizes <- map(candidates, "clustering") %>% map(table)
+      min_sizes  <- clustering_sizes %>% map_dbl(min)
+      n_clusters <- clustering_sizes %>% map_dbl(length)
+      candidates <- candidates[min_sizes > 1 & n_clusters == self$Q + 1]
+
+      for (i in seq_along(candidates))
+        candidates[[i]]$optimize(list(niter = 5, threshold = 1e-4))
+      candidates
+    },
+
+    #' @description generate and select a set of candidate models
+    #' by merging the clusters of the current model
+    candidates_merge = function() {
+      stopifnot("need at least two clusters to merge them" = self$Q > 1)
+      candidates <- map(combn(self$Q, 2, simplify = FALSE), self$merge)
+      for (i in seq_along(candidates))
+        candidates[[i]]$optimize(list(niter = 5, threshold = 1e-4))
+      candidates
     },
 
     #' @description Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
     #' @param indices indices (couple of integer) of the clusters to merge
+    #' @param in_place should the split applied to the object itself, or should a copy be sent?
+    #' default FALSE (send a copy)
     #' @return A new [`NB`] object
-    merge = function(indices) {
-      myNB <- self$clone()
-      myNB
+    merge = function(indices, in_place=FALSE) {
+
+      ## sorting by increasing group label
+      indices <- sort(indices)
+
+      ## Cluster merge
+      new_C <- private$C[, -indices[2]]
+      new_C[, indices[1]] <- private$C[, indices[1]] + private$C[, indices[2]]
+
+      ## Variational means
+      new_M <- private$M[, -indices[2]]
+      new_M[, indices[1]] <- .5 * (private$M[, indices[1]] + private$M[, indices[2]])
+
+      ## Variational variances
+      if (is.matrix(private$S)) {
+        new_S <- private$S[, -indices[2]]
+        new_S[, indices[1]] <- .5 * (private$S[, indices[1]] + private$S[, indices[2]])
+      } else {
+        new_S <- private$S[-indices[2]]
+        new_S[indices[1]] <- .5 * (private$S[indices[1]] + private$S[indices[2]])
+      }
+
+      ## Precision matrix
+      new_OmegaQ <- private$OmegaQ[-indices[2], -indices[2]]
+      new_OmegaQ[indices[1], indices[1]] <-
+        .5 * (private$OmegaQ[indices[1], indices[1]] + private$OmegaQ[indices[2], indices[2]])
+
+      ## Sparsity weights
+      new_weights <-  private$weights[-indices[2], -indices[2]]
+
+      if (in_place) {
+        self$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        self$sparsity_weights <- new_weights
+        return(self)
+      } else {
+        new_NB <- self$clone()
+        new_NB$update(C = new_C, OmegaQ = new_OmegaQ, M = new_M, S = new_S)
+        new_NB$sparsity_weights <- new_weights
+        return(new_NB)
+      }
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -291,9 +410,18 @@ NB <- R6::R6Class(
     criteria = function(value) c(Q = self$Q, n_edges = self$n_edges, sparsity = self$sparsity, super$criteria, EBIC = self$EBIC),
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical
     get_res_covariance = function(value) private$res_covariance,
+    #' @field memberships cluster memberships
+    memberships = function(value) private$C,
     #' @field clustering given as the list of elements contained in each cluster
     clustering = function(value) get_clusters(private$C),
+    #' @field cluster_sizes given as a vector of cluster sizes
+    cluster_sizes = function(value) table(self$clustering),
     #' @field elements_per_cluster given as the list of elements contained in each cluster
-    elements_per_cluster = function(value) base::split(names(self$clustering), self$clustering)
+    elements_per_cluster = function(value) {
+      if (is.null(names(self$clustering)))
+        base::split(1:self$p, self$clustering)
+      else
+        base::split(names(self$clustering), self$clustering)
+    }
   )
 )

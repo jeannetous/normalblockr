@@ -39,12 +39,12 @@ normal_block <- function(data,
                      control = control)
 
   ## Estimation/optimization
-  if(control$verbose) cat("Fitting a", model$who_am_I, "\n")
+  if (control$verbose) cat("Fitting a", model$who_am_I, "\n")
 
   model$optimize(control)
 
   ## Finishing
-  if(control$verbose) cat("\nDONE\n")
+  if (control$verbose) cat("\nDONE\n")
 
   model
 }

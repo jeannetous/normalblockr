@@ -38,7 +38,11 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
+\item{\code{memberships}}{cluster memberships}
+
 \item{\code{clustering}}{given as the list of elements contained in each cluster}
+
+\item{\code{cluster_sizes}}{given as a vector of cluster sizes}
 
 \item{\code{elements_per_cluster}}{given as the list of elements contained in each cluster}
 }
@@ -49,6 +53,8 @@ R6 class for a generic sparse Normal Block model
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
 \item \href{#method-NB-split}{\code{NB$split()}}
+\item \href{#method-NB-candidates_split}{\code{NB$candidates_split()}}
+\item \href{#method-NB-candidates_merge}{\code{NB$candidates_merge()}}
 \item \href{#method-NB-merge}{\code{NB$merge()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
@@ -95,14 +101,18 @@ A new [`NB`] object
 \if{latex}{\out{\hypertarget{method-NB-split}{}}}
 \subsection{Method \code{split()}}{
 Create a clone of the current [`NB`] object after splitting cluster `cl`
+We split the cluster according to the species variances
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$split(index)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$split(index, in_place = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{index}}{index (integer) of the cluster to split}
+
+\item{\code{in_place}}{should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)}
 }
 \if{html}{\out{</div>}}
 }
@@ -111,18 +121,43 @@ A new [`NB`] object
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-candidates_split"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-candidates_split}{}}}
+\subsection{Method \code{candidates_split()}}{
+generate and select a set of candidate models
+by splitting the clusters of the current model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$candidates_split()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-candidates_merge"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-candidates_merge}{}}}
+\subsection{Method \code{candidates_merge()}}{
+generate and select a set of candidate models
+by merging the clusters of the current model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$candidates_merge()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-merge"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-merge}{}}}
 \subsection{Method \code{merge()}}{
 Create a clone of the current [`NB`] object after merging clusters `cl1` and `cl2`
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$merge(indices)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$merge(indices, in_place = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{indices}}{indices (couple of integer) of the clusters to merge}
+
+\item{\code{in_place}}{should the split applied to the object itself, or should a copy be sent?
+default FALSE (send a copy)}
 }
 \if{html}{\out{</div>}}
 }

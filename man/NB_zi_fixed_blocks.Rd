@@ -11,13 +11,6 @@ R6 class for a generic normal model
 \section{Super classes}{
 \code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_zi_fixed_blocks}
 }
-\section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{zeros}}{indicator matrix of zeros in Y}
-}
-\if{html}{\out{</div>}}
-}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
@@ -48,6 +41,8 @@ R6 class for a generic normal model
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="candidates_merge"><a href='../../normalblockr/html/NB.html#method-NB-candidates_merge'><code>normalblockr::NB$candidates_merge()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="candidates_split"><a href='../../normalblockr/html/NB.html#method-NB-candidates_split'><code>normalblockr::NB$candidates_split()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="merge"><a href='../../normalblockr/html/NB.html#method-NB-merge'><code>normalblockr::NB$merge()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>

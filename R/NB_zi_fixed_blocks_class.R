@@ -14,9 +14,6 @@ NB_zi_fixed_blocks <- R6::R6Class(
   ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field zeros indicator matrix of zeros in Y
-    zeros = NULL,
-
     #' @description Create a new [`NB_zi_fixed_blocks_fixed_sparsity`] object.
     #' @param data object of normal_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
@@ -28,7 +25,6 @@ NB_zi_fixed_blocks <- R6::R6Class(
       stopifnot("There cannot be empty clusters" = min(colSums(C)) > 0)
       super$initialize(data, ncol(C), sparsity, control = control)
       private$C  <- C
-      self$zeros <- 1 * (data$Y == 0)
     }
   ),
 
@@ -37,19 +33,22 @@ NB_zi_fixed_blocks <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, OmegaQ, dm1 = NA, kappa = NA, M = NA, S = NA, rho = NA, R = NA) {
-      rho_bar        <- 1 - rho
-      A              <- (self$data$Y - self$data$X %*% B - M %*% t(private$C))^2 + S %*% t(private$C)
+    compute_loglik  = function(B, OmegaQ, dm1 = NA, kappa = NA, gamma = NA, mu = NA) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
-      J <- J + .5 * self$n * log_det_OmegaQ
-      J <- J  + .5 * sum(log(S))
-      J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
-      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
+      log_det_Gamma  <- gamma %>%
+        map(determinant, logarithm = TRUE) %>%
+        map("modulus") %>% map(as.numeric)
+
+      J <- -.5 * self$data$npY * log(2 * pi * exp(1))
+      J <- J + .5 * sum(self$data$nY * log(dm1)) + .5 * self$n * log_det_OmegaQ
+      J <- J + .5 * sum(unlist(log_det_Gamma))
+      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
+      J <- J - self$data$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+
       if (private$sparsity_ > 0) {
+        gamma_bar <- reduce(gamma, `+`)
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
+        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (gamma_bar + crossprod(mu))))
         J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
@@ -67,91 +66,58 @@ NB_zi_fixed_blocks <- R6::R6Class(
                       "diagonal"  = 1 / as.vector(ddiag),
                       "spherical" = rep(1/mean(ddiag), self$p))
       OmegaQ     <- t(private$C) %*% diag(dm1) %*% private$C
-      kappa      <- init_model$model_par$kappa ## mieux qu'une 0-initialisation ?
-      rho        <- init_model$model_par$rho
-      G          <- solve(diag(colSums(dm1 * private$C), self$Q, self$Q) + OmegaQ)
-      R          <- self$data$Y - self$data$X %*% B
-      M          <- R %*% (dm1 * private$C) %*% G
-      S          <- matrix(rep(0.1, self$n * self$Q), nrow = self$n)
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, kappa = kappa, rho = rho, M = M,
-           S = S)
+      kappa      <- init_model$model_par$kappa
+      mu    <- matrix(0, self$n, self$Q)
+      gamma <- rep(list(diag(1, self$Q, self$Q)), self$data$n)
+      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, kappa = kappa, gamma = gamma, mu = mu)
     },
 
-    EM_step = function(B, dm1, OmegaQ, kappa, M, S, rho) {
-      R   <- self$data$Y - self$data$X %*% B
-      ones <- as.vector(rep(1, self$n))
+    EM_step = function(B, dm1, OmegaQ, kappa, gamma = gamma, mu = mu) {
+
+      ## Auxiliary variables
+      R <- self$data$Y - self$data$X %*% B
+      dm1_mat <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
+      dm1C    <- dm1_mat %*% private$C
 
       # E step
-      M <- private$zi_NB_fixed_blocks_nlopt_optim_M(M, dm1, OmegaQ, B, rho)
-      S <-  1 / sweep((1 - rho) %*% (dm1 * private$C), 2, diag(OmegaQ), "+")
-      A <- (R - tcrossprod(M, private$C))^2 + tcrossprod(S, private$C)
-      nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      gamma <- apply(dm1C, 1, function(dm1C_) {
+        solve(OmegaQ + diag(dm1C_, self$Q, self$Q))}, simplify = FALSE)
+      Rdm1C <- (R * dm1_mat) %*% private$C
+      mu    <- t(sapply(1:length(gamma), function(i) Rdm1C[i, ] %*% gamma[[i]]))
 
       # M step
-      B <- private$zi_NB_fixed_blocks_nlopt_optim_B(B, dm1, OmegaQ, M, rho)
+      B <- private$zi_NB_fixed_blocks_optim_B(B, dm1_mat, mu)
+      RmmuC <- R - mu %*% t(private$C)
+      CgC   <- t(sapply(gamma, function(gamma_) diag(gamma_)[self$clustering]))
+      A     <- RmmuC^2  + CgC
+
       dm1  <- switch(private$res_covariance,
-        "diagonal"  = colSums(1 - rho) / colSums((1 - rho) * A),
-        "spherical" = rep(sum(1 - rho) / sum((1 - rho) * A), self$p))
-      kappa <- colMeans(rho)
-      OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
+        "diagonal"  = self$data$nY / colSums(self$data$zeros_bar * A),
+        "spherical" = rep(self$data$npY / sum(self$data$zeros_bar * A), self$p))
+      OmegaQ <- private$get_OmegaQ((crossprod(mu) + reduce(gamma, `+`))/self$n)
 
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ,  kappa = kappa, rho = rho, M = M,
-           S = S)
+      list(B = B, dm1 = dm1, OmegaQ = OmegaQ,  kappa = kappa, gamma = gamma, mu = mu)
     },
 
-    zi_NB_fixed_blocks_obj_grad_M = function(M_vec, dm1_1mrho, OmegaQ, R) {
-      M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
-      RmMC <- R - M %*% t(private$C)
-      MO   <- M %*% OmegaQ
-
-      obj  <- -.5 * sum(dm1_1mrho * RmMC^2) - .5 * sum(MO * M)
-      grad <- (dm1_1mrho * RmMC) %*% private$C - MO
-
-      res  <- list("objective" = - obj, "gradient"  = - grad)
+    zi_NB_fixed_blocks_obj_grad_B = function(B_vec, dm1_mat, muC) {
+      RmmuC <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p) - muC
+      grad <- crossprod(self$data$X, dm1_mat * RmmuC)
+      obj <- -.5 * sum(dm1_mat * RmmuC^2)
+      res <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
-    zi_NB_fixed_blocks_nlopt_optim_M = function(M0, dm1, OmegaQ, B, rho) {
-      res <- nloptr::nloptr(
-        x0 = as.vector(M0),
-        eval_f = private$zi_NB_fixed_blocks_obj_grad_M,
-        opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
-        ),
-        dm1_1mrho = t(dm1 * t(1 - rho)),
-        OmegaQ    = OmegaQ,
-        R         = self$data$Y - self$data$X %*% B
-      )
-      newM <- matrix(res$solution, nrow = self$n, ncol = self$Q)
-      newM
-    },
-
-    zi_NB_fixed_blocks_obj_grad_B = function(B_vec, dm1_1mrho, MC) {
-      R   <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      RmMC <- R - MC
-
-      obj  <- -.5 * sum(dm1_1mrho * RmMC^2)
-      grad <- crossprod(self$data$X, dm1_1mrho * RmMC)
-
-      res  <- list("objective" = -obj, "gradient"  = -grad)
-      res
-    },
-
-    zi_NB_fixed_blocks_nlopt_optim_B = function(B0, dm1, OmegaQ, M, rho) {
+    zi_NB_fixed_blocks_optim_B = function(B0, dm1_mat, mu) {
+      muC <- mu %*% t(private$C)
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_blocks_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
-        dm1_1mrho = t(dm1 * t(1 - rho)),
-        MC = tcrossprod(M, private$C)
+        dm1_mat = dm1_mat,
+        muC = muC
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
@@ -164,7 +130,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
       rho    <- model$model_par$rho
       R      <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
-      Sigma  <- (t(R) %*% R) / model$n
+      Sigma  <- crossprod(R) / model$n
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = kappa)
@@ -198,7 +164,8 @@ NB_zi_fixed_blocks <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
       } else {
-        res <- (1 - private$rho) * (self$data$X %*% private$B + private$M %*% t(private$C))
+        res <- self$data$X %*% private$B + private$mu %*% t(private$C)
+        res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       }
       res
     },

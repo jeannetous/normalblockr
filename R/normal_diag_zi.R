@@ -11,17 +11,12 @@ normal_diag_zi <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-
-    #' @field zeros indicator matrix of zeros in Y
-    zeros = NULL,
-
     #' @description Create a new [`normal_diag_zi`] object.
     #' @param data contains the matrix of responses (Y) and the design matrix (X).
     #' @return A new [`normal_diag_zi`] object
     initialize = function(data) {
       super$initialize(data)
       private$optimizer <- private$EM_optimize
-      self$zeros <- 1 * (data$Y == 0)
     }
   ),
 
@@ -30,56 +25,46 @@ normal_diag_zi <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, dm1, rho, kappa) {
-      rho_bar <- 1 - rho
-      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum(rho_bar * t(t(self$data$Y - self$data$X %*% B)^2 * dm1))
-      J <- J + sum(rho %*% log(kappa)) + sum(rho_bar %*% log(1 - kappa))
-      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
+    compute_loglik  = function(B, dm1, kappa) {
+      J <- -.5 * sum(self$data$zeros_bar %*% (log(2 * pi) - log(dm1)))
+      J <- J - .5 * sum(self$data$zeros_bar * t(t(self$data$Y - self$data$X %*% B)^2 * dm1))
+      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
       J
     },
 
     EM_initialize = function() {
-      rho   <- check_one_boundary(check_zero_boundary(self$zeros))
-      kappa <- colMeans(rho)
-      B     <- self$data$XtXm1 %*% crossprod(self$data$X, self$data$Y)
-      dm1   <- 1 / check_one_boundary(check_zero_boundary(diag(cov(self$data$Y - self$data$X %*% B))))
-      list(B = B, dm1 = dm1, kappa = kappa, rho = rho)
+      kappa <- colMeans(self$data$zeros)
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      dm1   <- colSums(self$data$zeros_bar) / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
+      list(B = B, dm1 = dm1, kappa = kappa)
     },
 
-    EM_step = function(B, dm1, kappa, rho) {
+    EM_step = function(B, dm1, kappa) {
 
-      ## E step
-      rho <- 1/(1 + outer(rep(1, self$n), (1 - kappa) / kappa) * dnorm(0, self$data$X %*% B, sqrt(1/dm1)))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
+      B     <- private$normal_zi_optim_B(B, dm1)
+      dm1   <- colSums(self$data$zeros_bar) / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
 
-      ## M step
-      B     <- private$normal_zi_optim_B(B, dm1, rho)
-      dm1   <- colSums(1 - rho) / colSums((1 - rho) * (self$data$Y - self$data$X %*% B)^2)
-      kappa <- colMeans(rho)
-
-      list(B = B, dm1 = dm1, kappa = kappa, rho = rho)
+      list(B = B, dm1 = dm1, kappa = kappa)
     },
 
-    normal_zi_obj_grad_B = function(B_vec, dm1_1mrho) {
+    normal_zi_obj_grad_B = function(B_vec, dm1_) {
       R <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      grad <- crossprod(self$data$X, dm1_1mrho * R)
-      obj <- -.5 * sum(dm1_1mrho * R^2)
+      grad <- crossprod(self$data$X, dm1_ * R)
+      obj <- -.5 * sum(dm1_ * R^2)
       res <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
-    normal_zi_optim_B = function(B0, dm1, rho) {
-      dm1_1mrho <- t(dm1 * t(1 - rho))
+    normal_zi_optim_B = function(B0, dm1) {
+      dm1_ <- t(dm1 * t(self$data$zeros_bar))
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$normal_zi_obj_grad_B,
         opts = list(
-          algorithm = "NLOPT_LD_MMA",
-          xtol_rel = 1e-6,
-          maxeval = 1000
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
         ),
-        dm1_1mrho = dm1_1mrho
+        dm1_ = dm1_
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB

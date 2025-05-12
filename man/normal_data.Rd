@@ -24,6 +24,14 @@ R6 class for a generic normal model
 \item{\code{XtXm1}}{inverse of XtX, useful for inference}
 
 \item{\code{XtY}}{useful for inference}
+
+\item{\code{npY}}{total number of non zeros in Y}
+
+\item{\code{nY}}{total number of non zeros for each column/variable in Y}
+
+\item{\code{zeros}}{where are the zero in Y}
+
+\item{\code{zeros_bar}}{where are the non-zeros in Y}
 }
 \if{html}{\out{</div>}}
 }

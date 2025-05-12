@@ -42,7 +42,7 @@ NB_fixed_blocks <- R6::R6Class(
       J <- J + .5 * self$n * log_det_gamma
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + t(mu) %*% mu)))
+        J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + crossprod(mu))))
         J <- J - self$sparsity * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J

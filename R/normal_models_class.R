@@ -120,10 +120,10 @@ normal_models <- R6::R6Class(
     EM_optimize = function(control) {
       parameters <- private$EM_initialize()
       ll_list    <- do.call(private$compute_loglik, parameters)
-      for (h in 2:control$niter) {
+      for (h in 1:control$niter) {
         parameters <- do.call(private$EM_step, parameters)
         ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
-        if (abs(ll_list[h] - ll_list[h - 1]) < control$threshold)
+        if (abs(ll_list[h + 1] - ll_list[h]) < control$threshold)
           break
       }
       c(parameters, list(ll_list = ll_list))

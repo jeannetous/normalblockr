@@ -22,6 +22,7 @@ Imports:
     aricode,
     dplyr,
     tidyr,
+    tibble,
     purrr,
     R6,
     ggplot2,

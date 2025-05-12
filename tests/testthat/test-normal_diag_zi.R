@@ -13,6 +13,6 @@ test_that("normal_diag_zi: check dimensions, optimization and field access", {
   expect_equal(model$n, nrow(Y))
   expect_equal(model$p, ncol(Y))
   expect_equal(model$d, ncol(X))
-  expect_lt(model$BIC, 6460)
-  expect_gt(model$loglik,  -3100)
+  expect_lt(model$BIC, 6700)
+  expect_gt(model$loglik,  -3200)
 })
