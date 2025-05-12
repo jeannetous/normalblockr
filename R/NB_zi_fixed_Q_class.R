@@ -63,7 +63,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       init_model$optimize()
       B      <- init_model$model_par$B
       kappa  <- init_model$model_par$kappa
-      rho    <- init_model$model_par$rho
+      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
       ddiag  <- 1/init_model$model_par$dm1
       dm1 <- switch(private$res_covariance,
                     "diagonal"  = 1 / as.vector(ddiag),
