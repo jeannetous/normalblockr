@@ -36,17 +36,16 @@ NB_zi_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
+    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      rho_bar <- 1 - rho
       R <- self$data$Y - self$data$X %*% B
-      A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
-      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
+      A <- R^2 - 2 * R * tcrossprod(M, C) + tcrossprod(M^2 + S, C)
+
+      J <- -.5 * (self$data$npY * log(2 * pi * exp(1)) - sum(self$data$nY * log(dm1)))
       J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
-      J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
-      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      J <- J  + .5 * sum(log(S)) - sum(C * log(C))
+      J <- J - sum(xlogx(C)) + .5 * sum(log(S))
+      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
+
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
@@ -75,15 +74,13 @@ NB_zi_fixed_Q <- R6::R6Class(
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, kappa = kappa,
-           C = private$C, alpha = colMeans(private$C), rho = rho)
+           C = private$C, alpha = colMeans(private$C))
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated inference ------------------------
 
     EM_initialize = function() {
-      # G       <- solve(diag(colSums(dm1 * C), self$Q, self$Q) + OmegaQ)
-      # M       <- R %*% (dm1 * C) %*% G
       c(private$get_heuristic_parameters(),  list(
           M = matrix(rep(0, self$n * self$Q), nrow = self$n),
           S = matrix(rep(0.1, self$n * self$Q), nrow = self$n)

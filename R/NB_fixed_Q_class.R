@@ -38,8 +38,7 @@ NB_fixed_Q <- R6::R6Class(
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
 
       J <- -.5 * self$n * self$p * log(2 * pi * exp(1)) + .5 * self$n * sum(log(dm1))
-      J <- J  + .5 * self$n * log_det_OmegaQ
-      J <- J + sum(C %*% log(alpha))
+      J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
       J <- J - sum(xlogx(C)) + .5 * self$n * sum(log(S))
 
       if (private$sparsity_ > 0) {

@@ -39,9 +39,8 @@ NB_zi_fixed_blocks <- R6::R6Class(
         map(determinant, logarithm = TRUE) %>%
         map("modulus") %>% map(as.numeric)
 
-      J <- -.5 * self$data$npY * log(2 * pi * exp(1))
-      J <- J + .5 * sum(self$data$nY * log(dm1)) + .5 * self$n * log_det_OmegaQ
-      J <- J + .5 * sum(unlist(log_det_Gamma))
+      J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
+      J <- J + .5 * (self$n * log_det_OmegaQ + sum(unlist(log_det_Gamma)))
       J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
       J <- J - self$data$n * sum(xlogx(kappa) - xlogx(1 - kappa))
 
@@ -56,20 +55,12 @@ NB_zi_fixed_blocks <- R6::R6Class(
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated inference ------------------------
-
     EM_initialize = function() {
-      init_model <- normal_diag_zi$new(self$data)
-      init_model$optimize()
-      B          <- init_model$model_par$B
-      ddiag      <- 1/init_model$model_par$dm1
-      dm1 <- switch(private$res_covariance,
-                      "diagonal"  = 1 / as.vector(ddiag),
-                      "spherical" = rep(1/mean(ddiag), self$p))
-      OmegaQ     <- t(private$C) %*% diag(dm1) %*% private$C
-      kappa      <- init_model$model_par$kappa
-      mu    <- matrix(0, self$n, self$Q)
-      gamma <- rep(list(diag(1, self$Q, self$Q)), self$data$n)
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, kappa = kappa, gamma = gamma, mu = mu)
+      c(private$get_heuristic_parameters(),  list(
+        mu    = matrix(0, self$n, self$Q),
+        gamma = rep(list(diag(1, self$Q, self$Q)), self$data$n)
+        )
+      )
     },
 
     EM_step = function(B, dm1, OmegaQ, kappa, gamma = gamma, mu = mu) {
@@ -128,12 +119,15 @@ NB_zi_fixed_blocks <- R6::R6Class(
     get_heuristic_parameters = function(){
       model  <- normal_diag_zi$new(self$data) ; model$optimize()
       B      <- model$model_par$B ; kappa <- model$model_par$kappa
-      rho    <- model$model_par$rho
-      R      <- self$data$Y - self$data$X %*% B ; R[rho > 0.7] <- 0
+      R      <- self$data$Y - self$data$X %*% B
       Sigma  <- crossprod(R) / model$n
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
       OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list(B = B, OmegaQ = OmegaQ, rho = rho, kappa = kappa)
+      ddiag      <- 1/model$model_par$dm1
+      dm1 <- switch(private$res_covariance,
+                    "diagonal"  = 1 / as.vector(ddiag),
+                    "spherical" = rep(1/mean(ddiag), self$p))
+      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, kappa = kappa)
     }
   ),
 
