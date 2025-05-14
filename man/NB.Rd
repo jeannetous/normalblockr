@@ -8,33 +8,53 @@ R6 class for a generic sparse Normal Block model
 
 R6 class for a generic sparse Normal Block model
 }
-\section{Super class}{
-\code{\link[normalblockr:normal_models]{normalblockr::normal_models}} -> \code{NB}
+\section{Public fields}{
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{data}}{object of normal_data class, with responses and design matrix}
+}
+\if{html}{\out{</div>}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
+\item{\code{n}}{number of samples}
+
+\item{\code{p}}{number of responses per sample}
+
+\item{\code{d}}{number of variables (dimensions in X)}
 
 \item{\code{Q}}{number of blocks}
 
+\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
+
 \item{\code{nb_param}}{number of parameters in the model}
 
-\item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
+\item{\code{objective}}{evolution of the objective function during (V)EM algorithm}
 
-\item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))}
+\item{\code{loglik}}{(or its variational lower bound)}
+
+\item{\code{deviance}}{(or its variational lower bound)}
+
+\item{\code{BIC}}{(or its variational lower bound)}
+
+\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+
+\item{\code{ICL}}{variational lower bound of the ICL}
+
+\item{\code{EBIC}}{variational lower bound of the EBIC}
+
+\item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
+
+\item{\code{inference_method}}{inference procedure used (heuristic or integrated with EM)}
+
+\item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
 
 \item{\code{sparsity}}{(overall sparsity parameter)}
 
 \item{\code{sparsity_weights}}{(weights associated to each pair of groups)}
 
 \item{\code{sparsity_term}}{(sparsity_term term in log-likelihood due to sparsity)}
-
-\item{\code{loglik}}{(or its variational lower bound)}
-
-\item{\code{EBIC}}{variational lower bound of the EBIC}
-
-\item{\code{criteria}}{a vector with loglik, BIC and number of parameters}
 
 \item{\code{get_res_covariance}}{whether the residual covariance is diagonal or spherical}
 
@@ -52,24 +72,18 @@ R6 class for a generic sparse Normal Block model
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-NB-new}{\code{NB$new()}}
+\item \href{#method-NB-update}{\code{NB$update()}}
+\item \href{#method-NB-optimize}{\code{NB$optimize()}}
 \item \href{#method-NB-split}{\code{NB$split()}}
 \item \href{#method-NB-candidates_split}{\code{NB$candidates_split()}}
 \item \href{#method-NB-candidates_merge}{\code{NB$candidates_merge()}}
 \item \href{#method-NB-merge}{\code{NB$merge()}}
+\item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
-\if{html}{\out{
-<details open><summary>Inherited methods</summary>
-<ul>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="optimize"><a href='../../normalblockr/html/normal_models.html#method-normal_models-optimize'><code>normalblockr::normal_models$optimize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="plot_loglik"><a href='../../normalblockr/html/normal_models.html#method-normal_models-plot_loglik'><code>normalblockr::normal_models$plot_loglik()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="normalblockr" data-topic="normal_models" data-id="update"><a href='../../normalblockr/html/normal_models.html#method-normal_models-update'><code>normalblockr::normal_models$update()</code></a></span></li>
-</ul>
-</details>
-}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-NB-new"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-new}{}}}
@@ -94,6 +108,80 @@ Create a new [`NB`] object.
 }
 \subsection{Returns}{
 A new [`NB`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-update"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-update}{}}}
+\subsection{Method \code{update()}}{
+Update a [`normal_models`] object
+
+All possible parameters of the child classes
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$update(
+  B = NA,
+  dm1 = NA,
+  C = NA,
+  OmegaQ = NA,
+  gamma = NA,
+  mu = NA,
+  kappa = NA,
+  alpha = NA,
+  M = NA,
+  S = NA,
+  ll_list = NA
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{B}}{regression matrix}
+
+\item{\code{dm1}}{diagonal vector of inverse variance matrix (variables level)}
+
+\item{\code{C}}{the matrix of groups memberships (posterior probabilities)}
+
+\item{\code{OmegaQ}}{groups inverse variance matrix}
+
+\item{\code{gamma}}{variance of posterior distribution of W}
+
+\item{\code{mu}}{mean for posterior distribution of W}
+
+\item{\code{kappa}}{vector of zero-inflation probabilities}
+
+\item{\code{alpha}}{vector of groups probabilities}
+
+\item{\code{M}}{variational mean for posterior distribution of W}
+
+\item{\code{S}}{variational diagonal of variances for posterior distribution of W}
+
+\item{\code{ll_list}}{list of log-lik (elbo) values}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Update the current [`normal`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-optimize"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-optimize}{}}}
+\subsection{Method \code{optimize()}}{
+calls optimization (EM or heuristic) and updates relevant fields
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$optimize(control = list(niter = 100, threshold = 1e-04))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{control}}{a list for controlling the optimization proces}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+optimizes the model and updates its parameters
 }
 }
 \if{html}{\out{<hr>}}
@@ -163,6 +251,27 @@ default FALSE (send a copy)}
 }
 \subsection{Returns}{
 A new [`NB`] object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-plot_loglik"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-plot_loglik}{}}}
+\subsection{Method \code{plot_loglik()}}{
+plots log-likelihood values during model optimization
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik(type = "b", log = "", neg = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{char for line type (see plot.default)}
+
+\item{\code{log}}{char for logarithmic axes (see plot.default)}
+
+\item{\code{neg}}{boolean plot negative log-likelihood (useful when log="y")}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}

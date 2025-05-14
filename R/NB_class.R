@@ -8,11 +8,12 @@
 #' @param control structured list of more specific parameters, to generate with NB_control
 NB <- R6::R6Class(
   classname = "NB",
-  inherit   = normal_models,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
+    #' @field data object of normal_data class, with responses and design matrix
+    data  = NULL,
 
     #' @description Create a new [`NB`] object.
     #' @param data object of normal_data class, with responses and design matrix
@@ -20,7 +21,7 @@ NB <- R6::R6Class(
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
-      super$initialize(data, control)
+      self$data <- data
 
       stopifnot("There cannot be more blocks than there are entities to cluster" = Q <= ncol(self$data$Y))
 
@@ -70,6 +71,56 @@ NB <- R6::R6Class(
       } else {
         private$C <- matrix(NA, self$data$n, Q)
       }
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Setters    ------------------------
+    #' @description
+    #' Update a [`normal_models`] object
+    #'
+    #' All possible parameters of the child classes
+    #' @param B regression matrix
+    #' @param dm1 diagonal vector of inverse variance matrix (variables level)
+    #' @param C the matrix of groups memberships (posterior probabilities)
+    #' @param OmegaQ groups inverse variance matrix
+    #' @param gamma  variance of posterior distribution of W
+    #' @param mu mean for posterior distribution of W
+    #' @param kappa vector of zero-inflation probabilities
+    #' @param alpha vector of groups probabilities
+    #' @param M variational mean for posterior distribution of W
+    #' @param S variational diagonal of variances for posterior distribution of W
+    #' @param ll_list  list of log-lik (elbo) values
+    #' @return Update the current [`normal`] object
+    update = function(B = NA,
+                      dm1 = NA,
+                      C = NA,
+                      OmegaQ = NA,
+                      gamma = NA,
+                      mu = NA,
+                      kappa = NA,
+                      alpha = NA,
+                      M = NA,
+                      S = NA,
+                      ll_list = NA) {
+      if (!anyNA(B))       private$B       <- B
+      if (!anyNA(dm1))     private$dm1     <- dm1
+      if (!anyNA(C))       private$C       <- C
+      if (!anyNA(OmegaQ))  private$OmegaQ  <- OmegaQ
+      if (!anyNA(gamma))   private$gamma   <- gamma
+      if (!anyNA(kappa))   private$kappa   <- kappa
+      if (!anyNA(mu))      private$mu      <- mu
+      if (!anyNA(alpha))   private$alpha   <- alpha
+      if (!anyNA(M))       private$M       <- M
+      if (!anyNA(S))       private$S       <- S
+      if (!anyNA(ll_list)) private$ll_list <- ll_list
+    },
+
+    #' @description calls optimization (EM or heuristic) and updates relevant fields
+    #' @param control a list for controlling the optimization proces
+    #' @return optimizes the model and updates its parameters
+    optimize = function(control = list(niter = 100, threshold = 1e-4)) {
+      optim_out <- private$optimizer(control)
+      do.call(self$update, optim_out)
     },
 
     #' @description Create a clone of the current [`NB`] object after splitting cluster `cl`
@@ -209,6 +260,17 @@ NB <- R6::R6Class(
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Graphical methods------------------
+    #' @param type char for line type (see plot.default)
+    #' @param log char for logarithmic axes (see plot.default)
+    #' @param neg boolean plot negative log-likelihood (useful when log="y")
+    #' @description plots log-likelihood values during model optimization
+    plot_loglik = function(type = "b", log = "", neg = FALSE) {
+      neg <- ifelse(neg, -1, 1)
+      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Extractors ------------------------
     #' @description Extract interaction network in the latent space
     #' @param type edge value in the network. Can be "support" (binary edges), "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species)
@@ -299,11 +361,40 @@ NB <- R6::R6Class(
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
+    B                 = NA, # regression matrix
+    dm1               = NA, # diagonal vector of inverse variance matrix (variables level)
+    C                 = NA, # the matrix of posterior probabilities (tau) or group affectation
+    OmegaQ            = NA, # precision matrix for clusters
+    kappa             = NA, # vector of zero-inflation probabilities
+    alpha             = NA, # vector of groups probabilities
+    gamma             = NA, # variance of  posterior distribution of W
+    mu                = NA, # mean for posterior distribution of W
+    M                 = NA, # variational mean for posterior distribution of W
+    S                 = NA, # variational diagonal of variances for posterior distribution of W
+    optimizer         = NA, # a link to the function that perform the optimization
+    ll_list           = NA, # list of log-likelihoods or ELBOs
     sparsity_         = NA, # scalar controlling the overall sparsity
     weights           = NA, # sparsity weights specific to each pairs of group
     res_covariance    = NA, # shape of the residuals covariance (diagonal or spherical)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## Methods for integrated EM inference------------------
+    EM_optimize = function(control) {
+      parameters <- private$EM_initialize()
+      ll_list    <- do.call(private$compute_loglik, parameters)
+      for (h in 1:control$niter) {
+        parameters <- do.call(private$EM_step, parameters)
+        ll_list    <- c(ll_list, do.call(private$compute_loglik, parameters))
+        if (abs(ll_list[h + 1] - ll_list[h]) < control$threshold)
+          break
+      }
+      c(parameters, list(ll_list = ll_list))
+    },
+    EM_step = function() {},
+    EM_initialize = function() {},
+    compute_loglik  = function() {},
 
     get_OmegaQ = function(Sigma) {
       if (private$sparsity_ == 0) {
@@ -326,6 +417,53 @@ NB <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference----------------------
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## MLE of MV Normal distribution
+    multivariate_normal_inference = function(){
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      R     <- self$data$Y - self$data$X %*% B
+      Sigma <- cov(R)
+      list(B = B, R = R, Sigma = Sigma)
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## MLE of ZI Diagonal Normal distribution
+    zi_diag_normal_inference = function(){
+      kappa <- colMeans(self$data$zeros)
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
+      for (i in 1:3) { # a couple of iterates is enough
+        B     <- private$zi_diag_normal_optim_B(B, dm1)
+        dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
+      }
+      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
+      R <- (1 - rho) * (self$data$Y - self$data$X %*% B)
+      list(B = B, dm1 = dm1, kappa = kappa, R = R)
+    },
+
+    zi_diag_normal_obj_grad_B = function(B_vec, DM1) {
+      R <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
+      grad <- crossprod(self$data$X, DM1 * R)
+      obj <- -.5 * sum(DM1 * R^2)
+      res <- list("objective" = -obj, "gradient"  = -grad)
+      res
+    },
+
+    zi_diag_normal_optim_B = function(B0, dm1) {
+      DM1 <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
+      res <- nloptr::nloptr(
+        x0 = as.vector(B0),
+        eval_f = private$zi_diag_normal_obj_grad_B,
+        opts = list(
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
+        ),
+        DM1 = DM1
+      )
+      newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
+      newB
+    },
 
     heuristic_optimize = function(control){
       parameters <- private$get_heuristic_parameters()
@@ -368,19 +506,44 @@ NB <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field inference_method inference procedure used (heuristic or integrated with EM)
-    inference_method = function(value) ifelse(private$approx, "heuristic", "integrated"),
+    #' @field n number of samples
+    n = function() self$data$n,
+    #' @field p number of responses per sample
+    p = function() self$data$p,
+    #' @field d number of variables (dimensions in X)
+    d = function() self$data$d,
     #' @field Q number of blocks
     Q = function(value) as.integer(ncol(private$C)),
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
+    model_par = function(value) c(B = private$B, dm1 = private$dm1, list(OmegaQ = private$OmegaQ)),
     #' @field nb_param number of parameters in the model
     nb_param = function(value) {
       nb_param_D <- ifelse(private$res_covariance == "diagonal", self$p, 1)
-      as.integer(super$nb_param + self$Q + self$n_edges + nb_param_D)
-      }, # adding OmegaQ and dm1
+      as.integer(self$p * self$d + self$Q + self$n_edges + nb_param_D)
+    },
+    #' @field objective evolution of the objective function during (V)EM algorithm
+    objective = function() private$ll_list[-1],
+    #' @field loglik (or its variational lower bound)
+    loglik = function(value) if (private$approx) NA else private$ll_list[[length(private$ll_list)]] + self$sparsity_term,
+    #' @field deviance (or its variational lower bound)
+    deviance = function() -2 * self$loglik,
+    #' @field BIC (or its variational lower bound)
+    #' @field entropy Entropy of the variational distribution when applicable
+    entropy    = function() 0,
+    BIC = function() self$deviance + log(self$n) * self$nb_param,
+    #' @field ICL variational lower bound of the ICL
+    ICL        = function() self$BIC + 2 * self$entropy,
+    #' @field EBIC variational lower bound of the EBIC
+    EBIC   = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(self$Q), 0),
+    #' @field criteria a vector with loglik, BIC and number of parameters
+    criteria   = function() {
+      data.frame(nb_param = self$nb_param, Q = self$Q, n_edges = self$n_edges, sparsity = self$sparsity,
+                 loglik = self$loglik, deviance = self$deviance, BIC = self$BIC, ICL = self$ICL, EBIC = self$EBIC)
+    },
+    #' @field inference_method inference procedure used (heuristic or integrated with EM)
+    inference_method = function(value) ifelse(private$approx, "heuristic", "integrated"),
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function(value) c(super$model_par, list(OmegaQ = private$OmegaQ)),
     #' @field sparsity (overall sparsity parameter)
     sparsity = function(value) {
       if (missing(value)) {
@@ -402,12 +565,6 @@ NB <- R6::R6Class(
     },
     #' @field sparsity_term (sparsity_term term in log-likelihood due to sparsity)
     sparsity_term = function(value) self$sparsity * sum(abs(self$sparsity_weights * private$OmegaQ)),
-    #' @field loglik (or its variational lower bound)
-    loglik = function(value) if (private$approx) NA else super$loglik + self$sparsity_term,
-    #' @field EBIC variational lower bound of the EBIC
-    EBIC   = function(value) self$BIC + 2 * ifelse(self$n_edges > 0, self$n_edges * log(self$Q), 0),
-    #' @field criteria a vector with loglik, BIC and number of parameters
-    criteria = function(value) c(Q = self$Q, n_edges = self$n_edges, sparsity = self$sparsity, super$criteria, EBIC = self$EBIC),
     #' @field get_res_covariance whether the residual covariance is diagonal or spherical
     get_res_covariance = function(value) private$res_covariance,
     #' @field memberships cluster memberships
