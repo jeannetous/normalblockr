@@ -35,7 +35,7 @@ NB_fixed_blocks <- R6::R6Class(
 
     compute_loglik  = function(B, OmegaQ, dm1 = NA, gamma = NA, mu = NA) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
+      log_det_gamma  <- as.numeric(determinant(gamma , logarithm = TRUE)$modulus)
 
       J <- -.5 * (self$n * self$p * log(2 * pi * exp(1)) - self$n * sum(log(dm1)))
       J <- J + .5 * self$n * (log_det_OmegaQ + log_det_gamma)
@@ -47,16 +47,23 @@ NB_fixed_blocks <- R6::R6Class(
       J
     },
 
-    EM_initialize = function() {
-      B     <- self$data$XtXm1 %*% self$data$XtY
-      ddiag <- colMeans((self$data$Y - self$data$X %*% B)^2)
+    get_heuristic_parameters = function(){
+      reg_res   <- private$multivariate_normal_inference()
+      ddiag <- colMeans(reg_res$R^2)
       dm1   <- switch(private$res_covariance,
-        "diagonal"  = 1 / as.vector(ddiag),
-        "spherical" = rep(1/mean(ddiag), self$p))
-      OmegaQ <- diag(colSums(dm1 * private$C), self$Q, self$Q)
-      mu    <- matrix(0, self$n, self$Q)
-      gamma <- diag(1, self$Q, self$Q)
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, gamma = gamma, mu = mu)
+                      "diagonal"  = 1 / as.vector(ddiag),
+                      "spherical" = rep(1/mean(ddiag), self$p))
+      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
+      OmegaQ    <- private$get_OmegaQ(SigmaQ)
+      list(B = reg_res$B, dm1 = dm1, OmegaQ = OmegaQ)
+    },
+
+    EM_initialize = function() {
+      c(private$get_heuristic_parameters(),  list(
+        gamma = diag(1, self$Q, self$Q),
+        mu    = matrix(0, self$n, self$Q)
+        )
+      )
     },
 
     EM_step = function(B, dm1, OmegaQ, gamma, mu) {
@@ -73,14 +80,8 @@ NB_fixed_blocks <- R6::R6Class(
         "spherical" = rep(1/mean(ddiag), self$p))
       OmegaQ <- private$get_OmegaQ(crossprod(mu)/self$n + gamma)
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, gamma = gamma, mu = mu)
-    },
-
-    get_heuristic_parameters = function(){
-      reg_res   <- private$multivariate_normal_inference()
-      SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
-      OmegaQ    <- private$get_OmegaQ(SigmaQ)
-      list(B = reg_res$B, OmegaQ = OmegaQ)
     }
+
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -89,7 +90,7 @@ NB_fixed_blocks <- R6::R6Class(
   active = list(
     #' @field posterior_par a list with the parameters of posterior distribution W | Y
     posterior_par = function(value) list(gamma = private$gamma, mu = private$mu),
-    #' @field entropy Entropy of the variational distribution when applicable
+    #' @field entropy Entropy of the conditional distribution
     entropy    = function(value) {
       if (!private$approx){
         res <- .5 * self$n * self$Q * log(2 * pi * exp(1)) +

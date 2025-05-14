@@ -16,7 +16,7 @@ R6 class for a generic normal model
 \describe{
 \item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
 
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+\item{\code{entropy}}{Entropy of the conditional distribution}
 
 \item{\code{fitted}}{Y values predicted by the model}
 

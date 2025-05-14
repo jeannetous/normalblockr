@@ -64,8 +64,9 @@ NB_zi_fixed_Q <- R6::R6Class(
       private$C <- check_one_boundary(check_zero_boundary(private$C))
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list(B = zi_diag$B, OmegaQ = OmegaQ, dm1 = zi_diag$dm1, kappa = zi_diag$kappa,
-           C = private$C, alpha = colMeans(private$C))
+      list(B = zi_diag$B, dm1 = zi_diag$dm1, OmegaQ = OmegaQ,
+           alpha = colMeans(private$C), kappa = zi_diag$kappa,
+           C = private$C)
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -79,10 +80,10 @@ NB_zi_fixed_Q <- R6::R6Class(
       )
     },
 
-    EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, C) {
+    EM_step = function(B, dm1, OmegaQ, alpha, kappa, C, M, S) {
 
       R <- self$data$Y - self$data$X %*% B
-      dm1_mat <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
+      dm1_mat <- matrix(dm1, self$n, self$p, byrow = TRUE) * self$data$zeros_bar
 
       # E step
       M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, dm1_mat, R, OmegaQ, C)
@@ -102,20 +103,19 @@ NB_zi_fixed_Q <- R6::R6Class(
       alpha <- colMeans(C)
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 
-      list(B = B, dm1 = dm1, alpha = alpha, OmegaQ = OmegaQ, kappa = kappa,
-           M = M, S = S, C = C)
+      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, alpha = alpha, kappa = kappa,
+           C = C, M = M, S = S)
     },
 
     zi_NB_fixed_Q_obj_grad_M = function(M_vec, DM1, DM1RC, DM1C, R, C, OmegaQ) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       MO   <- M %*% OmegaQ
-
       grad <- DM1RC - DM1C * M - MO
       obj <- -.5 * ( sum(DM1 * (M^2 %*% t(C)) - 2*R * (M %*% t(C))) + sum(MO * M) )
-
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
+
     zi_NB_fixed_Q_nlopt_optim_M = function(M0, dm1_mat, R, OmegaQ, C) {
       M0_vec <- as.vector(M0)
       res <- nloptr::nloptr(
@@ -140,7 +140,6 @@ NB_zi_fixed_Q <- R6::R6Class(
       R    <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
       grad <- crossprod(self$data$X, dm1_mat * (R - MC))
       obj  <- -.5 * sum(dm1_mat * (R^2 - 2 * R * MC))
-
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
@@ -169,8 +168,7 @@ NB_zi_fixed_Q <- R6::R6Class(
     #' @field nb_param number of parameters in the model
     nb_param = function() super$nb_param + self$p + self$Q - 1, # adding kappa and alpha
     #' @field var_par a list with variational parameters
-    var_par  = function() {list(M = private$M, S = private$S,
-                                rho = private$rho, tau = private$C)},
+    var_par  = function() {list(M = private$M, S = private$S, tau = private$C)},
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (blocks precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par
@@ -178,23 +176,23 @@ NB_zi_fixed_Q <- R6::R6Class(
       par$alpha <- private$alpha
       par
     },
-    #' @field entropy Entropy of the variational distribution when applicable
+    #' @field entropy Entropy of the conditional distribution
     entropy    = function() {
       if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
-        res <- res - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
         res <- res - sum(xlogx(private$C))
+        res <- res - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
       } else {res <- NA}
       res
     },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function(){
       if (private$approx) {
-        res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
+        res <- self$data$X %*% private$B
       } else {
         res <- self$data$X %*% private$B + private$M %*% t(private$C)
-        res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       }
+      res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       res
     },
     #' @field who_am_I a method to print what model is being fitted

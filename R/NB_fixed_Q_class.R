@@ -121,11 +121,11 @@ NB_fixed_Q <- R6::R6Class(
     nb_param = function() {as.integer(super$nb_param + self$Q - 1)}, # adding alpha
     #' @field var_par a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)
     var_par    = function() list(M = private$M,  S = private$S, tau = private$C),
-    #' @field entropy Entropy of the variational distribution when applicable
+    #' @field entropy Entropy of the conditional distribution
     entropy    = function() {
       if (!private$approx){
-        res <- .5 * self$n * self$Q * log(2 * pi * exp(1)) +
-          .5 * self$n * sum(log(private$S)) - sum(xlogx(private$C))
+        res <- .5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * self$n * sum(log(private$S))
+        res <- res - sum(xlogx(private$C))
       } else {res <- NA}
       res
     },

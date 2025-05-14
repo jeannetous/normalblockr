@@ -27,7 +27,7 @@ R6 class for normal-block model with fixed Q (number of groups)
 
 \item{\code{var_par}}{a list with the matrices of the variational parameters: M (means), S (variances), tau (posterior group probabilities)}
 
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+\item{\code{entropy}}{Entropy of the conditional distribution}
 
 \item{\code{fitted}}{Y values predicted by the model}
 

@@ -14,13 +14,13 @@ R6 class for a generic normal model
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
+\item{\code{posterior_par}}{a list with the parameters of posterior distribution W | Y}
+
+\item{\code{entropy}}{Entropy of the conditional distribution}
+
 \item{\code{nb_param}}{number of parameters in the model}
 
-\item{\code{var_par}}{a list with variational parameters}
-
 \item{\code{model_par}}{a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix), kappa (zero-inflation probabilities)}
-
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
 
 \item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 

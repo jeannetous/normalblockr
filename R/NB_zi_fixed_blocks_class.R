@@ -37,12 +37,12 @@ NB_zi_fixed_blocks <- R6::R6Class(
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
       log_det_Gamma  <- gamma %>%
         map(determinant, logarithm = TRUE) %>%
-        map("modulus") %>% map(as.numeric)
+        map("modulus") %>% map(as.numeric) %>% unlist()
 
       J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
-      J <- J + .5 * (self$n * log_det_OmegaQ + sum(unlist(log_det_Gamma)))
+      J <- J + .5 * (self$n * log_det_OmegaQ + sum(log_det_Gamma))
       J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
-      J <- J - self$data$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+      J <- J - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
 
       if (private$sparsity_ > 0) {
         gamma_bar <- reduce(gamma, `+`)
@@ -53,21 +53,26 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J
     },
 
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for integrated inference ------------------------
+    get_heuristic_parameters = function(){
+      zi_diag <- private$zi_diag_normal_inference()
+      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
+      OmegaQ  <- private$get_OmegaQ(SigmaQ)
+      list(B = zi_diag$B, dm1 = zi_diag$dm1, OmegaQ = OmegaQ, kappa = zi_diag$kappa)
+    },
+
     EM_initialize = function() {
       c(private$get_heuristic_parameters(),  list(
-        mu    = matrix(0, self$n, self$Q),
-        gamma = rep(list(diag(1, self$Q, self$Q)), self$data$n)
+        gamma = rep(list(diag(1, self$Q, self$Q)), self$n),
+        mu    = matrix(0, self$n, self$Q)
         )
       )
     },
 
-    EM_step = function(B, dm1, OmegaQ, kappa, gamma = gamma, mu = mu) {
+    EM_step = function(B, dm1, OmegaQ, kappa, gamma, mu) {
 
       ## Auxiliary variables
       R <- self$data$Y - self$data$X %*% B
-      dm1_mat <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
+      dm1_mat <- matrix(dm1, self$n, self$p, byrow = TRUE) * self$data$zeros_bar
       dm1C    <- dm1_mat %*% private$C
 
       # E step
@@ -112,15 +117,6 @@ NB_zi_fixed_blocks <- R6::R6Class(
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
       newB
-    },
-
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Methods for heuristic inference -------------------------
-    get_heuristic_parameters = function(){
-      zi_diag <- private$zi_diag_normal_inference()
-      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
-      OmegaQ  <- private$get_OmegaQ(SigmaQ)
-      list(B = zi_diag$B, dm1 = zi_diag$dm1, OmegaQ = OmegaQ, kappa = zi_diag$kappa)
     }
   ),
 
@@ -128,32 +124,35 @@ NB_zi_fixed_blocks <- R6::R6Class(
   ##  ACTIVE BINDINGS ------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field posterior_par a list with the parameters of posterior distribution W | Y
+    posterior_par = function(value) list(gamma = private$gamma, mu = private$mu),
+    #' @field entropy Entropy of the conditional distribution
+    entropy    = function(value) {
+      if (!private$approx){
+        log_det_Gamma <- private$gamma %>%
+          map(determinant, logarithm = TRUE) %>%
+          map("modulus") %>% map(as.numeric) %>% unlist()
+        res <- .5 * (self$n * self$Q * log(2*pi*exp(1)) + sum(log_det_Gamma))
+        res <- res - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+      } else {res <- NA}
+      res
+    },
     #' @field nb_param number of parameters in the model
     nb_param = function() super$nb_param + self$p, # adding kappa
-    #' @field var_par a list with variational parameters
-    var_par  = function() list(M = private$M, S = private$S, rho = private$rho),
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par
       par$kappa <- private$kappa
       par
     },
-    #' @field entropy Entropy of the variational distribution when applicable
-    entropy    = function() {
-      if (!private$approx) {
-        res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
-        res <- res - sum(private$rho * log(private$rho) + (1 - private$rho) * log(1 - private$rho))
-      } else {res <- NA}
-      res
-    },
     #' @field fitted Y values predicted by the model Y values predicted by the model
     fitted = function(){
       if (private$approx) {
-        res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
+        res <- self$data$X %*% private$B
       } else {
         res <- self$data$X %*% private$B + private$mu %*% t(private$C)
-        res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       }
+      res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       res
     },
     #' @field who_am_I a method to print what model is being fitted

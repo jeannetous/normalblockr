@@ -38,7 +38,7 @@ R6 class for a generic sparse Normal Block model
 
 \item{\code{BIC}}{(or its variational lower bound)}
 
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+\item{\code{entropy}}{Entropy of the conditional distribution when applicable}
 
 \item{\code{ICL}}{variational lower bound of the ICL}
 
@@ -114,7 +114,7 @@ A new [`NB`] object
 \if{html}{\out{<a id="method-NB-update"></a>}}
 \if{latex}{\out{\hypertarget{method-NB-update}{}}}
 \subsection{Method \code{update()}}{
-Update a [`normal_models`] object
+Update a [`NB`] object
 
 All possible parameters of the child classes
 \subsection{Usage}{

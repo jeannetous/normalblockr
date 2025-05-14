@@ -76,7 +76,7 @@ NB <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Setters    ------------------------
     #' @description
-    #' Update a [`normal_models`] object
+    #' Update a [`NB`] object
     #'
     #' All possible parameters of the child classes
     #' @param B regression matrix
@@ -528,7 +528,7 @@ NB <- R6::R6Class(
     #' @field deviance (or its variational lower bound)
     deviance = function() -2 * self$loglik,
     #' @field BIC (or its variational lower bound)
-    #' @field entropy Entropy of the variational distribution when applicable
+    #' @field entropy Entropy of the conditional distribution when applicable
     entropy    = function() 0,
     BIC = function() self$deviance + log(self$n) * self$nb_param,
     #' @field ICL variational lower bound of the ICL

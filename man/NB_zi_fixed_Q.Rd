@@ -29,7 +29,7 @@ R6 class for a generic normal model
 
 \item{\code{model_par}}{a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (blocks precision matrix), kappa (zero-inflation probabilities)}
 
-\item{\code{entropy}}{Entropy of the variational distribution when applicable}
+\item{\code{entropy}}{Entropy of the conditional distribution}
 
 \item{\code{fitted}}{Y values predicted by the model Y values predicted by the model}
 
