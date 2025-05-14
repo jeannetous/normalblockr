@@ -58,22 +58,13 @@ NB_zi_fixed_Q <- R6::R6Class(
     ## Methods for heuristic inference -----------------------
 
     get_heuristic_parameters = function() {
-      init_model  <- normal_diag_zi$new(self$data)
-      init_model$optimize()
-      B      <- init_model$model_par$B
-      kappa  <- init_model$model_par$kappa
-      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
-      ddiag  <- 1/init_model$model_par$dm1
-      dm1 <- switch(private$res_covariance,
-                    "diagonal"  = 1 / as.vector(ddiag),
-                    "spherical" = rep(1/mean(ddiag), self$p))
-      R <- (1 - rho) * (self$data$Y - self$data$X %*% B)
+      zi_diag <- private$zi_diag_normal_inference()
       if (anyNA(private$C))
-        private$C <- private$clustering_approx(R)
+        private$C <- private$clustering_approx(zi_diag$R)
       private$C <- check_one_boundary(check_zero_boundary(private$C))
-      SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(R))
+      SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)
-      list(B = B, OmegaQ = OmegaQ, dm1 = dm1, kappa = kappa,
+      list(B = zi_diag$B, OmegaQ = OmegaQ, dm1 = zi_diag$dm1, kappa = zi_diag$kappa,
            C = private$C, alpha = colMeans(private$C))
     },
 
