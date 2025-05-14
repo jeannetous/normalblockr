@@ -46,20 +46,20 @@ R6 class for a generic normal model"></head><body>
     </div>
     <div class="section level2">
     <h2 id="active-bindings">Active bindings<a class="anchor" aria-label="anchor" href="#active-bindings"></a></h2>
-    <p></p><div class="r6-active-bindings"><dl><dt><code>nb_param</code></dt>
+    <p></p><div class="r6-active-bindings"><dl><dt><code>posterior_par</code></dt>
+<dd><p>a list with the parameters of posterior distribution W | Y</p></dd>
+
+
+<dt><code>entropy</code></dt>
+<dd><p>Entropy of the conditional distribution</p></dd>
+
+
+<dt><code>nb_param</code></dt>
 <dd><p>number of parameters in the model</p></dd>
-
-
-<dt><code>var_par</code></dt>
-<dd><p>a list with variational parameters</p></dd>
 
 
 <dt><code>model_par</code></dt>
 <dd><p>a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix), kappa (zero-inflation probabilities)</p></dd>
-
-
-<dt><code>entropy</code></dt>
-<dd><p>Entropy of the variational distribution when applicable</p></dd>
 
 
 <dt><code>fitted</code></dt>
