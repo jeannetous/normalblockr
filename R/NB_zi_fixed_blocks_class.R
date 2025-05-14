@@ -117,17 +117,10 @@ NB_zi_fixed_blocks <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for heuristic inference -------------------------
     get_heuristic_parameters = function(){
-      model  <- normal_diag_zi$new(self$data) ; model$optimize()
-      B      <- model$model_par$B ; kappa <- model$model_par$kappa
-      R      <- self$data$Y - self$data$X %*% B
-      Sigma  <- crossprod(R) / model$n
-      SigmaQ <- private$heuristic_SigmaQ_from_Sigma(Sigma)
-      OmegaQ <- private$get_OmegaQ(SigmaQ)
-      ddiag      <- 1/model$model_par$dm1
-      dm1 <- switch(private$res_covariance,
-                    "diagonal"  = 1 / as.vector(ddiag),
-                    "spherical" = rep(1/mean(ddiag), self$p))
-      list(B = B, dm1 = dm1, OmegaQ = OmegaQ, kappa = kappa)
+      zi_diag <- private$zi_diag_normal_inference()
+      SigmaQ  <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
+      OmegaQ  <- private$get_OmegaQ(SigmaQ)
+      list(B = zi_diag$B, dm1 = zi_diag$dm1, OmegaQ = OmegaQ, kappa = zi_diag$kappa)
     }
   ),
 

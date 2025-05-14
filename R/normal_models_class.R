@@ -31,10 +31,9 @@ normal_models <- R6::R6Class(
     #' @param dm1 diagonal vector of inverse variance matrix (variables level)
     #' @param C the matrix of groups memberships (posterior probabilities)
     #' @param OmegaQ groups inverse variance matrix
-    #' @param gamma  variance of  posterior distribution of W
-    #' @param mu  mean for posterior distribution of W
+    #' @param gamma  variance of posterior distribution of W
+    #' @param mu mean for posterior distribution of W
     #' @param kappa vector of zero-inflation probabilities
-    #' @param rho posterior probabilities of zero-inflation
     #' @param alpha vector of groups probabilities
     #' @param M variational mean for posterior distribution of W
     #' @param S variational diagonal of variances for posterior distribution of W
@@ -96,7 +95,6 @@ normal_models <- R6::R6Class(
     OmegaQ    = NA, # precision matrix for clusters
     kappa     = NA, # vector of zero-inflation probabilities
     alpha     = NA, # vector of groups probabilities
-    rho       = NA, # posterior probabilities of zero-inflation
     gamma     = NA, # variance of  posterior distribution of W
     mu        = NA, # mean for posterior distribution of W
     M         = NA, # variational mean for posterior distribution of W
@@ -107,12 +105,50 @@ normal_models <- R6::R6Class(
     compute_loglik  = function() {},
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## MLE of MV distribution
+    ## MLE of MV Normal distribution
     multivariate_normal_inference = function(){
       B     <- self$data$XtXm1 %*% self$data$XtY
       R     <- self$data$Y - self$data$X %*% B
       Sigma <- cov(R)
       list(B = B, R = R, Sigma = Sigma)
+    },
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## MLE of ZI Diagonal Normal distribution
+    zi_diag_normal_inference = function(){
+      kappa <- colMeans(self$data$zeros)
+      B     <- self$data$XtXm1 %*% self$data$XtY
+      dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
+      for (i in 1:3) { # a couple of iterates is enough
+        B     <- private$zi_diag_normal_optim_B(B, dm1)
+        dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
+      }
+      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
+      R <- (1 - rho) * (self$data$Y - self$data$X %*% B)
+      list(B = B, dm1 = dm1, kappa = kappa, R = R)
+    },
+
+    zi_diag_normal_obj_grad_B = function(B_vec, DM1) {
+      R <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
+      grad <- crossprod(self$data$X, DM1 * R)
+      obj <- -.5 * sum(DM1 * R^2)
+      res <- list("objective" = -obj, "gradient"  = -grad)
+      res
+    },
+
+    zi_diag_normal_optim_B = function(B0, dm1) {
+      DM1 <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
+      res <- nloptr::nloptr(
+        x0 = as.vector(B0),
+        eval_f = private$zi_diag_normal_obj_grad_B,
+        opts = list(
+          algorithm = "NLOPT_LD_LBFGS",
+          maxeval = 100
+        ),
+        DM1 = DM1
+      )
+      newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
+      newB
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

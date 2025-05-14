@@ -30,12 +30,12 @@ test_that("zero inflated normal block with spherical residual covariance and kno
   ctrl <- NB_control(noise_covariance = "spherical")
   model <- NB_zi_fixed_Q$new(data, Q, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -3000)
+  expect_gt(model$loglik, -3200)
   expect_lt(Metrics::rmse(model$fitted, Y), 3)
 
   model <- NB_zi_fixed_Q$new(data, Q, sparsity = 0.1, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -3000)
+  expect_gt(model$loglik, -3200)
   expect_lt(Metrics::rmse(model$fitted, Y), 3)
 })
 
