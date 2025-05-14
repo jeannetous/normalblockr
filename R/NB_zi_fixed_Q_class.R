@@ -36,17 +36,16 @@ NB_zi_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
 
-    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
+    compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      rho_bar <- 1 - rho
       R <- self$data$Y - self$data$X %*% B
-      A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
-      J <- -.5 * sum(rho_bar %*% (log(2 * pi) - log(dm1)))
-      J <- J - .5 * sum(rho_bar * A %*% diag(dm1))
+      A <- R^2 - 2 * R * tcrossprod(M, C) + tcrossprod(M^2 + S, C)
+
+      J <- -.5 * (self$data$npY * log(2 * pi * exp(1)) - sum(self$data$nY * log(dm1)))
       J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
-      J <- J + sum(rho %*% log(kappa) + rho_bar %*% log(1 - kappa))
-      J <- J - sum(rho * log(rho)) - sum(rho_bar*log(rho_bar))
-      J <- J  + .5 * sum(log(S)) - sum(C * log(C))
+      J <- J - sum(xlogx(C)) + .5 * sum(log(S))
+      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
+
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
@@ -75,15 +74,13 @@ NB_zi_fixed_Q <- R6::R6Class(
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list(B = B, OmegaQ = OmegaQ, dm1 = dm1, kappa = kappa,
-           C = private$C, alpha = colMeans(private$C), rho = rho)
+           C = private$C, alpha = colMeans(private$C))
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated inference ------------------------
 
     EM_initialize = function() {
-      # G       <- solve(diag(colSums(dm1 * C), self$Q, self$Q) + OmegaQ)
-      # M       <- R %*% (dm1 * C) %*% G
       c(private$get_heuristic_parameters(),  list(
           M = matrix(rep(0, self$n * self$Q), nrow = self$n),
           S = matrix(rep(0.1, self$n * self$Q), nrow = self$n)
@@ -91,49 +88,44 @@ NB_zi_fixed_Q <- R6::R6Class(
       )
     },
 
-    EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, C, rho) {
+    EM_step = function(B, dm1, OmegaQ, alpha, kappa, M, S, C) {
+
       R <- self$data$Y - self$data$X %*% B
-      ones <- as.vector(rep(1, self$n))
+      dm1_mat <- matrix(dm1, self$data$n, self$data$p, byrow = TRUE) * self$data$zeros_bar
 
       # E step
-      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, B, dm1, OmegaQ, C, rho)
-      S <-  1 / sweep((1 - rho) %*% (dm1 * C), 2, diag(OmegaQ), "+")
+      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, dm1_mat, R, OmegaQ, C)
+      S <-  1 / sweep(dm1_mat %*% C, 2, diag(OmegaQ), "+")
       if (self$Q > 1 & !self$fixed_tau) {
-        eta <- -.5 * dm1 * t(1 - rho) %*% (M^2 + S)
-        eta <- eta + dm1 * t((1 - rho) * R) %*% M  + outer(rep(1, self$p), log(alpha)) - 1
+        eta <- -.5 * crossprod(dm1_mat, (M^2 + S))
+        eta <- eta + crossprod(dm1_mat * R, M) + outer(rep(1, self$p), log(alpha)) - 1
         C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
       A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
-      # nu <- log(2 * pi) - outer(ones, log(dm1)) + A %*% diag(dm1)
-      # rho <- 1 / (1 + exp(-.5 * nu) * outer(ones, (1 - kappa) / kappa))
-      # rho <- check_one_boundary(check_zero_boundary(self$zeros * rho))
-      rho <- check_one_boundary(check_zero_boundary(self$zeros))
 
       # M step
-      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1, OmegaQ, M, C, rho)
+      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1_mat, M, C)
       dm1  <- switch(private$res_covariance,
-                     "diagonal"  = colSums(1 - rho) / colSums((1 - rho) * A),
-                     "spherical" = rep(sum(1 - rho) / sum((1 - rho) * A), self$p))
+                     "diagonal"  = self$data$nY / colSums(self$data$zeros_bar * A),
+                     "spherical" = rep(self$data$npY / sum(self$data$zeros_bar * A), self$p))
       alpha <- colMeans(C)
-      kappa <- colMeans(rho)
       OmegaQ <- private$get_OmegaQ(crossprod(M)/self$n + diag(colMeans(S), self$Q, self$Q))
 
       list(B = B, dm1 = dm1, alpha = alpha, OmegaQ = OmegaQ, kappa = kappa,
-           M = M, S = S, C = C, rho = rho)
+           M = M, S = S, C = C)
     },
 
-    zi_NB_fixed_Q_obj_grad_M = function(M_vec, R, dm1T, OmegaQ, rho) {
+    zi_NB_fixed_Q_obj_grad_M = function(M_vec, DM1, DM1RC, DM1C, R, C, OmegaQ) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       MO   <- M %*% OmegaQ
 
-      grad <- ((1 - rho) * R) %*% dm1T - ((1 - rho) %*% dm1T) * M - MO
-      obj  <- sum((1 - rho) * (R * (M %*% t(dm1T)) - .5 * M^2 %*% t(dm1T))) - .5 * sum(MO * M)
+      grad <- DM1RC - DM1C * M - MO
+      obj <- -.5 * ( sum(DM1 * (M^2 %*% t(C)) - 2*R * (M %*% t(C))) + sum(MO * M) )
 
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
-
-    zi_NB_fixed_Q_nlopt_optim_M = function(M0, B, dm1, OmegaQ, C, rho) {
+    zi_NB_fixed_Q_nlopt_optim_M = function(M0, dm1_mat, R, OmegaQ, C) {
       M0_vec <- as.vector(M0)
       res <- nloptr::nloptr(
         x0 = M0_vec,
@@ -142,26 +134,27 @@ NB_zi_fixed_Q <- R6::R6Class(
           algorithm = "NLOPT_LD_LBFGS",
           maxeval = 100
         ),
-        R = self$data$Y - self$data$X %*% B,
-        dm1T    = dm1 * C,
-        OmegaQ = OmegaQ,
-        rho    = rho
+        DM1    = dm1_mat,
+        DM1RC  = (dm1_mat * R) %*% C,
+        DM1C   = dm1_mat %*% C,
+        R      = R,
+        C      = C,
+        OmegaQ = OmegaQ
       )
       newM <- matrix(res$solution, nrow = self$n, ncol = self$Q)
       newM
     },
 
-    zi_NB_fixed_Q_obj_grad_B = function(B_vec, dm1_1mrho, MC) {
+    zi_NB_fixed_Q_obj_grad_B = function(B_vec, dm1_mat, MC) {
       R    <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      grad <- crossprod(self$data$X, dm1_1mrho * (R - MC))
-      obj  <- -.5 * sum(dm1_1mrho * (R^2 - 2 * R * MC))
+      grad <- crossprod(self$data$X, dm1_mat * (R - MC))
+      obj  <- -.5 * sum(dm1_mat * (R^2 - 2 * R * MC))
 
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
-    zi_NB_fixed_Q_nlopt_optim_B = function(B0, dm1, OmegaQ, M, C, rho) {
-      dm1_1mrho <- t(dm1 * t(1 - rho))
+    zi_NB_fixed_Q_nlopt_optim_B = function(B0, dm1_mat, M, C) {
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_Q_obj_grad_B,
@@ -169,7 +162,7 @@ NB_zi_fixed_Q <- R6::R6Class(
           algorithm = "NLOPT_LD_LBFGS",
           maxeval = 100
         ),
-        dm1_1mrho = t(dm1 * t(1 - rho)),
+        dm1_mat = dm1_mat,
         MC = tcrossprod(M, C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
@@ -208,7 +201,8 @@ NB_zi_fixed_Q <- R6::R6Class(
       if (private$approx) {
         res <- self$data$X %*% private$B ; res[private$rho > 0.7] <- 0
       } else {
-        res <- (1 - private$rho) * (self$data$X %*% private$B + private$M %*% t(private$C))
+        res <- self$data$X %*% private$B + private$M %*% t(private$C)
+        res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
       }
       res
     },

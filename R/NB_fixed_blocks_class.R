@@ -37,9 +37,8 @@ NB_fixed_blocks <- R6::R6Class(
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
       log_det_gamma  <- as.numeric(determinant(gamma, logarithm = TRUE)$modulus)
 
-      J <- -.5 * self$n * self$p * log(2 * pi * exp(1))
-      J <- J + .5 * self$n * sum(log(dm1)) + .5 * self$n * log_det_OmegaQ
-      J <- J + .5 * self$n * log_det_gamma
+      J <- -.5 * (self$n * self$p * log(2 * pi * exp(1)) - self$n * sum(log(dm1)))
+      J <- J + .5 * self$n * (log_det_OmegaQ + log_det_gamma)
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + crossprod(mu))))

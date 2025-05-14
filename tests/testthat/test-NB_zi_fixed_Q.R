@@ -12,14 +12,14 @@ test_that("zero inflated normal block with diagonal residual covariance and know
 
   model <- normalblockr:::NB_zi_fixed_Q$new(data, Q)
   model$optimize()
-  expect_lt(model$BIC, 5800)
-  expect_gt(model$loglik, -2800)
-  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_lt(model$BIC, 6600)
+  expect_gt(model$loglik, -3200)
+  expect_lt(Metrics::rmse(model$fitted, Y), 3)
 
-  model <- NB_zi_fixed_Q$new(data, Q, sparsity = 0.1)
+  model <- normalblockr:::NB_zi_fixed_Q$new(data, Q, sparsity = 2)
   model$optimize()
-  expect_gt(model$loglik, -2800)
-  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_gt(model$loglik, -3200)
+  expect_lt(Metrics::rmse(model$fitted, Y), 3)
 
 })
 
@@ -30,19 +30,19 @@ test_that("zero inflated normal block with spherical residual covariance and kno
   ctrl <- NB_control(noise_covariance = "spherical")
   model <- NB_zi_fixed_Q$new(data, Q, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -2800)
-  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_gt(model$loglik, -3000)
+  expect_lt(Metrics::rmse(model$fitted, Y), 3)
 
   model <- NB_zi_fixed_Q$new(data, Q, sparsity = 0.1, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -2800)
-  expect_lt(Metrics::rmse(model$fitted, Y), 1)
+  expect_gt(model$loglik, -3000)
+  expect_lt(Metrics::rmse(model$fitted, Y), 3)
 })
 
 test_that("zero inflated normal block with known clusters, heuristic", {
   data <- normal_data$new(Y, X)
-  model <- NB_zi_fixed_Q$new(data, Q, sparsity = 0.05,
+  model <- NB_zi_fixed_Q$new(data, Q, sparsity = 2,
                                   control = NB_control(heuristic = TRUE))
   model$optimize()
-  expect_lt(Metrics::rmse(model$fitted, Y), 4)
+  expect_lt(Metrics::rmse(model$fitted, Y), 5)
 })
