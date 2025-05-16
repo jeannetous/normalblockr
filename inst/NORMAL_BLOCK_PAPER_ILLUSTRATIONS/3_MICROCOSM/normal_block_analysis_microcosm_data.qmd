@@ -44,7 +44,7 @@ taxo_reference <- taxonomy[match(colnames(microcosm$Abundance),taxonomy$ASV), ]
 ```{r data-formatting}
 Y <- scale(log(1 + microcosm$Abundance), FALSE, TRUE) %>% as.matrix()
 X <- model.matrix(~ 0 + microcosm$site_time)
-data <- normalblockr:::normal_data$new(Y, X)
+data <- NBData$new(Y, X)
 ```
 
 ## Getting a good initial clustering
@@ -52,7 +52,7 @@ data <- normalblockr:::normal_data$new(Y, X)
 Based on previous analysis, we use hclust to get a good initial clustering for the model.
 
 ```{r initial-clustering}
-zimvn <- normalblockr:::normal_diag_zi$new(data) ; zimvn$optimize()
+zimvn <- ZINB_fixed_Q$new(data, Q = 1, control = NB_control(heuristic = TRUE)) 
 hc    <- hclust(dist(1-cor(data$Y - zimvn$fitted)), method="ward.D2")
 cl0_hclust <- cutree(hc, 5)
 ```
@@ -102,7 +102,7 @@ ARI_zimvnb
 #### Clustering on the ZI-component of the model
 
 ```{r, zi-clustering}
-cl_rho_hcvar <- cutree(hclustvar(zimvnb$var_par$rho), 5)
+cl_rho_hcvar <- cutree(hclustvar(zimvnb$model_par$kappa), 5)
 ARI_rho <- data.frame(
     Phylum  = ARI(cl_rho_hcvar,taxo_reference$Phylum),
     Class   = ARI(cl_rho_hcvar, taxo_reference$Class),

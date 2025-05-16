@@ -11,9 +11,10 @@
 #' generated with NB_control().
 #' @return an R6 object with one of the NB classes
 #' @examples
+#' ## Normal Data
 #' ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
 #' data <- NBData$new(ex_data$Y, ex_data$X)
-#' my_normal_block <- normal_block(data, blocks = 1:6)
+#' my_normal_block <- normal_block(data, blocks = 1:6, zero)
 #' \dontrun{
 #' my_normal_block$plot("deviance")
 #' my_normal_block$plot("BIC")
@@ -21,6 +22,11 @@
 #' Y_hat <- my_normal_block$get_best_model()$fitted
 #' plot(data$Y, Y_hat); abline(0,1)
 #' }
+#' ## Normal Data with Zero Inflation
+#' ex_data_zi <- generate_normal_block_data(n=50, p=50, d=1, Q=10, kappa = rep(0.5,50))
+#' zidata <- NBData$new(ex_data_zi$Y, ex_data_zi$X)
+#' my_normal_block <- normal_block(zidata, blocks = 1:6, zero_inflation = TRUE)
+#'
 #' @export
 normal_block <- function(data,
                          blocks,

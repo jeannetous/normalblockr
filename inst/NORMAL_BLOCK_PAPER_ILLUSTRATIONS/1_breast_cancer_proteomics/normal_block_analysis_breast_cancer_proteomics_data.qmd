@@ -6,7 +6,7 @@ editor: visual
 
 ## Useful libraries
 
-```{r, useful-libraries}
+```{r useful-libraries, message=FALSE}
 library(tidyverse)
 library(normalblockr)
 library(aricode)
@@ -26,7 +26,7 @@ clinical  <- read_rds("brca_clinical.rds")
 
 Loading proteomics data to analyse.
 
-```{r}
+```{r data-load}
 RPPA_expr <- read_rds("RPPA_expr.rds")
 RPPA_meta <- read_rds("RPPA_meta.rds")
 RPPA_clin <- clinical[match(rownames(RPPA_expr), clinical$sampleId), ]
@@ -34,39 +34,34 @@ RPPA_clin <- clinical[match(rownames(RPPA_expr), clinical$sampleId), ]
 
 Formatting data for Normal-Block.
 
-```{r, Normal-Block-formatting}
+```{r Normal-Block-formatting}
 Y            <- as.matrix(RPPA_expr) %>% scale()
 X_subtype    <- model.matrix(~ 0 + PAM50_SUBTYPE, data = RPPA_clin)
-data_subtype <- normal_data$new(Y, X_subtype)
+data_subtype <- NBData$new(Y, X_subtype)
 ```
 
 ## Applying Normal-Block to the data
 
-### Running the integrated inference procedure for 1 to 50 clusters.
+### Running the integrated inference procedure for 1 to 40 clusters.
 
-```{r, running-normal-block}
-NB_prot_subtype <- normal_block(data_subtype, blocks = 1:50)
+```{r running-normal-block}
+NB_prot_subtype <- normal_block(data_subtype, blocks = 1:40)
 ```
 
 ### Model selection: criteria to fix the number of clusters
 
-<<<<<<< HEAD
-```{r, plotting-criteria}
-NB_prot_subtype$plot(c("BIC", "ICL"))
-=======
-```{r, plotting criteria}
+```{r plotting criteria}
 NB_prot_subtype$plot(c("deviance", "BIC", "ICL"))
->>>>>>> b1aa640e96852ce025a4e129721f061a1b3c82b7
 ```
 
-```{r, model-selection}
+```{r model-selection}
 selected_NB <- NB_prot_subtype$get_best_model("ICL")
 paste0("ICL selects ", selected_NB$Q, " clusters.")
 ```
 
 ## Enrichment analysis
 
-```{r, enrichment}
+```{r enrichment}
 EntrezGeneID <- str_remove_all(RPPA_meta["entrezGeneId", ], " ")
 df_inter <- data.frame(Entrez = EntrezGeneID, group  = selected_NB$clustering)
 inter_kegg <- compareCluster(Entrez~group, data = df_inter, fun='enrichKEGG', pvalueCutoff = 0.001)
