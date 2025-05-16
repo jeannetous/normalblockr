@@ -34,7 +34,7 @@ Fit a normal-block model with a variational or heuristic algorithm
 }
 \examples{
 ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
-data <- normal_data$new(ex_data$Y, ex_data$X)
+data <- NBData$new(ex_data$Y, ex_data$X)
 my_normal_block <- normal_block(data, blocks = 1:6)
 \dontrun{
 my_normal_block$plot("deviance")

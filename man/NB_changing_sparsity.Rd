@@ -15,7 +15,7 @@ R6 class for normal-block model with unknown Q (number of groups)
 
 \item{\code{control}}{store the list of user-defined model settings and optimization parameters}
 
-\item{\code{data}}{object of normal_data class, with responses and design matrix}
+\item{\code{data}}{object of NBData class, with responses and design matrix}
 }
 \if{html}{\out{</div>}}
 }
@@ -69,7 +69,7 @@ Create a new [`NB_changing_sparsity`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mydata}}{object of normal_data class, with responses and design matrix}
+\item{\code{mydata}}{object of NBData class, with responses and design matrix}
 
 \item{\code{blocks}}{group matrix or number of blocks.}
 

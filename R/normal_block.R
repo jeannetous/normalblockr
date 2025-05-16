@@ -12,7 +12,7 @@
 #' @return an R6 object with one of the NB classes
 #' @examples
 #' ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=10)
-#' data <- normal_data$new(ex_data$Y, ex_data$X)
+#' data <- NBData$new(ex_data$Y, ex_data$X)
 #' my_normal_block <- normal_block(data, blocks = 1:6)
 #' \dontrun{
 #' my_normal_block$plot("deviance")
@@ -135,19 +135,12 @@ get_model <- function(data,
     )
   )
 
-  zi_class      <- ifelse(
-    block_class != "_unknown_Q" & sparse_class != "_changing_sparsity" &
-      zero_inflation,
-    "_zi",
-    ""
-  )
-  is_collection <- ifelse(sparse_class == "_changing_sparsity" |
-                            block_class == "_unknown_Q",
-                          TRUE,
-                          FALSE)
-  myClass <- eval(str2lang(paste0(
-    "NB", zi_class, block_class, sparse_class
-  )))
+  is_collection <- ifelse(sparse_class == "_changing_sparsity" | block_class == "_unknown_Q", TRUE, FALSE)
+
+  class_name <- paste0("NB", block_class, sparse_class)
+  if (!is_collection & zero_inflation) class_name <- paste0("ZI", class_name)
+
+  myClass <- eval(str2lang(class_name))
   if (is_collection) {
     if (sparse_class == "_changing_sparsity") {
       model   <- myClass$new(data, blocks, zero_inflation, control = control)

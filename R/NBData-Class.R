@@ -1,13 +1,13 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS normal_data ##################################
+##  CLASS NBData ##################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for a generic normal model
 #' @param Y the matrix of responses (called Y in the model).
 #' @param X design matrix (called X in the model).
 #' @export
-normal_data <- R6::R6Class(
-  classname = "normal_data",
+NBData <- R6::R6Class(
+  classname = "NBData",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,7 +35,7 @@ normal_data <- R6::R6Class(
     #' @field zeros_bar where are the non-zeros in Y
     zeros_bar = NULL,
 
-    #' @description Create a new [`normal_data`] object.
+    #' @description Create a new [`NBData`] object.
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     initialize = function(Y, X) {

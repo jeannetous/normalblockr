@@ -2,11 +2,8 @@
 ##  CLASS NB_fixed_blocks                ###############
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
-#' @param data object of normal_data class, with responses and design matrix
-#' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-#' @param sparsity sparsity penalty to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with NB_control
+#' R6 class for normal-block model with known block
+#' @export
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",
   inherit   = NB,
@@ -15,7 +12,7 @@ NB_fixed_blocks <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @description Create a new [`NB_fixed_blocks`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @param data object of NBData class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
     #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control
@@ -35,10 +32,10 @@ NB_fixed_blocks <- R6::R6Class(
 
     compute_loglik  = function(B, OmegaQ, dm1 = NA, gamma = NA, mu = NA) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
-      log_det_gamma  <- as.numeric(determinant(gamma , logarithm = TRUE)$modulus)
+      log_det_Gamma  <- as.numeric(determinant(gamma , logarithm = TRUE)$modulus)
 
       J <- -.5 * (self$n * self$p * log(2 * pi * exp(1)) - self$n * sum(log(dm1)))
-      J <- J + .5 * self$n * (log_det_OmegaQ + log_det_gamma)
+      J <- J + .5 * self$n * (log_det_OmegaQ + log_det_Gamma)
       if (self$sparsity > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
         J <- J + self$n*self$Q / 2 - .5 * sum(diag(OmegaQ %*% (self$n * gamma + crossprod(mu))))

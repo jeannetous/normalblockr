@@ -1,25 +1,22 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_zi_fixed_blocks_fixed_sparsity ###############
+##  CLASS ZINB_fixed_blocks_fixed_sparsity ############
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' R6 class for a generic normal model
-#' @param data object of normal_data class, with responses and design matrix
-#' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
-#' @param sparsity to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with NB_control
-NB_zi_fixed_blocks <- R6::R6Class(
-  classname = "NB_zi_fixed_blocks",
+#' @export
+ZINB_fixed_blocks <- R6::R6Class(
+  classname = "ZINB_fixed_blocks",
   inherit   = NB,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS --------------------------------------
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @description Create a new [`NB_zi_fixed_blocks_fixed_sparsity`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @description Create a new [`ZINB_fixed_blocks_fixed_sparsity`] object.
+    #' @param data object of NBData class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
     #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control
-    #' @return A new [`NB_zi_fixed_blocks_fixed_sparsity`] object
+    #' @return A new [`ZINB_fixed_blocks_fixed_sparsity`] object
     initialize = function(data, C, sparsity = 0, control = NB_control()) {
       stopifnot("C must be a matrix" = is.matrix(C))
       stopifnot("There cannot be empty clusters" = min(colSums(C)) > 0)
@@ -42,7 +39,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
       J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
       J <- J + .5 * (self$n * log_det_OmegaQ + sum(log_det_Gamma))
       J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
-      J <- J - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+      J <- J - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
 
       if (private$sparsity_ > 0) {
         gamma_bar <- reduce(gamma, `+`)
@@ -133,7 +130,7 @@ NB_zi_fixed_blocks <- R6::R6Class(
           map(determinant, logarithm = TRUE) %>%
           map("modulus") %>% map(as.numeric) %>% unlist()
         res <- .5 * (self$n * self$Q * log(2*pi*exp(1)) + sum(log_det_Gamma))
-        res <- res - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+        res <- res - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
       } else {res <- NA}
       res
     },
@@ -145,14 +142,14 @@ NB_zi_fixed_blocks <- R6::R6Class(
       par$kappa <- private$kappa
       par
     },
-    #' @field fitted Y values predicted by the model Y values predicted by the model
+    #' @field fitted Y values predicted by the model
     fitted = function(){
       if (private$approx) {
         res <- self$data$X %*% private$B
       } else {
         res <- self$data$X %*% private$B + private$mu %*% t(private$C)
       }
-      res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
+      res <- res * self$data$zeros_bar
       res
     },
     #' @field who_am_I a method to print what model is being fitted

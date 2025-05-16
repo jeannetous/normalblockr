@@ -2,21 +2,19 @@
 ##  CLASS NB ############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic sparse Normal Block model
-#' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param Q number of clusters
-#' @param control structured list of more specific parameters, to generate with NB_control
+#' R6 abstract class for a generic sparse Normal Block model
 NB <- R6::R6Class(
   classname = "NB",
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field data object of normal_data class, with responses and design matrix
+    #' @field data object of NBData class, with responses and design matrix
     data  = NULL,
 
     #' @description Create a new [`NB`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @param data object of NBData class, with responses and design matrix
+    #' @param Q number of block/cluster
     #' @param sparsity sparsity penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_control
     #' @return A new [`NB`] object
@@ -506,6 +504,8 @@ NB <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
+    #' @field inference_method inference procedure used (heuristic or integrated with EM)
+    inference_method = function(value) ifelse(private$approx, "heuristic", "integrated"),
     #' @field n number of samples
     n = function() self$data$n,
     #' @field p number of responses per sample
@@ -514,6 +514,8 @@ NB <- R6::R6Class(
     d = function() self$data$d,
     #' @field Q number of blocks
     Q = function(value) as.integer(ncol(private$C)),
+    #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
+    n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
     model_par = function(value) c(B = private$B, dm1 = private$dm1, list(OmegaQ = private$OmegaQ)),
     #' @field nb_param number of parameters in the model
@@ -540,10 +542,6 @@ NB <- R6::R6Class(
       data.frame(nb_param = self$nb_param, Q = self$Q, n_edges = self$n_edges, sparsity = self$sparsity,
                  loglik = self$loglik, deviance = self$deviance, BIC = self$BIC, ICL = self$ICL, EBIC = self$EBIC)
     },
-    #' @field inference_method inference procedure used (heuristic or integrated with EM)
-    inference_method = function(value) ifelse(private$approx, "heuristic", "integrated"),
-    #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
-    n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field sparsity (overall sparsity parameter)
     sparsity = function(value) {
       if (missing(value)) {

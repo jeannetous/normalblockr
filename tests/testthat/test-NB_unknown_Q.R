@@ -13,7 +13,7 @@ test_that("normal block with diagonal residual covariance and unknown Q", {
   clustering_init_1 <- clustering_init_2 ; clustering_init_1[which(clustering_init_1 == 2) ] = 1
   clustering_init   <- list(clustering_init_1, clustering_init_2, clustering_init_3)
 
-  data  <- normalblockr:::normal_data$new(Y, X)
+  data  <- normalblockr:::NBData$new(Y, X)
   model <- normalblockr:::NB_unknown_Q$new(data, c(1, 2, 3), zero_inflation = FALSE,
                             control = NB_control(clustering_init = clustering_init))
   model$optimize()
@@ -22,7 +22,7 @@ test_that("normal block with diagonal residual covariance and unknown Q", {
 })
 
 test_that("normal block with unknown Q, heuristic", {
-  data  <- normal_data$new(Y, X)
+  data  <- NBData$new(Y, X)
   model <- normalblockr:::NB_unknown_Q$new(data, c(2, 3, 4), sparsity = 0.05,
                             control = NB_control(heuristic = TRUE))
   model$optimize()

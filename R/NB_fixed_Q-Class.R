@@ -2,12 +2,8 @@
 ##  CLASS NB_fixed_Q ###################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-#' R6 class for normal-block model with fixed Q (number of groups)
-#' @param data contains the matrix of responses (Y) and the design matrix (X).
-#' @param Q number of clusters
-#' @param sparsity sparsity penalty to add on blocks precision matrix for sparsity
-#' @param control structured list for specific parameters (including initial clustering proposal)
+#' R6 class for normal-block model with fixed number of groups
+#' @export
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",
   inherit = NB,
@@ -20,7 +16,9 @@ NB_fixed_Q <- R6::R6Class(
     fixed_tau = NULL,
 
     #' @description Create a new [`NB_fixed_Q`] object.
+    #' @param data contains the matrix of responses (Y) and the design matrix (X).
     #' @param Q required number of groups
+    #' @param sparsity sparsity penalty to add on blocks precision matrix for sparsity
     #' @param control structured list for specific parameters
     #' @return A new [`NB_fixed_Q`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {

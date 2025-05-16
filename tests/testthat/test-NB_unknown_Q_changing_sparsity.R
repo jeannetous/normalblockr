@@ -10,7 +10,7 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 ###############################################################################
 ###############################################################################
 
-data  <- normalblockr:::normal_data$new(Y, X)
+data  <- normalblockr:::NBData$new(Y, X)
 
 test_that("normal block with spherical residual covariance and unknown clusters", {
   model <- normalblockr:::NB_unknown_Q_changing_sparsity$new(data, c(2,3,4))
@@ -21,7 +21,7 @@ test_that("normal block with spherical residual covariance and unknown clusters"
 })
 
 test_that("normal block with spherical residual covariance and unknown clusters heuristic", {
-  data <- normal_data$new(Y, X)
+  data <- NBData$new(Y, X)
   model <- normalblockr:::NB_unknown_Q_changing_sparsity$new(data, c(2,3,4),
                                               control = NB_control(heuristic = TRUE))
   model$optimize()

@@ -18,11 +18,11 @@ NB_changing_sparsity <- R6::R6Class(
     models = NA,
     #' @field control store the list of user-defined model settings and optimization parameters
     control = NA,
-    #' @field data object of normal_data class, with responses and design matrix
+    #' @field data object of NBData class, with responses and design matrix
     data   = NA,
 
     #' @description Create a new [`NB_changing_sparsity`] object.
-    #' @param mydata object of normal_data class, with responses and design matrix
+    #' @param mydata object of NBData class, with responses and design matrix
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control
     #' @return A new [`NB_changing_sparsity`] object
@@ -172,10 +172,10 @@ NB_changing_sparsity <- R6::R6Class(
         cat("\nStability Selection for NB_fixed_blocks_sparse: \nsubsampling: ")
 
       stabs_out <- lapply(subsamples, function(subsample) {
-        mydata <- normal_data$new(Y = self$data$Y[subsample, , drop = FALSE],
+        mydata <- NBData$new(Y = self$data$Y[subsample, , drop = FALSE],
                                   X = self$data$X[subsample, , drop = FALSE])
         myNB <- NB_changing_sparsity$new(
-          mydata, blocks, self$zero_inflation, control_stabs)
+          mydata, blocks, self$control$zero_inflation, control_stabs)
         myNB$optimize(control_stabs)
 
         upper_tri <- upper.tri(diag(self$Q))

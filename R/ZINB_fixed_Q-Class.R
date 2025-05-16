@@ -1,14 +1,11 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_zi_fixed_Q ###############
+##  CLASS ZINB_fixed_Q ###############
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
-#' @param data object of normal_data class, with responses and design matrix
-#' @param Q number of clusters
-#' @param sparsity to apply on variance matrix when calling GLASSO
-#' @param control structured list of more specific parameters, to generate with NB_control
-NB_zi_fixed_Q <- R6::R6Class(
-  classname = "NB_zi_fixed_Q",
+#' R6 class for zero-inflated normal-block model with fixed number of groups#'
+#' @export
+ZINB_fixed_Q <- R6::R6Class(
+  classname = "ZINB_fixed_Q",
   inherit   = NB,
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   ## PUBLIC MEMBERS --------------------------------------
@@ -19,11 +16,12 @@ NB_zi_fixed_Q <- R6::R6Class(
     #' @field zeros indicator matrix of zeros in Y
     zeros = NULL,
 
-    #' @description Create a new [`NB_zi_fixed_Q`] object.
-    #' @param data object of normal_data class, with responses and design matrix
+    #' @description Create a new [`ZINB_fixed_Q`] object.
+    #' @param data object of NBData class, with responses and design matrix
+    #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param Q required number of groups
     #' @param control structured list of more specific parameters
-    #' @return A new [`NB_zi_fixed_Q`] object
+    #' @return A new [`ZINB_fixed_Q`] object
     initialize = function(data, Q, sparsity = 0, control = NB_control()) {
       super$initialize(data, Q, sparsity, control)
       self$fixed_tau  <- control$fixed_tau
@@ -181,7 +179,7 @@ NB_zi_fixed_Q <- R6::R6Class(
       if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
         res <- res - sum(xlogx(private$C))
-        res <- res - self$n * sum(xlogx(kappa) - xlogx(1 - kappa))
+        res <- res - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
       } else {res <- NA}
       res
     },

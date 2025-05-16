@@ -9,7 +9,7 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 
 ###############################################################################
 ###############################################################################
-data <- normalblockr:::normal_data$new(Y, X)
+data <- NBData$new(Y, X)
 
 test_that("normal block with changing sparsity, integrated inference", {
   model <- normalblockr:::NB_changing_sparsity$new(data, Q, control = NB_control(verbose = FALSE))
