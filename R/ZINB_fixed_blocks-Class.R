@@ -37,7 +37,7 @@ ZINB_fixed_blocks <- R6::R6Class(
         map("modulus") %>% map(as.numeric) %>% unlist()
 
       J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
-      J <- J + .5 * (self$n * log_det_OmegaQ + sum(log_det_Gamma))
+      J <- J + .5 * self$n * log_det_OmegaQ + .5 * sum(log_det_Gamma)
       J <- J +  private$ZI_cond_mean
 
       if (private$sparsity_ > 0) {

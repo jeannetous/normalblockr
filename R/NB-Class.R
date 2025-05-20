@@ -271,7 +271,7 @@ NB <- R6::R6Class(
     #' @description plots log-likelihood values during model optimization
     plot_loglik = function(type = "b", log = "", neg = FALSE) {
       neg <- ifelse(neg, -1, 1)
-      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
+      plot(seq_along(self$objective[-1]), neg * self$objective[-1], type = type, log = log)
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -435,16 +435,14 @@ NB <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## MLE of ZI Diagonal Normal distribution
     zi_diag_normal_inference = function(){
-      kappa <- colMeans(self$data$zeros)
       B     <- self$data$XtXm1 %*% self$data$XtY
       dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
       for (i in 1:3) { # a couple of iterates is enough
         B     <- private$zi_diag_normal_optim_B(B, dm1)
         dm1   <- self$data$nY / colSums(self$data$zeros_bar * (self$data$Y - self$data$X %*% B)^2)
       }
-      rho    <- matrix(kappa, self$data$n, self$data$p, byrow = TRUE)
-      R <- (1 - rho) * (self$data$Y - self$data$X %*% B)
-      list(B = B, dm1 = dm1, kappa = kappa, R = R)
+      R <- self$data$zeros_bar * (self$data$Y - self$data$X %*% B)
+      list(B = B, dm1 = dm1, kappa = private$kappa, R = R)
     },
 
     zi_diag_normal_obj_grad_B = function(B_vec, DM1) {

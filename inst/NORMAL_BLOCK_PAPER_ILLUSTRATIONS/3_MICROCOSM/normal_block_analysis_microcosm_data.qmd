@@ -53,6 +53,7 @@ Based on previous analysis, we use hclust to get a good initial clustering for t
 
 ```{r initial-clustering}
 zimvn <- ZINB_fixed_Q$new(data, Q = 1, control = NB_control(heuristic = TRUE)) 
+zimvn$optimize()
 hc    <- hclust(dist(1-cor(data$Y - zimvn$fitted)), method="ward.D2")
 cl0_hclust <- cutree(hc, 5)
 ```
@@ -61,14 +62,10 @@ cl0_hclust <- cutree(hc, 5)
 
 ```{r running-zimvnb}
 zimvnb <- normal_block(data, blocks = 5, zero_inflation = TRUE,
-                       sparsity = 0.001,
                        control = NB_control(clustering_init = cl0_hclust,
-                                            threshold = 1e-6, niter = 300,                    
+                                            threshold = 1e-6, niter = 300,
+                                            fixed_tau = TRUE,
                                             verbose = TRUE))
-```
-
-```{r optim-check}
-zimvnb$plot_loglik(log="xy", neg=TRUE)
 ```
 
 ### Fitting quality

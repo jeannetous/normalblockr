@@ -35,8 +35,9 @@ ZINB_fixed_Q <- R6::R6Class(
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
 
       J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
-      J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
-      J <- J - sum(xlogx(C)) + .5 * sum(log(S)) + private$ZI_cond_mean
+      J <- J + .5 * self$n * log_det_OmegaQ + .5 * sum(log(S))
+      J <- J +  sum(C %*% log(alpha)) - sum(xlogx(C))
+      J <- J + private$ZI_cond_mean
 
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
@@ -57,7 +58,7 @@ ZINB_fixed_Q <- R6::R6Class(
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)
       list(B = zi_diag$B, dm1 = zi_diag$dm1, OmegaQ = OmegaQ,
-           alpha = colMeans(private$C), kappa = zi_diag$kappa,
+           alpha = colMeans(private$C), kappa = private$kappa,
            C = private$C)
     },
 
@@ -75,20 +76,20 @@ ZINB_fixed_Q <- R6::R6Class(
     EM_step = function(B, dm1, OmegaQ, alpha, kappa, C, M, S) {
 
       R <- self$data$Y - self$data$X %*% B
-      dm1_mat <- matrix(dm1, self$n, self$p, byrow = TRUE) * self$data$zeros_bar
+      DM1 <- matrix(dm1, self$n, self$p, byrow = TRUE) * self$data$zeros_bar
 
       # E step
-      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, dm1_mat, R, OmegaQ, C)
-      S <-  1 / sweep(dm1_mat %*% C, 2, diag(OmegaQ), "+")
+      M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, DM1, R, OmegaQ, C)
+      S <-  1 / sweep(DM1 %*% C, 2, diag(OmegaQ), "+")
       if (self$Q > 1 & !self$fixed_tau) {
-        eta <- -.5 * crossprod(dm1_mat, (M^2 + S))
-        eta <- eta + crossprod(dm1_mat * R, M) + outer(rep(1, self$p), log(alpha)) - 1
+        eta <- -.5 * crossprod(DM1, (M^2 + S))
+        eta <- eta + crossprod(DM1 * R, M) + outer(rep(1, self$p), log(alpha)) - 1
         C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
       A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
 
       # M step
-      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, dm1_mat, M, C)
+      B   <- private$zi_NB_fixed_Q_nlopt_optim_B(B, DM1, M, C)
       dm1  <- switch(private$res_covariance,
                      "diagonal"  = self$data$nY / colSums(self$data$zeros_bar * A),
                      "spherical" = rep(self$data$npY / sum(self$data$zeros_bar * A), self$p))
@@ -108,7 +109,7 @@ ZINB_fixed_Q <- R6::R6Class(
       res
     },
 
-    zi_NB_fixed_Q_nlopt_optim_M = function(M0, dm1_mat, R, OmegaQ, C) {
+    zi_NB_fixed_Q_nlopt_optim_M = function(M0, DM1, R, OmegaQ, C) {
       M0_vec <- as.vector(M0)
       res <- nloptr::nloptr(
         x0 = M0_vec,
@@ -117,9 +118,9 @@ ZINB_fixed_Q <- R6::R6Class(
           algorithm = "NLOPT_LD_LBFGS",
           maxeval = 100
         ),
-        DM1    = dm1_mat,
-        DM1RC  = (dm1_mat * R) %*% C,
-        DM1C   = dm1_mat %*% C,
+        DM1    = DM1,
+        DM1RC  = (DM1 * R) %*% C,
+        DM1C   = DM1 %*% C,
         R      = R,
         C      = C,
         OmegaQ = OmegaQ
@@ -183,7 +184,7 @@ ZINB_fixed_Q <- R6::R6Class(
       } else {
         res <- self$data$X %*% private$B + private$M %*% t(private$C)
       }
-      res <- sweep(res, MARGIN = 2, STATS = 1 - private$kappa, FUN = "*")
+      res <- res * self$data$zeros_bar
       res
     },
     #' @field who_am_I a method to print what model is being fitted
