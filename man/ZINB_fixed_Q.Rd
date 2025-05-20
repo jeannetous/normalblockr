@@ -15,8 +15,6 @@ R6 class for zero-inflated normal-block model with fixed number of groups#'
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{fixed_tau}}{whether tau should be fixed at clustering_init during optimization, useful for stability selection}
-
-\item{\code{zeros}}{indicator matrix of zeros in Y}
 }
 \if{html}{\out{</div>}}
 }
