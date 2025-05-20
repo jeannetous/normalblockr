@@ -40,7 +40,7 @@ ZINB_fixed_Q <- R6::R6Class(
 
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
-        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), self$Q, self$Q))))
+        J <- J + .5 * self$n * self$Q - .5 * sum(diag(OmegaQ %*% (crossprod(M) + diag(colSums(S), nrow = self$Q, ncol = self$Q))))
         J <- J - private$sparsity_ * sum(abs(self$sparsity_weights * OmegaQ))
       }
       J
