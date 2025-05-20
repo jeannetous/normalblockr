@@ -62,6 +62,7 @@ cl0_hclust <- cutree(hc, 5)
 
 ```{r running-zimvnb}
 zimvnb <- normal_block(data, blocks = 5, zero_inflation = TRUE,
+                       sparsity = 0.001
                        control = NB_control(clustering_init = cl0_hclust,
                                             threshold = 1e-6, niter = 300,
                                             fixed_tau = TRUE,
@@ -94,21 +95,6 @@ ARI_zimvnb <- data.frame(
     Species = ARI(zimvnb$clustering, taxo_reference$Species)
   )
 ARI_zimvnb
-```
-
-#### Clustering on the ZI-component of the model
-
-```{r, zi-clustering}
-cl_rho_hcvar <- cutree(hclustvar(zimvnb$model_par$kappa), 5)
-ARI_rho <- data.frame(
-    Phylum  = ARI(cl_rho_hcvar,taxo_reference$Phylum),
-    Class   = ARI(cl_rho_hcvar, taxo_reference$Class),
-    Order   = ARI(cl_rho_hcvar, taxo_reference$Order),
-    Family  = ARI(cl_rho_hcvar, taxo_reference$Family),
-    Genus   = ARI(cl_rho_hcvar, taxo_reference$Genus),
-    Species = ARI(cl_rho_hcvar, taxo_reference$Species)
-  )
-ARI_rho
 ```
 
 ### Network

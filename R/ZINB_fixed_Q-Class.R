@@ -100,11 +100,11 @@ ZINB_fixed_Q <- R6::R6Class(
            C = C, M = M, S = S)
     },
 
-    zi_NB_fixed_Q_obj_grad_M = function(M_vec, DM1, DM1RC, DM1C, R, C, OmegaQ) {
+    zi_NB_fixed_Q_obj_grad_M = function(M_vec, DM1, DM1RC, DM1C, R, CT, OmegaQ) {
       M    <- matrix(M_vec, nrow = self$n, ncol = self$Q)
       MO   <- M %*% OmegaQ
       grad <- DM1RC - DM1C * M - MO
-      obj <- -.5 * ( sum(DM1 * (M^2 %*% t(C)) - 2*R * (M %*% t(C))) + sum(MO * M) )
+      obj <- -.5 * ( sum(DM1 * ((M^2) %*% CT - 2*R * (M %*% CT))) + sum(MO * M) )
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
@@ -122,7 +122,7 @@ ZINB_fixed_Q <- R6::R6Class(
         DM1RC  = (DM1 * R) %*% C,
         DM1C   = DM1 %*% C,
         R      = R,
-        C      = C,
+        CT     = t(C),
         OmegaQ = OmegaQ
       )
       newM <- matrix(res$solution, nrow = self$n, ncol = self$Q)

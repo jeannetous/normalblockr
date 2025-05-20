@@ -495,7 +495,8 @@ NB <- R6::R6Class(
     },
 
     heuristic_cluster_residuals = function(R){
-      clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+      ## clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
+      clustering <- ClustOfVar::kmeansvar(R, init = self$Q)$cluster
       if (length(unique(clustering)) < self$Q) {
         clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
       }
