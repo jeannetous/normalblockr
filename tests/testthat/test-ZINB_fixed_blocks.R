@@ -10,13 +10,13 @@ test_that("zero inflated normal block with diagonal residual covariance and know
   ## Diagonal model
   model <- ZINB_fixed_blocks$new(data, C)
   model$optimize()
-  expect_lt(model$BIC, 3500)
-  expect_gt(model$loglik, -1600)
+  expect_lt(model$BIC, 5600)
+  expect_gt(model$loglik, -2700)
   expect_lt(Metrics::rmse(model$fitted, Y), 0.7)
 
   model <- ZINB_fixed_blocks$new(data, C, sparsity = 2)
   model$optimize()
-  expect_gt(model$loglik, -1650)
+  expect_gt(model$loglik, -2700)
   expect_lt(Metrics::rmse(model$fitted, Y), 0.7)
 })
 
@@ -25,12 +25,12 @@ test_that("zero inflated normal block with spherical residual covariance and kno
   ctrl <- NB_control(noise_covariance = "spherical")
   model <- ZINB_fixed_blocks$new(data, C, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -1610)
+  expect_gt(model$loglik, -2700)
   expect_lt(Metrics::rmse(model$fitted, Y), 0.7)
 
   model <- ZINB_fixed_blocks$new(data, C, sparsity = 2, control = ctrl)
   model$optimize()
-  expect_gt(model$loglik, -1650)
+  expect_gt(model$loglik, -2700)
   expect_lt(Metrics::rmse(model$fitted, Y), 0.7)
 })
 

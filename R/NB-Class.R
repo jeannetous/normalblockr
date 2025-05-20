@@ -69,6 +69,12 @@ NB <- R6::R6Class(
       } else {
         private$C <- matrix(NA, self$data$n, Q)
       }
+
+      ## ZI parameters that will remain fixed
+      private$kappa <- colMeans(data$zeros)
+      private$ZI_cond_mean <-
+        sum(xlogy(data$zeros, rep(private$kappa, each = data$n) )) +
+        sum(xlogy(data$zeros_bar, 1 - rep(private$kappa, each = data$n) ))
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -376,6 +382,7 @@ NB <- R6::R6Class(
     res_covariance    = NA, # shape of the residuals covariance (diagonal or spherical)
     approx            = NA, # use approximation/heuristic approach or not
     clustering_approx = NA, # clustering function in the heuristic approach
+    ZI_cond_mean      = NA, # conditional mean of the ZI component (fixed)
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Methods for integrated EM inference------------------

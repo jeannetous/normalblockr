@@ -34,11 +34,9 @@ ZINB_fixed_Q <- R6::R6Class(
     compute_loglik  = function(B, dm1, OmegaQ, alpha, kappa, M, S, C) {
       log_det_OmegaQ <- as.numeric(determinant(OmegaQ, logarithm = TRUE)$modulus)
 
-      J <- -.5 * (self$data$npY * log(2 * pi * exp(1)) - sum(self$data$nY * log(dm1)))
+      J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
       J <- J + .5 * self$n * log_det_OmegaQ + sum(C %*% log(alpha))
-      J <- J - sum(xlogx(C)) + .5 * sum(log(S))
-      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
-      J <- J - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
+      J <- J - sum(xlogx(C)) + .5 * sum(log(S)) + private$ZI_cond_mean
 
       if (private$sparsity_ > 0) {
         ## when not sparse, this terms equal -n Q /2 by definition of OmegaQ_hat
@@ -175,7 +173,6 @@ ZINB_fixed_Q <- R6::R6Class(
       if (!private$approx) {
         res <- 0.5 * self$n * self$Q * log(2 * pi * exp(1)) + .5 * sum(log(private$S))
         res <- res - sum(xlogx(private$C))
-        res <- res - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
       } else {res <- NA}
       res
     },

@@ -38,8 +38,7 @@ ZINB_fixed_blocks <- R6::R6Class(
 
       J <- -.5 * self$data$npY * log(2 * pi * exp(1)) + .5 * sum(self$data$nY * log(dm1))
       J <- J + .5 * (self$n * log_det_OmegaQ + sum(log_det_Gamma))
-      J <- J + sum(self$data$zeros %*% log(kappa)) + sum(self$data$zeros_bar %*% log(1 - kappa))
-      J <- J - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
+      J <- J +  private$ZI_cond_mean
 
       if (private$sparsity_ > 0) {
         gamma_bar <- reduce(gamma, `+`)
@@ -130,7 +129,6 @@ ZINB_fixed_blocks <- R6::R6Class(
           map(determinant, logarithm = TRUE) %>%
           map("modulus") %>% map(as.numeric) %>% unlist()
         res <- .5 * (self$n * self$Q * log(2*pi*exp(1)) + sum(log_det_Gamma))
-        res <- res - self$n * (sum(xlogx(kappa)) + sum(xlogx(1 - kappa)))
       } else {res <- NA}
       res
     },
