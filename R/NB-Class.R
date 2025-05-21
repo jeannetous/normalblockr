@@ -530,7 +530,7 @@ NB <- R6::R6Class(
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function(value) c(B = private$B, dm1 = private$dm1, list(OmegaQ = private$OmegaQ)),
+    model_par = function(value) list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ),
     #' @field nb_param number of parameters in the model
     nb_param = function(value) {
       nb_param_D <- ifelse(private$res_covariance == "diagonal", self$p, 1)

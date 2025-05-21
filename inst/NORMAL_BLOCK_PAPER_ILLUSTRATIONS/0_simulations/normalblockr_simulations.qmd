@@ -58,7 +58,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
   args_fixed_blocks    <- c(args_common, list(blocks = true_param$C))
   myNB_fixed_blocks    <- do.call(normal_block, args_fixed_blocks)
 
-  res_fixed_blocks_BIC <- get_measures(myNB_fixed_blocks, true_param, "BIC", TRUE)
+  res_fixed_blocks_BIC <- get_measures(myNB_fixed_blocks, true_param, data, "BIC", TRUE)
   
   ## -------------------------------------------------------------------------------------
   ## NORMAL BLOCKS WITH UNOBSERVED BLOCKS BUT FIXED NUMBER OF BLOCKS
@@ -67,7 +67,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
   args_fixed_Q <- c(args_common, list(blocks = Q))
   myNB_fixed_Q <- do.call(normal_block, args_fixed_Q)
 
-  res_fixed_Q_BIC   <- get_measures(myNB_fixed_Q, true_param, "BIC")
+  res_fixed_Q_BIC   <- get_measures(myNB_fixed_Q, true_param, data, "BIC")
   
   ## -------------------------------------------------------------------------------------
   ## G-LASSO ON RESIDUALS OF NORMAL BLOCKS WITH KNOWN BLOCKS (heuristic method)
@@ -79,7 +79,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
   args_heuristic_fixed_blocks$sparsity <- NULL
   
   heuristic_fixed_blocks     <- do.call(normal_block, args_heuristic_fixed_blocks)
-  res_heuristic_fixed_blocks <- get_measures(heuristic_fixed_blocks, true_param,
+  res_heuristic_fixed_blocks <- get_measures(heuristic_fixed_blocks, true_param, data,
                                              observed_blocks = TRUE, heuristic = TRUE)
   
   ## -------------------------------------------------------------------------------------
@@ -94,7 +94,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
   
   heuristic_sigma_cl      <- do.call(normal_block, args_heuristic_sigma_cl)
 
-  res_heuristic_sigma_cl  <- get_measures(heuristic_sigma_cl, true_param,
+  res_heuristic_sigma_cl  <- get_measures(heuristic_sigma_cl, true_param, data,
                                                   observed_blocks = FALSE, heuristic = TRUE)
 
   ## -------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
                                                      clustering_approx = "kmeans")
 
   heuristic_residuals_cl  <- do.call(normal_block, args_heuristic_residuals_cl)
-  res_heuristic_residuals_cl <- get_measures(heuristic_residuals_cl, true_param,
+  res_heuristic_residuals_cl <- get_measures(heuristic_residuals_cl, true_param, data,
                                              observed_blocks = FALSE, heuristic = TRUE)
 
   res <- as.data.frame(
@@ -139,7 +139,7 @@ multiple_simulations <- function(n_simu, n, p, Q, d, kappa,
                                  omega_structure = c("erdos_reyni",
                                                      "preferential_attachment","community"),
                                  mc.cores = max(1, detectCores() - 2)){
-
+  
     cat("Settings: (n, p, Q, d, kappa) = (",n, p, Q, d, mean(kappa), ")\n")
     omega_structure <- match.arg(omega_structure)
     # multiple_res    <- lapply(1:n_simu,
@@ -196,3 +196,4 @@ res <- grid_simulations(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
                         omega_structure_list, saving_folder = NULL,
                         mc.cores = max(1, detectCores() - 2))
 ```
+

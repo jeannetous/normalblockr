@@ -93,11 +93,12 @@ get_auc <- function(omega_true, NB_sparse, permutation = NULL){
 
 #' Function to compute different measures to assess the quality of the inference by a given Normal-Block model
 #' @param NB_object Normal-Block object to assess
+#' @param data NBData object
 #' @param param list of true parameters to compare the results to
 #' @param model_selection criterion for model selection if applicable
 #' @param observed_blocks boolean, whether the clustering is observed or not
 #' @param heuristic boolean, whether a heuristic method was used for the inference
-get_measures <- function(NB_object, param, model_selection = "None",
+get_measures <- function(NB_object, param, data, model_selection = "None",
                          observed_blocks = FALSE, heuristic = FALSE) {
   # Select best sparsity level according to the chosen criterion
   if(heuristic){
@@ -130,7 +131,7 @@ get_measures <- function(NB_object, param, model_selection = "None",
     rmse_B = rmse(param$B, model$model_par$B),
     rmse_D = rmse(diag(param$D), 1/model$model_par$dm1),
     rmse_kappa = ifelse(is.null(model$model_par$kappa), NA, rmse(param$kappa, model$model_par$kappa)),
-    rmse_fit = rmse(model$fitted, NB_object$Y),
+    rmse_fit = rmse(model$fitted, data$Y),
     rmse_omega = rmse_omega(param$Omega, omega_hat, best_perm),
     roc_metrics(param$Omega, omega_hat, best_perm)
   )
