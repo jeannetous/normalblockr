@@ -52,8 +52,8 @@ NB_fixed_Q <- R6::R6Class(
 
     get_heuristic_parameters = function(){
       reg_res   <- private$multivariate_normal_inference()
-      if (anyNA(private$C)) # if none initial clustering provided
-        private$C <- private$clustering_approx(reg_res$R)
+      if (anyNA(private$C)) # if no initial clustering provided
+        private$C <- private$heuristic_clustering(reg_res$R)
       private$C <- check_one_boundary(check_zero_boundary(private$C))
       SigmaQ    <- private$heuristic_SigmaQ_from_Sigma(reg_res$Sigma)
       OmegaQ    <- private$get_OmegaQ(SigmaQ)

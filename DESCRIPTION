@@ -27,6 +27,7 @@ Imports:
     R6,
     ggplot2,
     igraph,
+    sbm,
     MASS
 RoxygenNote: 7.3.2
 Suggests: 

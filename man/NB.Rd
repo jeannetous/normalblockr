@@ -259,7 +259,7 @@ A new [`NB`] object
 \subsection{Method \code{plot_loglik()}}{
 plots log-likelihood values during model optimization
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik(type = "b", log = "", neg = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik(type = "b", log = "xy", neg = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

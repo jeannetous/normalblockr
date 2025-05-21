@@ -16,7 +16,7 @@ NB_control(
   verbose = TRUE,
   heuristic = FALSE,
   noise_covariance = c("diagonal", "spherical"),
-  clustering_approx = c("residuals", "covariance")
+  clustering_approx = c("ward2", "kmeans", "sbm")
 )
 }
 \arguments{

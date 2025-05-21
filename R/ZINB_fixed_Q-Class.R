@@ -53,7 +53,7 @@ ZINB_fixed_Q <- R6::R6Class(
     get_heuristic_parameters = function() {
       zi_diag <- private$zi_diag_normal_inference()
       if (anyNA(private$C))
-        private$C <- private$clustering_approx(zi_diag$R)
+        private$C <- private$heuristic_clustering(zi_diag$R)
       private$C <- check_one_boundary(check_zero_boundary(private$C))
       SigmaQ <- private$heuristic_SigmaQ_from_Sigma(cov(zi_diag$R))
       OmegaQ <- private$get_OmegaQ(SigmaQ)

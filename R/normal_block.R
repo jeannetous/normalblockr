@@ -87,7 +87,7 @@ NB_control <- function(
     verbose              = TRUE,
     heuristic            = FALSE,
     noise_covariance     = c("diagonal", "spherical"),
-    clustering_approx    = c("residuals", "covariance")) {
+    clustering_approx    = c("ward2", "kmeans", "sbm")) {
 
   if (!is.null(sparsity_weights))
     stopifnot(all(is.matrix(sparsity_weights), isSymmetric(sparsity_weights)))

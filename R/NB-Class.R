@@ -34,9 +34,11 @@ NB <- R6::R6Class(
       private$approx <- control$heuristic
       private$clustering_approx <-
         switch(control$clustering_approx,
-               "residuals"  = private$heuristic_cluster_residuals,
-               "covariance" = private$heuristic_cluster_sigma
+               "kmeans"    = private$heuristic_cluster_residuals_kmeans,
+               "ward2"     = private$heuristic_cluster_sigma_ward2,
+               "sbm"       = private$heuristic_cluster_sigma_sbm
         )
+
       ## penalty mask
       private$sparsity_ <- sparsity
       weights <- matrix(1, Q, Q)
@@ -269,9 +271,9 @@ NB <- R6::R6Class(
     #' @param log char for logarithmic axes (see plot.default)
     #' @param neg boolean plot negative log-likelihood (useful when log="y")
     #' @description plots log-likelihood values during model optimization
-    plot_loglik = function(type = "b", log = "", neg = FALSE) {
+    plot_loglik = function(type = "b", log = "xy", neg = TRUE) {
       neg <- ifelse(neg, -1, 1)
-      plot(seq_along(self$objective[-1]), neg * self$objective[-1], type = type, log = log)
+      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -475,7 +477,7 @@ NB <- R6::R6Class(
 
     heuristic_SigmaQ_from_Sigma = function(Sigma){
       Sigma_Q <- (t(private$C) %*% Sigma %*% private$C) / outer(colSums(private$C), colSums(private$C))
-### TODO: why is there any NA?
+      ### TODO: why is there any NA?
       if (anyNA(Sigma_Q)) {
         diag(Sigma_Q)[is.na(diag(Sigma_Q))] <- mean(diag(Sigma_Q)[!is.na(diag(Sigma_Q))])
         Sigma_Q[is.na(Sigma_Q)] <- 0
@@ -483,27 +485,34 @@ NB <- R6::R6Class(
       Sigma_Q
     },
 
-    heuristic_cluster_sigma = function(R){
-      sink('/dev/null')
-      mySBM <- cov(R) %>%
-        sbm::estimateSimpleSBM("gaussian",
-                               estimOption=list(verbosity=0, exploreMin=self$Q, verbosity=0, plot=FALSE, nbCores=1)
-        )
-      sink()
-      mySBM$setModel(self$Q)
-      mySBM$memberships |> as_indicator()
-    },
-
-    heuristic_cluster_residuals = function(R){
-      ## clustering <- kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
-      clustering <- ClustOfVar::kmeansvar(R, init = self$Q)$cluster
+    heuristic_clustering = function(R) {
+      clustering <- private$clustering_approx(R)
       if (length(unique(clustering)) < self$Q) {
         clustering <- cutree(ClustOfVar::hclustvar(R), self$Q)
       }
       C <- as_indicator(clustering)
       if (min(colSums(C)) < 1) warning("Initialization failed to place elements in each cluster")
       C
+    },
+
+    heuristic_cluster_sigma_ward2 = function(R){
+      hc <- hclust(dist(1 - cor(R)), method = "ward.D2")
+      cutree(hc, self$Q)
+    },
+
+    heuristic_cluster_sigma_sbm = function(R){
+      options <- list(verbosity=0, exploreMin=self$Q, verbosity=0, plot=FALSE, nbCores=1)
+      sink('/dev/null')
+      mySBM <- sbm::estimateSimpleSBM(cov(R), "gaussian", estimOptions = options)
+      sink()
+      mySBM$setModel(self$Q)
+      mySBM$memberships
+    },
+
+    heuristic_cluster_residuals_kmeans = function(R) {
+      kmeans(t(R), self$Q, nstart = 30, iter.max = 50)$cluster
     }
+
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -563,7 +572,7 @@ NB <- R6::R6Class(
         private$weights
       } else {
         stopifnot("must be a Q x Q matrix" =
-          all(is.matrix(value), nrow(value) == ncol(value), ncol(value) == self$Q))
+                    all(is.matrix(value), nrow(value) == ncol(value), ncol(value) == self$Q))
         private$weights <- value
       }
     },
