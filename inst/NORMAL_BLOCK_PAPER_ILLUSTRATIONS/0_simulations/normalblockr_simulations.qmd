@@ -6,13 +6,13 @@ editor: visual
 
 ## Useful libraries & functions
 
-```{r, useful-libraries}
+```{r useful-libraries}
 library(normalblockr)
 library(parallel)
 library(tibble)
 ```
 
-```{r, simulations-functions}
+```{r simulations-functions}
 source("utils.R")
 source("data_generation.R")
 source("omega_generation.R")
@@ -22,7 +22,7 @@ source("measures.R")
 
 ## Function to run one simulation
 
-```{r, one-simulation}
+```{r one-simulation}
 #' Function to generate data and assess the results of the inference methods once
 #' @param simu integer, rank of the simulations being run (useful when running multiple simulations)
 #' @param n number of individuals in the data
@@ -126,7 +126,7 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
 
 ## Function to run multiple simulations
 
-```{r, multiple-simulations}
+```{r multiple-simulations}
 #' Function to run multiple simulations with one parametrization
 #' @param n_simu number of simulations to run
 #' @param n number of individuals in the data
@@ -156,7 +156,7 @@ multiple_simulations <- function(n_simu, n, p, Q, d, kappa,
 
 ## Functions to run a grid of simulations over a set of parameters
 
-```{r, simulations-grid}
+```{r simulations-grid}
 #' Function to run a grid of simulations with different parametrization
 #' @param n_simu number of simulations to run for each parametrization
 #' @param n_list list of values for n, number of individuals in the data
@@ -184,7 +184,7 @@ grid_simulations <- function(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
 }
 ```
 
-```{r, example}
+```{r example}
 n_simu = 3 ; n_list = c(50, 100) ; p_list = c(50) ; Q_list = c(3, 5) ; d_list = c(1) 
 
 kappa_list <- list(rep(0, 50),
