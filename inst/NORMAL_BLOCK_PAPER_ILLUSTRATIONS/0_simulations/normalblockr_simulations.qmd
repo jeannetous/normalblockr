@@ -110,17 +110,17 @@ one_simulation <- function(simu, n, p, Q, d, kappa,
   heuristic_residuals_cl  <- do.call(normal_block, args_heuristic_residuals_cl)
   res_heuristic_residuals_cl <- get_measures(heuristic_residuals_cl, true_param, data,
                                              observed_blocks = FALSE, heuristic = TRUE)
-
   res <- as.data.frame(
     cbind(simu = simu, n = n, p = p, Q = Q,
           zero_inflation = mean(kappa), omega_structure = omega_structure,
-          rbind(c(method = "NB", res_fixed_blocks_BIC),
-                c(method = "NB", res_fixed_Q_BIC),
-                c(method = "H_fixed", res_heuristic_fixed_blocks),
-                c(method = "H_sigma", res_heuristic_sigma_cl),
-                c(method = "H_residuals", res_heuristic_residuals_cl)
+          method = c("NB", "NB", "H_fixed", "H_sbm", "H_kmeans"), 
+          rbind(res_fixed_blocks_BIC,
+                res_fixed_Q_BIC,
+                res_heuristic_fixed_blocks,
+                res_heuristic_sigma_cl,
+                res_heuristic_residuals_cl
           )))
-  return(res)
+  res
 }
 ```
 
@@ -196,4 +196,3 @@ res <- grid_simulations(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
                         omega_structure_list, saving_folder = NULL,
                         mc.cores = max(1, detectCores() - 2))
 ```
-

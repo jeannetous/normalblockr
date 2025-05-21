@@ -123,7 +123,7 @@ get_measures <- function(NB_object, param, data, model_selection = "None",
   }
 
   ## get metrics
-  res <- c(
+  res <- as.data.frame(c(list(
     criterion = model_selection,
     fixed_blocks = observed_blocks,
     AUC = get_auc(param$Omega, NB_object, best_perm),
@@ -132,8 +132,7 @@ get_measures <- function(NB_object, param, data, model_selection = "None",
     rmse_D = rmse(diag(param$D), 1/model$model_par$dm1),
     rmse_kappa = ifelse(is.null(model$model_par$kappa), NA, rmse(param$kappa, model$model_par$kappa)),
     rmse_fit = rmse(model$fitted, data$Y),
-    rmse_omega = rmse_omega(param$Omega, omega_hat, best_perm),
-    roc_metrics(param$Omega, omega_hat, best_perm)
-  )
+    rmse_omega = rmse_omega(param$Omega, omega_hat, best_perm)
+  ), roc_metrics(param$Omega, omega_hat, best_perm)))
   res
 }
