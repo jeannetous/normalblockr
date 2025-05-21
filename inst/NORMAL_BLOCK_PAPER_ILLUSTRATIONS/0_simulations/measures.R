@@ -109,7 +109,7 @@ get_measures <- function(NB_object, param, model_selection = "None",
 
   # Get best permutation of Omega according to rmse when possible
   omega_hat <- model$model_par$OmegaQ
-  if (known_blocks) {
+  if (observed_blocks) {
     best_perm <- NULL
   } else if (model$Q < 7) {
     perms <- permn(model$Q)
@@ -124,7 +124,7 @@ get_measures <- function(NB_object, param, model_selection = "None",
   ## get metrics
   res <- c(
     criterion = model_selection,
-    fixed_blocks = known_blocks,
+    fixed_blocks = observed_blocks,
     AUC = get_auc(param$Omega, NB_object, best_perm),
     ARI = ARI(get_clusters(param$C), model$clustering),
     rmse_B = rmse(param$B, model$model_par$B),
