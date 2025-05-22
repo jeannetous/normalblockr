@@ -82,8 +82,8 @@ ZINB_fixed_Q <- R6::R6Class(
       M <- private$zi_NB_fixed_Q_nlopt_optim_M(M, DM1, R, OmegaQ, C)
       S <-  1 / sweep(DM1 %*% C, 2, diag(OmegaQ), "+")
       if (self$Q > 1 & !self$fixed_tau) {
-        eta <- -.5 * crossprod(DM1, (M^2 + S))
-        eta <- eta + crossprod(DM1 * R, M) + outer(rep(1, self$p), log(alpha)) - 1
+        eta <- -.5 * crossprod(DM1, (M^2 + S)) + crossprod(DM1 * R, M)
+        eta <- sweep(eta, 2, log(alpha) - 1, "+")
         C <- t(check_zero_boundary(check_one_boundary(apply(eta, 1, softmax))))
       }
       A <- R^2 - 2 * R * tcrossprod(M,C) + tcrossprod(M^2 + S, C)
@@ -129,15 +129,15 @@ ZINB_fixed_Q <- R6::R6Class(
       newM
     },
 
-    zi_NB_fixed_Q_obj_grad_B = function(B_vec, dm1_mat, MC) {
+    zi_NB_fixed_Q_obj_grad_B = function(B_vec, DM1, MC) {
       R    <- self$data$Y - self$data$X %*% matrix(B_vec, nrow = self$d, ncol = self$p)
-      grad <- crossprod(self$data$X, dm1_mat * (R - MC))
-      obj  <- -.5 * sum(dm1_mat * (R^2 - 2 * R * MC))
+      grad <- crossprod(self$data$X, DM1 * (R - MC))
+      obj  <- -.5 * sum(DM1 * (R^2 - 2 * R * MC))
       res  <- list("objective" = -obj, "gradient"  = -grad)
       res
     },
 
-    zi_NB_fixed_Q_nlopt_optim_B = function(B0, dm1_mat, M, C) {
+    zi_NB_fixed_Q_nlopt_optim_B = function(B0, DM1, M, C) {
       res <- nloptr::nloptr(
         x0 = as.vector(B0),
         eval_f = private$zi_NB_fixed_Q_obj_grad_B,
@@ -145,7 +145,7 @@ ZINB_fixed_Q <- R6::R6Class(
           algorithm = "NLOPT_LD_LBFGS",
           maxeval = 100
         ),
-        dm1_mat = dm1_mat,
+        DM1 = DM1,
         MC = tcrossprod(M, C)
       )
       newB <- matrix(res$solution, nrow = self$d, ncol = self$p)
