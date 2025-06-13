@@ -50,10 +50,11 @@ data <- NBData$new(Y, X)
 ## Running ZI-Normal-Block on the data with the selected clustering
 
 ```{r running-zimvnb}
-zimvnb <- normal_block(data, blocks = 4, zero_inflation = TRUE,
+zimvnb_all <- normal_block(data, blocks = 2:15, zero_inflation = TRUE,
                        sparsity = 0.001,
                        control = NB_control(threshold = 1e-6, niter = 300,
                                             verbose = TRUE))
+zimvnb <- zimvnb_all$get_model(15)
 ```
 
 ### Fitting quality

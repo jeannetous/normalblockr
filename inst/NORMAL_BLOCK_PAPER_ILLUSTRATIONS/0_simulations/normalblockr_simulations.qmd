@@ -7,7 +7,7 @@ editor: visual
 ## Useful libraries & functions
 
 ```{r useful-libraries}
-library(normalblockr)
+# library(normalblockr)
 library(parallel)
 library(tibble)
 ```
@@ -185,12 +185,16 @@ grid_simulations <- function(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
 ```
 
 ```{r example}
-n_simu = 3 ; n_list = c(50, 100) ; p_list = c(50) ; Q_list = c(3, 5) ; d_list = c(1) 
+n_simu = 50 ; n_list = c(50, 100) ; p_list = c(50) ; Q_list = c(3, 5) ; d_list = c(1) 
+n_list = c(75)
+# kappa_list <- list(rep(0, 50),
+#                    unlist(lapply(rnorm(50, 0.2, 0.05), f <- function(x){min(x, 0.9)})))
 
-kappa_list <- list(rep(0, 50),
-                   unlist(lapply(rnorm(50, 0.2, 0.05), f <- function(x){min(x, 0.9)})))
+kappa_list <- list(unlist(lapply(rnorm(50, 0.2, 0.05), f <- function(x){min(x, 0.9)})),
+                   unlist(lapply(rnorm(50, 0.5, 0.05), f <- function(x){min(x, 0.9)})),
+                   unlist(lapply(rnorm(50, 0.8, 0.05), f <- function(x){min(x, 0.9)})))
 
-omega_structure_list  <- c("preferential_attachment")
+omega_structure_list  <- c("erdos_reyni")
 
 res <- grid_simulations(n_simu, n_list, p_list, Q_list, d_list, kappa_list,
                         omega_structure_list, saving_folder = NULL,

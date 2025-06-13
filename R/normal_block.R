@@ -86,6 +86,7 @@ NB_control <- function(
     clustering_init      = NULL,
     verbose              = TRUE,
     heuristic            = FALSE,
+    zero_inflation_type  = c("column", "covar"),
     noise_covariance     = c("diagonal", "spherical"),
     clustering_approx    = c("ward2", "kmeans", "sbm")) {
 
@@ -103,7 +104,8 @@ NB_control <- function(
                  verbose              = verbose              ,
                  heuristic            = heuristic            ,
                  noise_covariance     = match.arg(noise_covariance),
-                 clustering_approx    = match.arg(clustering_approx)))
+                 clustering_approx    = match.arg(clustering_approx),
+                 zero_inflation_type  = match.arg(zero_inflation_type)))
 }
 
 
