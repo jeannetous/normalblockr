@@ -20,7 +20,7 @@ test_that("normal block with changing sparsity, integrated inference", {
 })
 
 
-test_that("normal block with fixed clusters, spherical residual covariance and heuristuic inference", {
+test_that("normal block with fixed clusters, spherical residual covariance and heuristic inference", {
   model <- normalblockr:::NB_changing_sparsity$new(data, C,
                                                    control = NB_control(noise_covariance = "spherical",
                                                                         heuristic = TRUE,

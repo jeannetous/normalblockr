@@ -57,3 +57,7 @@ edge_to_node <- function(x, n = max(x)) {
   data.frame(node1 = i + 1, node2 = j + 1)
 }
 
+sigmoid <- function(x){
+  return(1 / (1 + exp(-x)))
+}
+

@@ -15,9 +15,13 @@ R6 class for a generic normal model
 
 \item{\code{X}}{the matrix of covariates}
 
+\item{\code{X0}}{the matrix of zero-inflation covariates, if applicable}
+
 \item{\code{n}}{sample size}
 
 \item{\code{d}}{number of covariates}
+
+\item{\code{d0}}{number of zero-inflation covariates, if applicable}
 
 \item{\code{p}}{number of variables}
 
@@ -48,7 +52,7 @@ R6 class for a generic normal model
 \subsection{Method \code{new()}}{
 Create a new [`NBData`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NBData$new(Y, X)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NBData$new(Y, X, X0 = NA)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -57,6 +61,8 @@ Create a new [`NBData`] object.
 \item{\code{Y}}{the matrix of responses (called Y in the model).}
 
 \item{\code{X}}{design matrix (called X in the model).}
+
+\item{\code{X0}}{zero-inflation design matrix, if applicable.}
 }
 \if{html}{\out{</div>}}
 }

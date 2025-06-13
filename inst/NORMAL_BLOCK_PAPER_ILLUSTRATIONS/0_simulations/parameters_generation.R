@@ -51,7 +51,7 @@ generate_blocks <- function(p, Q, alpha = NULL){
 
 #' Function to generate the model's parametera B, C, D, Omega, Sigma, kappa
 #' @param X covariates matrix
-#' @param p number of variables 
+#' @param p number of variables
 #' @param Q number of clusters
 #' @param kappa list of zero-inflation probabilities for each variable
 #' @param omega_structure either erdos-reyni, preferential attachment, community (SBM)

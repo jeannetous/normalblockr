@@ -73,10 +73,23 @@ NB <- R6::R6Class(
       }
 
       ## ZI parameters that will remain fixed
-      private$kappa <- colMeans(data$zeros)
-      private$ZI_cond_mean <-
-        sum(xlogy(data$zeros, rep(private$kappa, each = data$n) )) +
-        sum(xlogy(data$zeros_bar, 1 - rep(private$kappa, each = data$n) ))
+      if(control$zero_inflation_type == "column"){
+        private$kappa <- colMeans(data$zeros)
+        private$ZI_cond_mean <-
+          sum(xlogy(data$zeros, rep(private$kappa, each = data$n) )) +
+          sum(xlogy(data$zeros_bar, 1 - rep(private$kappa, each = data$n) ))
+      }else{
+        B0_list <- lapply(1:self$data$p,
+                          f <- function(j){
+                            df <- data.frame("zeros" = data$zeros[,j], self$data$X0)
+                            model <- glm(zeros ~ 0 + ., family=binomial(link = "logit"), data=df)
+                            return(model$coefficients)})
+        private$B0 <- t(sapply(B0_list, unlist))
+        private$kappa <- apply(self$data$X0 %*% private$B0, MARGIN = c(1,2), FUN = sigmoid)
+        private$ZI_cond_mean <-
+          sum(xlogy(data$zeros, private$kappa)) +
+          sum(xlogy(data$zeros_bar, 1 - private$kappa))
+      }
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -372,6 +385,7 @@ NB <- R6::R6Class(
     C                 = NA, # the matrix of posterior probabilities (tau) or group affectation
     OmegaQ            = NA, # precision matrix for clusters
     kappa             = NA, # vector of zero-inflation probabilities
+    B0                = NA, # vector of zero-inflation regression matrix
     alpha             = NA, # vector of groups probabilities
     gamma             = NA, # variance of  posterior distribution of W
     mu                = NA, # mean for posterior distribution of W
@@ -530,7 +544,8 @@ NB <- R6::R6Class(
     #' @field n_edges number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)
     n_edges  = function(value) sum(private$OmegaQ[upper.tri(private$OmegaQ, diag = FALSE)] != 0),
     #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix))
-    model_par = function(value) list(B = private$B, dm1 = private$dm1, OmegaQ = private$OmegaQ),
+    model_par = function(value) list(B = private$B, B0 = private$B0,
+                                     dm1 = private$dm1, OmegaQ = private$OmegaQ),
     #' @field nb_param number of parameters in the model
     nb_param = function(value) {
       nb_param_D <- ifelse(private$res_covariance == "diagonal", self$p, 1)
