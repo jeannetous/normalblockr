@@ -71,7 +71,6 @@ NB <- R6::R6Class(
       } else {
         private$C <- matrix(NA, self$data$n, Q)
       }
-
       if(self$data$npY < self$n * self$p){
         B0_list <- lapply(1:self$data$p,
                           f <- function(j){
@@ -79,6 +78,7 @@ NB <- R6::R6Class(
                             model <- glm(zeros ~ 0 + ., family=binomial(link = "logit"), data=df)
                             return(model$coefficients)})
         private$B0 <- t(sapply(B0_list, unlist))
+        if(self$d0 > 1) private$B0 <- t(private$B0)
       }else{
         private$B0 <- matrix(rep(-Inf, self$data$p * self$data$d0), nrow = self$data$d0)
       }
@@ -343,7 +343,7 @@ NB <- R6::R6Class(
         ## Nice nodes
         V.deg <- igraph::degree(G)/sum(igraph::degree(G))
         igraph::V(G)$label.cex <- V.deg / max(V.deg) + .5
-        igraph::V(G)$size <- table(self$clustering) * 100 / self$p
+        igraph::V(G)$size <- table(c(self$clustering, 1:self$Q)) * 100 / self$p
         igraph::V(G)$label.color <- rgb(0, 0, .2, .8)
         igraph::V(G)$frame.color <- NA
         ## Nice edges
