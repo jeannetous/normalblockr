@@ -44,16 +44,16 @@ taxo_reference <- taxonomy[match(colnames(microcosm$Abundance),taxonomy$ASV), ]
 ```{r data-formatting}
 Y <- scale(log(1 + microcosm$Abundance), FALSE, TRUE) %>% as.matrix()
 X <- model.matrix(~ 0 + microcosm$site_time)
-data <- NBData$new(Y, X)
+data <- NBData$new(Y, X, X0 = X)
 ```
 
 ## Running ZI-Normal-Block on the data with the selected clustering
 
 ```{r running-zimvnb}
 zimvnb_all <- normal_block(data, blocks = 2:15, zero_inflation = TRUE,
-                       sparsity = 0.001,
-                       control = NB_control(threshold = 1e-6, niter = 300,
-                                            verbose = TRUE))
+                           sparsity = 0.001,
+                           control = NB_control(threshold = 1e-6, niter = 300,
+                                                verbose = TRUE))
 zimvnb <- zimvnb_all$get_model(15)
 ```
 
