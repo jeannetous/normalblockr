@@ -133,7 +133,7 @@ ZINB_fixed_blocks <- R6::R6Class(
       res
     },
     #' @field nb_param number of parameters in the model
-    nb_param = function() super$nb_param + self$p, # adding kappa
+    nb_param = function() super$nb_param + self$p * self$d0, # adding kappa
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (groups precision matrix), kappa (zero-inflation probabilities)
     model_par  = function() {
       par       <- super$model_par

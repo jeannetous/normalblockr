@@ -159,7 +159,7 @@ ZINB_fixed_Q <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field nb_param number of parameters in the model
-    nb_param = function() super$nb_param + self$p + self$Q - 1, # adding kappa and alpha
+    nb_param = function() super$nb_param + self$p * self$d0 + self$Q - 1, # adding kappa and alpha
     #' @field var_par a list with variational parameters
     var_par  = function() {list(M = private$M, S = private$S, tau = private$C)},
     #' @field model_par a list with model parameters: B (covariates), dm1 (species variance), OmegaQ (blocks precision matrix), kappa (zero-inflation probabilities)

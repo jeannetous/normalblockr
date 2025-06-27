@@ -44,15 +44,16 @@ NBData <- R6::R6Class(
     #' @param Y the matrix of responses (called Y in the model).
     #' @param X design matrix (called X in the model).
     #' @param X0 zero-inflation design matrix, if applicable.
-    initialize = function(Y, X, X0 = NA) {
+    initialize = function(Y, X, X0 = NULL) {
       stopifnot("Y and X must be matrices" = all(is.matrix(Y), is.matrix(X))) |> try()
       stopifnot("Y and X must have the same number of rows" = (nrow(Y) == nrow(X))) |> try()
       self$Y <- Y
       self$X <- X
-      self$X0 <- X0
       self$n <- nrow(Y)
       self$p <- ncol(Y)
       self$d <- ncol(X)
+      if(is.null(X0)){X0 <- matrix(rep(1, self$n))}
+      self$X0 <- X0
       self$d0 <- ncol(X0)
       self$XtXm1 <- solve(crossprod(X))
       self$XtY   <- crossprod(X, Y)

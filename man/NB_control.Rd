@@ -15,7 +15,6 @@ NB_control(
   clustering_init = NULL,
   verbose = TRUE,
   heuristic = FALSE,
-  zero_inflation_type = c("column", "covar"),
   noise_covariance = c("diagonal", "spherical"),
   clustering_approx = c("ward2", "kmeans", "sbm")
 )

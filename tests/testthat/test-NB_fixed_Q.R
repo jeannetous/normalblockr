@@ -12,7 +12,6 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 
 test_that("normal block with diagonal residual covariance and unknown clusters", {
   data <- NBData$new(Y, X)
-
   model <- NB_fixed_Q$new(data, Q)
   model$optimize()
   expect_gt(model$loglik, -2620)

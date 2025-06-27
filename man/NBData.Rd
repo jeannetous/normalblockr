@@ -52,7 +52,7 @@ R6 class for a generic normal model
 \subsection{Method \code{new()}}{
 Create a new [`NBData`] object.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NBData$new(Y, X, X0 = NA)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NBData$new(Y, X, X0 = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
