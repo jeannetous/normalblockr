@@ -72,12 +72,17 @@ NB <- R6::R6Class(
         private$C <- matrix(NA, self$data$n, Q)
       }
 
-      B0_list <- lapply(1:self$data$p,
-                        f <- function(j){
-                          df <- data.frame("zeros" = data$zeros[,j], self$data$X0)
-                          model <- glm(zeros ~ 0 + ., family=binomial(link = "logit"), data=df)
-                          return(model$coefficients)})
-      private$B0 <- t(sapply(B0_list, unlist))
+      if(self$data$npY < self$n * self$p){
+        B0_list <- lapply(1:self$data$p,
+                          f <- function(j){
+                            df <- data.frame("zeros" = data$zeros[,j], self$data$X0)
+                            model <- glm(zeros ~ 0 + ., family=binomial(link = "logit"), data=df)
+                            return(model$coefficients)})
+        private$B0 <- t(sapply(B0_list, unlist))
+      }else{
+        private$B0 <- matrix(rep(-Inf, self$data$p * self$data$d0), nrow = self$data$d0)
+      }
+
       private$kappa <- apply(self$data$X0 %*% private$B0, MARGIN = c(1,2), FUN = sigmoid)
       private$ZI_cond_mean <-
         sum(xlogy(data$zeros, private$kappa)) +
