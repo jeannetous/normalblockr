@@ -26,6 +26,8 @@ R6 abstract class for a generic sparse Normal Block model
 
 \item{\code{d}}{number of variables (dimensions in X)}
 
+\item{\code{d0}}{number of zi variables (dimensions in X0)}
+
 \item{\code{Q}}{number of blocks}
 
 \item{\code{n_edges}}{number of edges of the network (non null coefficient of the sparse precision matrix OmegaQ)}
