@@ -513,7 +513,8 @@ NB <- R6::R6Class(
     },
 
     heuristic_cluster_sigma_sbm = function(R){
-      options <- list(verbosity=0, exploreMin=self$Q, verbosity=0, plot=FALSE, nbCores=1)
+      options <- list(verbosity=0, exploreMin=self$Q, exploreMax=self$Q,
+                      verbosity=0, plot=FALSE, nbCores=1)
       mySBM <- sbm::estimateSimpleSBM(cov(R), "gaussian", estimOptions = options)
       mySBM$setModel(self$Q)
       mySBM$memberships
