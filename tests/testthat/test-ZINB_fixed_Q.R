@@ -4,7 +4,7 @@ testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; Q <- ncol(C)
-data <- NBData$new(Y, X)
+data <- NB_data$new(Y, X)
 
 ###############################################################################
 

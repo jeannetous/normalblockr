@@ -58,7 +58,7 @@ Explores and selects the optimal number of classes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mydata}}{object of NBData class, with responses and design matrix}
+\item{\code{mydata}}{object of NB_data class, with responses and design matrix}
 
 \item{\code{n_clusters_range}}{a size-2 vector with the range of cluster size to browse}
 

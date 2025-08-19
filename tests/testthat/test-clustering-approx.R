@@ -5,7 +5,7 @@ testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; Q <- ncol(C)
-data <- NBData$new(Y, X)
+data <- NB_data$new(Y, X)
 
 test_that("Robustness of starting clustering with NB", {
   ## Diagonal model
@@ -34,7 +34,7 @@ testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; Q <- ncol(C)
-data <- NBData$new(Y, X)
+data <- NB_data$new(Y, X)
 
 test_that("Robustness of starting clustering with ZINB", {
   ## Diagonal model

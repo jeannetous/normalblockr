@@ -11,7 +11,7 @@ R6 abstract class for a generic sparse Normal Block model
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
-\item{\code{data}}{object of NBData class, with responses and design matrix}
+\item{\code{data}}{object of NB_data class, with responses and design matrix}
 }
 \if{html}{\out{</div>}}
 }
@@ -98,7 +98,7 @@ Create a new [`NB`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of NBData class, with responses and design matrix}
+\item{\code{data}}{object of NB_data class, with responses and design matrix}
 
 \item{\code{Q}}{number of block/cluster}
 

@@ -5,7 +5,7 @@ Y  <- testdata$Y
 X  <- testdata$X
 X0 <- testdata$X0
 C  <- testdata$parameters$C ; Q <- ncol(C)
-data  <- NBData$new(Y, X, X0 = X0)
+data  <- NB_data$new(Y, X, X0 = X0)
 
 test_that("zero inflated normal block with diagonal residual covariance and known clusters", {
   ## Diagonal model

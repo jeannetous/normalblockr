@@ -69,7 +69,7 @@ Create a new [`ZINB_fixed_Q`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of NBData class, with responses and design matrix}
+\item{\code{data}}{object of NB_data class, with responses and design matrix}
 
 \item{\code{Q}}{required number of groups}
 

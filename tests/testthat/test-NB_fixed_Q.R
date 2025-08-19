@@ -11,7 +11,7 @@ C <- testdata$parameters$C ; Q <- ncol(C)
 ###############################################################################
 
 test_that("normal block with diagonal residual covariance and unknown clusters", {
-  data <- NBData$new(Y, X)
+  data <- NB_data$new(Y, X)
   model <- NB_fixed_Q$new(data, Q)
   model$optimize()
   expect_gt(model$loglik, -2620)
@@ -31,7 +31,7 @@ test_that("normal block with diagonal residual covariance and unknown clusters",
 
 
 test_that("normal block with spherical residual covariance and unknown clusters", {
-  data <- NBData$new(Y, X)
+  data <- NB_data$new(Y, X)
 
   ctrl <- NB_control(noise_covariance = "spherical")
   model <- NB_fixed_Q$new(data, Q, control = ctrl)
@@ -47,7 +47,7 @@ test_that("normal block with spherical residual covariance and unknown clusters"
 
 test_that("normal block with unknown clusters, heuristic", {
 
-  data <- NBData$new(Y, X)
+  data <- NB_data$new(Y, X)
   model <- NB_fixed_Q$new(data, Q, sparsity = 0.05,
                           control = NB_control(heuristic = TRUE))
   model$optimize()

@@ -58,7 +58,7 @@ Create a new [`NB_fixed_blocks`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{object of NBData class, with responses and design matrix}
+\item{\code{data}}{object of NB_data class, with responses and design matrix}
 
 \item{\code{C}}{clustering matrix C_jq = 1 if species j belongs to cluster q}
 

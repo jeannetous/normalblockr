@@ -59,7 +59,7 @@ Create a new [`NB_unknown_Q_changing_sparsity`] object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mydata}}{object of NBData class, with responses and design matrix}
+\item{\code{mydata}}{object of NB_data class, with responses and design matrix}
 
 \item{\code{Q_list}}{list of Q values (number of groups) in the collection}
 
