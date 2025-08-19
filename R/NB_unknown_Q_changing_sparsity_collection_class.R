@@ -19,7 +19,7 @@ NB_unknown_Q_changing_sparsity <- R6::R6Class(
     control = NA,
 
     #' @description Create a new [`NB_unknown_Q_changing_sparsity`] object.
-    #' @param mydata object of NBData class, with responses and design matrix
+    #' @param mydata object of NB_data class, with responses and design matrix
     #' @param Q_list list of Q values (number of groups) in the collection
     #' @param zero_inflation boolean to specify whether data is zero-inflated
     #' @param control structured list of parameters to handle sparsity control

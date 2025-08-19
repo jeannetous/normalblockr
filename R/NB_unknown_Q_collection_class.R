@@ -20,7 +20,7 @@ NB_unknown_Q <- R6::R6Class(
     control = NA,
 
     #' @description Create a new [`NB_unknown_Q`] object.
-    #' @param mydata object of NBData class, with responses and design matrix
+    #' @param mydata object of NB_data class, with responses and design matrix
     #' @param Q_list list of Q values (number of groups) in the collection
     #' @param zero_inflation whether the models in the collection should be zero-inflated or not
     #' @param sparsity sparsity penalty on the network density

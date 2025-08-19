@@ -13,7 +13,7 @@
 #' @examples
 #' ## Normal Data
 #' ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=3)
-#' data <- NBData$new(ex_data$Y, ex_data$X)
+#' data <- NB_data$new(ex_data$Y, ex_data$X)
 #' my_normal_block <- normal_block(data, blocks = 1:6)
 #' \dontrun{
 #' my_normal_block$plot(c("deviance", "BIC", "ICL"))
@@ -22,7 +22,7 @@
 #' }
 #' ## Normal Data with Zero Inflation
 #' ex_data_zi <- generate_normal_block_data(n=50, p=50, d=1, Q=3, kappa = rep(0.5,50))
-#' zidata <- NBData$new(ex_data_zi$Y, ex_data_zi$X)
+#' zidata <- NB_data$new(ex_data_zi$Y, ex_data_zi$X)
 #' my_normal_block <- normal_block(zidata, blocks = 1:6, zero_inflation = TRUE)
 #'
 #' @export
@@ -31,7 +31,6 @@ normal_block <- function(data,
                          sparsity = 0,
                          zero_inflation = FALSE,
                          control = NB_control()) {
-
   ## Recovering the requested model from the function arguments
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))

@@ -9,11 +9,11 @@ NB <- R6::R6Class(
   ## PUBLIC MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
-    #' @field data object of NBData class, with responses and design matrix
+    #' @field data object of NB_data class, with responses and design matrix
     data  = NULL,
 
     #' @description Create a new [`NB`] object.
-    #' @param data object of NBData class, with responses and design matrix
+    #' @param data object of NB_data class, with responses and design matrix
     #' @param Q number of block/cluster
     #' @param sparsity sparsity penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_control

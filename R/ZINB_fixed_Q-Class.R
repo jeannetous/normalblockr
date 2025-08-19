@@ -15,7 +15,7 @@ ZINB_fixed_Q <- R6::R6Class(
     fixed_tau = NULL,
 
     #' @description Create a new [`ZINB_fixed_Q`] object.
-    #' @param data object of NBData class, with responses and design matrix
+    #' @param data object of NB_data class, with responses and design matrix
     #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param Q required number of groups
     #' @param control structured list of more specific parameters

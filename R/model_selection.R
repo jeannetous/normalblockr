@@ -26,7 +26,7 @@ selection_n_clusters <- R6::R6Class(
     control = NA,
 
     #' @description Explores and selects the optimal number of classes
-    #' @param mydata object of NBData class, with responses and design matrix
+    #' @param mydata object of NB_data class, with responses and design matrix
     #' @param n_clusters_range a size-2 vector with the range of cluster size to browse
     #' @param zero_inflation whether the models in the collection should be zero-inflated or not
     #' @param sparsity sparsity penalty on the network density

@@ -12,7 +12,7 @@ NB_fixed_blocks <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @description Create a new [`NB_fixed_blocks`] object.
-    #' @param data object of NBData class, with responses and design matrix
+    #' @param data object of NB_data class, with responses and design matrix
     #' @param C clustering matrix C_jq = 1 if species j belongs to cluster q
     #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control
