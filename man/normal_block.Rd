@@ -13,7 +13,7 @@ normal_block(
 )
 }
 \arguments{
-\item{data}{contains the matrix of responses (Y, n x p) and the design matrix (X, n x d)."}
+\item{data}{NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d).}
 
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}

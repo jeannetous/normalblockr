@@ -1,7 +1,7 @@
 #' Normal-block model
 #'
 #' Fit a normal-block model with a variational or heuristic algorithm
-#' @param data contains the matrix of responses (Y, n x p) and the design matrix (X, n x d)."
+#' @param data NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d).
 #' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
 #'  or a p * Q matrix (for indicating block membership when its known)
 #' @param sparsity either TRUE to run the optimization for different sparsity penalty values

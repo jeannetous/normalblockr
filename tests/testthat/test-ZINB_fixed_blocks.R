@@ -2,9 +2,13 @@
 ###############################################################################
 testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y
-X <- testdata$X
+X <- testdata$X ; X <- cbind(X, rnorm(nrow(X))) ; colnames(X) <- c("X1", "X2")
 C <- testdata$parameters$C
-data <- NB_data$new(Y, X)
+data <- NB_data$new(Y, X, formula = ~ 0 + X1 | 1)
+
+data2 <- NB_data$new(Y, testdata$X)
+model2 <- ZINB_fixed_blocks$new(data2, C)
+model2$optimize()
 
 test_that("zero inflated normal block with diagonal residual covariance and known clusters", {
   ## Diagonal model
