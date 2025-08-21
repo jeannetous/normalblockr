@@ -47,11 +47,15 @@ R6 class for normal-block model with fixed number of groups
 <ul>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="candidates_merge"><a href='../../normalblockr/html/NB.html#method-NB-candidates_merge'><code>normalblockr::NB$candidates_merge()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="candidates_split"><a href='../../normalblockr/html/NB.html#method-NB-candidates_split'><code>normalblockr::NB$candidates_split()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="coef"><a href='../../normalblockr/html/NB.html#method-NB-coef'><code>normalblockr::NB$coef()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="latent_network"><a href='../../normalblockr/html/NB.html#method-NB-latent_network'><code>normalblockr::NB$latent_network()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="merge"><a href='../../normalblockr/html/NB.html#method-NB-merge'><code>normalblockr::NB$merge()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="optimize"><a href='../../normalblockr/html/NB.html#method-NB-optimize'><code>normalblockr::NB$optimize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot"><a href='../../normalblockr/html/NB.html#method-NB-plot'><code>normalblockr::NB$plot()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_loglik"><a href='../../normalblockr/html/NB.html#method-NB-plot_loglik'><code>normalblockr::NB$plot_loglik()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="plot_network"><a href='../../normalblockr/html/NB.html#method-NB-plot_network'><code>normalblockr::NB$plot_network()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="predict"><a href='../../normalblockr/html/NB.html#method-NB-predict'><code>normalblockr::NB$predict()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="print"><a href='../../normalblockr/html/NB.html#method-NB-print'><code>normalblockr::NB$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="split"><a href='../../normalblockr/html/NB.html#method-NB-split'><code>normalblockr::NB$split()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="normalblockr" data-topic="NB" data-id="update"><a href='../../normalblockr/html/NB.html#method-NB-update'><code>normalblockr::NB$update()</code></a></span></li>
 </ul>

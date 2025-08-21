@@ -276,15 +276,11 @@ NB <- R6::R6Class(
       }
     },
 
-    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    ## Graphical methods------------------
-    #' @param type char for line type (see plot.default)
-    #' @param log char for logarithmic axes (see plot.default)
-    #' @param neg boolean plot negative log-likelihood (useful when log="y")
-    #' @description plots log-likelihood values during model optimization
-    plot_loglik = function(type = "b", log = "xy", neg = TRUE) {
-      neg <- ifelse(neg, -1, 1)
-      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
+    #' @description Predicts observations Y for new covariates X.
+    #' @param new_X new set of covariates.
+    #' @return A n*p prediction matrix for new observations
+    predict = function(new_X){
+      return(new_X %*% private$B)
     },
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -310,6 +306,15 @@ NB <- R6::R6Class(
 
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Graphical methods------------------
+    #' @param type char for line type (see plot.default)
+    #' @param log char for logarithmic axes (see plot.default)
+    #' @param neg boolean plot negative log-likelihood (useful when log="y")
+    #' @description plots log-likelihood values during model optimization
+    plot_loglik = function(type = "b", log = "xy", neg = TRUE) {
+      neg <- ifelse(neg, -1, 1)
+      plot(seq_along(self$objective), neg * self$objective, type = type, log = log)
+    },
+
     #' @description plot the latent network.
     #' @param type edge value in the network. Either "precision" (coefficient of the precision matrix) or "partial_cor" (partial correlation between species).
     #' @param output Output type. Either `igraph` (for the network) or `corrplot` (for the adjacency matrix)
@@ -370,6 +375,31 @@ NB <- R6::R6Class(
         }
       }
       invisible(G)
+    },
+
+    #' @description plot together latent network and log-likelihood values during model optimization
+    plot = function(){
+      self$plot_loglik(type = "b", log = "xy", neg = TRUE)
+    },
+
+    #' @description coef returns regression coefficients for the covariates
+    coef = function() private$B,
+
+
+    ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    ## S3 methods ----------------------------
+    #' @description User friendly print method
+    #' @param model First line of the print output
+    print = function(model = paste("A", self$who_am_I, ".\n")) {
+      cat(model)
+      cat("===========================================================================\n")
+      print(as.data.frame(round(self$criteria, digits = 3), row.names = ""))
+      cat("===========================================================================\n")
+      cat("* Useful fields\n")
+      cat("    $model_par, $posterior_par / $var_par, $clustering \n")
+      cat("    $loglik, $BIC, $ICL, $objective, $nb_param, $criteria\n")
+      cat("* Useful S3 methods\n")
+      cat("    print(), fitted() \n")
     }
   ),
 

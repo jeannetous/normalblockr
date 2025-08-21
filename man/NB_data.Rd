@@ -17,7 +17,7 @@ R6 class for a generic normal model
 
 \item{\code{X0}}{the matrix of zero-inflation covariates, if applicable}
 
-\item{\code{formula}}{describes the relationship between Y and X (and X0, if applicable), useful if not all of X's (X0's) covariates should be used.}
+\item{\code{formula}}{describes the relationship between Y and X, and X0 if applicable, useful if not all of X's or X0's covariates should be used, should be formatted ~ X1 + X2... | Z1 + Z2... with the Normal formula before the | and the ZI formula after the |}
 
 \item{\code{n}}{sample size}
 

@@ -80,9 +80,13 @@ R6 abstract class for a generic sparse Normal Block model
 \item \href{#method-NB-candidates_split}{\code{NB$candidates_split()}}
 \item \href{#method-NB-candidates_merge}{\code{NB$candidates_merge()}}
 \item \href{#method-NB-merge}{\code{NB$merge()}}
-\item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
+\item \href{#method-NB-predict}{\code{NB$predict()}}
 \item \href{#method-NB-latent_network}{\code{NB$latent_network()}}
+\item \href{#method-NB-plot_loglik}{\code{NB$plot_loglik()}}
 \item \href{#method-NB-plot_network}{\code{NB$plot_network()}}
+\item \href{#method-NB-plot}{\code{NB$plot()}}
+\item \href{#method-NB-coef}{\code{NB$coef()}}
+\item \href{#method-NB-print}{\code{NB$print()}}
 \item \href{#method-NB-clone}{\code{NB$clone()}}
 }
 }
@@ -256,24 +260,23 @@ A new [`NB`] object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-NB-plot_loglik"></a>}}
-\if{latex}{\out{\hypertarget{method-NB-plot_loglik}{}}}
-\subsection{Method \code{plot_loglik()}}{
-plots log-likelihood values during model optimization
+\if{html}{\out{<a id="method-NB-predict"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-predict}{}}}
+\subsection{Method \code{predict()}}{
+Predicts observations Y for new covariates X.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik(type = "b", log = "xy", neg = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{NB$predict(new_X)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{char for line type (see plot.default)}
-
-\item{\code{log}}{char for logarithmic axes (see plot.default)}
-
-\item{\code{neg}}{boolean plot negative log-likelihood (useful when log="y")}
+\item{\code{new_X}}{new set of covariates.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A n*p prediction matrix for new observations
 }
 }
 \if{html}{\out{<hr>}}
@@ -294,6 +297,27 @@ Extract interaction network in the latent space
 }
 \subsection{Returns}{
 a square matrix of size `NB_fixed_blocks_class$Q`
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-plot_loglik"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-plot_loglik}{}}}
+\subsection{Method \code{plot_loglik()}}{
+plots log-likelihood values during model optimization
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$plot_loglik(type = "b", log = "xy", neg = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{char for line type (see plot.default)}
+
+\item{\code{log}}{char for logarithmic axes (see plot.default)}
+
+\item{\code{neg}}{boolean plot negative log-likelihood (useful when log="y")}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
@@ -329,6 +353,43 @@ plot the latent network.
 \item{\code{layout}}{an optional igraph layout. Only relevant for igraph output.}
 
 \item{\code{plot}}{logical. Should the final network be displayed or only sent back to the user. Default is `TRUE`.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-plot"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-plot}{}}}
+\subsection{Method \code{plot()}}{
+plot together latent network and log-likelihood values during model optimization
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$plot()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-coef"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-coef}{}}}
+\subsection{Method \code{coef()}}{
+coef returns regression coefficients for the covariates
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$coef()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NB-print"></a>}}
+\if{latex}{\out{\hypertarget{method-NB-print}{}}}
+\subsection{Method \code{print()}}{
+User friendly print method
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NB$print(model = paste("A", self$who_am_I, ".\\n"))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{model}}{First line of the print output}
 }
 \if{html}{\out{</div>}}
 }

@@ -19,7 +19,7 @@ NB_data <- R6::R6Class(
     X = NULL,
     #' @field X0 the matrix of zero-inflation covariates, if applicable
     X0 = NULL,
-    #' @field formula describes the relationship between Y and X (and X0, if applicable), useful if not all of X's (X0's) covariates should be used.
+    #' @field formula describes the relationship between Y and X, and X0 if applicable, useful if not all of X's or X0's covariates should be used, should be formatted ~ X1 + X2... | Z1 + Z2... with the Normal formula before the | and the ZI formula after the |
     formula = NULL,
     #' @field n sample size
     n  = NULL,
