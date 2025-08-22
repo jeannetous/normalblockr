@@ -1,9 +1,14 @@
 ---
-title: "normal-block"
-output: rmarkdown::html_vignette
+title: "Analyzing multivariate Gaussian data with the Normal-Block model"
+author: "Jeanne Tous, Julien Chiquet"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
 vignette: >
-  %\VignetteIndexEntry{normal-block}
   %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Analyzing multivariate Gaussian data with the Normal-Block model}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -14,6 +19,133 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+# Preliminaries
+
+This vignette illustrates the use of the normal-block function and the methods accompanying the R6 normal-block classes.
+
+From a statistical point of view, the function normal-block adjusts a multivariate Normal-Block model (Gaussian graphical model with a latent clustering structure) to a table of observations, possibly after correcting for the effects of covariates. Depending on the parameters given, the function uses the clustering that is given or infers one, integrates zero-inflation or not, infers a sparse network or not... The parameters inference can either be done with an integrated variational Expectation-Maximization approach (recommended) or with a heuristic approach.
+
+### Requirements
+
+```{r, set-up}
 library(normalblockr)
+library(pheatmap)
+library(paletteer)
 ```
+
+# Data simulation
+
+We illustrate the analysis with two simulated datasets.
+
+Fix the seed to make the results reproducible.
+
+```{r, set-seed}
+set.seed(1)
+```
+
+Simulate data with generate_normal_block_data.
+
+## Fix simulation parameters
+
+Several parameters need to be defined to simulate the data:
+
+```{r, fix-simulations-parameters}
+n = 100 # Number of samples (number of rows in the matrix of observations)
+p = 40  # Number of entities observed (number of columns in the matrix of observations)
+d = 2   # Number of covariates
+Q = 3   # Number of clusters
+kappa = 0 # Mean zero-inflation probability (can also be a vector to define one ZI-probability for each variable). kappa = 0 means that there is no zero-inflation.
+omega_structure = "erdos-renyi" # Network structure.
+u_v = c(0.3, 0.1) # Parameters to generate an association matrix from a graph, details given in the bibliography.
+SNR = 0.75 # Signal to Noise Ratio, defines the relative weight of the covariates and the variance
+alpha = rep(1/Q, Q) # Vector giving probabilities of belonging to each cluster
+range_X = c(0, 10)  # Min and max values for the covariates 
+range_D = c(0.5, 1.5) # Min and max values for the individual entities variances 
+```
+
+## Simulation 1 (no zero-inflation)
+**generate_normal_block_data** generates data under the Normal-Block model. It returns a list that contains the simulated covariates $X$ and observations $Y$, the simulation parameters (including the clustering $C$). 
+
+```{r, simulation1}
+my_nb_data <- generate_normal_block_data(n, p, d, Q, kappa, omega_structure, u_v,
+                                        SNR, alpha, range_X, range_D)
+```
+
+```{r, simulation1-visualization}
+pheatmap(my_nb_data$Y,
+         color = paletteer_c("ggthemes::Orange-Gold", n = 100),
+         cluster_rows = FALSE, cluster_cols = FALSE,
+         show_rownames = FALSE)
+```
+
+
+## Simulation 2 (with zero-inflation)
+
+To generate zero-inflated data, we set-up kappa as a vector of zero-inflation probabilities. One needs to ensure that these values are between 0 and 1.
+```{r, simulation2}
+kappa_zi = rnorm(p, mean = 0.6, sd = 0.01)
+my_nb_data_zi <- generate_normal_block_data(n, p, d, Q, kappa_zi, omega_structure,
+                                            u_v, SNR, alpha, range_X, range_D)
+```
+For a better visualization of the zero-inflated data, we set-up the 0 to be shown in white.
+
+```{r, simulation2-visualization}
+min_val <- min(my_nb_data_zi$Y) ; max_val <- max(my_nb_data_zi$Y)
+orange_gold_pal <- paletteer_c("ggthemes::Orange-Gold", n = 100)
+n_breaks <- 100
+zero_pos <- round((0 - min_val) / (max_val - min_val) * n_breaks) + 1
+custom_pal <- c(orange_gold_pal[1:(zero_pos - 1)], "white", orange_gold_pal[zero_pos:n_breaks])
+pheatmap(my_nb_data_zi$Y,
+         color = custom_pal,
+         cluster_rows = FALSE, cluster_cols = FALSE,
+         show_rownames = FALSE)
+```
+
+
+# Prepare the data for a normal-block analysis
+A specific data object of class **NB_data** needs to be created to analyse the data with normalblockr.
+
+One can either use Y and X only to generate the **NB_data** object.
+
+```{r, NB_data}
+my_data    <- NB_data$new(my_nb_data$Y, my_nb_data$X)
+my_data_zi <- NB_data$new(my_nb_data_zi$Y, my_nb_data_zi$X)
+```
+
+Alternatively, if one only wants to include some of the covariates contained in X, a formula can be used to specify which one:
+
+```{r, NB_data-alt}
+colnames(nb_data$X) <- c("X1", "X2")
+my_data_alt    <- NB_data$new(my_nb_data$Y, my_nb_data$X, formula = ~ 0 + X1)
+```
+
+
+# Run a normal-block analysis
+All normal-block analysis can be run with the **normal_block** function. The function is called with different parameterizations  depending on whether the clustering or the number of clusters is known or not, and according to the requested level of sparsity, among other factors. Details about this can be found in the function's documentation. 
+
+By default, the parameters are inferred using a variational Expectation Maximization approach with 100 iterations. A finer control of the optimization is possible with the **control** parameter of **normal-block** that must be a list generated by the **NB_control** function.
+
+## With non-zero-inflated data
+### Fixed clustering
+When the variables' clustering is known, one can directly give them as an input to the **normal-block** function.
+
+```{r, simulation1-NB1}
+my_NB <- normal_block(data = my_data,
+                      blocks = my_nb_data$parameters$C,
+                      sparsity = 0)
+```
+
+The model convergence can be checked with **plot**.
+
+```{r, simulation1-NB1-plot}
+plot(my_NB)
+```
+
+A summary of the results is accessible via **print**.
+```{r, simulation1-NB1-print}
+print(my_NB)
+```
+
+
+
+
