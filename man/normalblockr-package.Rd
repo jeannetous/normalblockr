@@ -4,13 +4,14 @@
 \name{normalblockr-package}
 \alias{normalblockr}
 \alias{normalblockr-package}
-\title{normalblockr: An implementation of Normal block model, normal data with cluster effect}
+\title{normalblockr: implementation of the Normal-block model, Gaussian graphical model with latent clustering structure}
 \description{
-More about what it does (maybe more than one line) Use four spaces when indenting paragraphs within the Description.
+The Normal-Block model (Tous, J., & Chiquet, J. (2025). An integrated method for clustering and association network inference. arXiv preprint arXiv:2503.22467.) can be used to analyse multivariate Gaussian data with underlying latent structure. The model infers a structure of statistical dependencies between the clusters identified (or given) in the observations.
 }
 \seealso{
 Useful links:
 \itemize{
+  \item \url{http://github.com/jeannetous/normalblockr}
   \item Report bugs at \url{https://github.com/jeannetous/normalblockr/issues}
 }
 

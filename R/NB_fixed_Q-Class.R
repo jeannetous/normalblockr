@@ -2,7 +2,7 @@
 ##  CLASS NB_fixed_Q ###################################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for normal-block model with fixed number of groups
+#' R6 class for a normal-block model with fixed number of clusters (but unknown clustering).
 #' @export
 NB_fixed_Q <- R6::R6Class(
   classname = "NB_fixed_Q",

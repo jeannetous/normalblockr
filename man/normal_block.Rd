@@ -13,7 +13,7 @@ normal_block(
 )
 }
 \arguments{
-\item{data}{NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d).}
+\item{data}{NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d), must be created with NB_data$new.}
 
 \item{blocks}{either a integer (number of blocks), a vector of integer (list of possible number of block)
 or a p * Q matrix (for indicating block membership when its known)}
@@ -27,7 +27,7 @@ OR float to run model with a single sparsity penalty value}
 generated with NB_control().}
 }
 \value{
-an R6 object with one of the NB classes
+an R6 object with one of the NB classes (or a collection of NB objects).
 }
 \description{
 Fit a normal-block model with a variational or heuristic algorithm

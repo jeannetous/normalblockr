@@ -3,7 +3,7 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#' R6 class for normal-block model with unknown Q (number of groups)
+#' R6 class for a collection of normal-block models with different number of clusters (Q) and a fixed sparsity level.
 #' @param data contains the matrix of responses (Y) and the design matrix (X).
 #' @param zero_inflation whether the models should be zero-inflated or not
 #' @param control structured list for specific parameters (including initial clustering proposal)

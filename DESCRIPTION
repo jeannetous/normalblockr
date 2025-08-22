@@ -1,15 +1,20 @@
 Package: normalblockr
 Type: Package
-Title: An implementation of Normal block model, normal data with cluster effect
+Title: implementation of the Normal-block model, Gaussian graphical model with latent clustering structure
 Version: 0.1.0
 Authors@R: c(
   person("Jeanne", "Tous", role = c("aut", "cre"), email = "jeanne.tous@inrae.fr"),
   person("Julien", "Chiquet", role = c("aut"), email = "julien.chiquet@inrae.fr",
       comment = c(ORCID = "0000-0002-3629-3429"))
       )
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: The Normal-Block model (Tous, J., & Chiquet, J. (2025). An 
+             integrated method for clustering and association network inference.
+             arXiv preprint arXiv:2503.22467.) can be used to analyse
+             multivariate Gaussian data with underlying latent structure. 
+             The model infers a structure of statistical dependencies between
+             the clusters identified (or given) in the observations.
 License: CC BY 4.0
+URL: http://github.com/jeannetous/normalblockr
 BugReports: https://github.com/jeannetous/normalblockr/issues
 Encoding: UTF-8
 LazyData: true
@@ -32,5 +37,8 @@ Imports:
 RoxygenNote: 7.3.2
 Suggests: 
     testthat (>= 3.0.0),
-    Metrics
+    Metrics,
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr

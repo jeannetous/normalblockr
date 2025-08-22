@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_unknown_Q_collection_class.R
 \name{NB_unknown_Q}
 \alias{NB_unknown_Q}
-\title{R6 class for normal-block model with unknown Q (number of groups)}
+\title{R6 class for a collection of normal-block models with different number of clusters (Q) and a fixed sparsity level.}
 \description{
-R6 class for normal-block model with unknown Q (number of groups)
+R6 class for a collection of normal-block models with different number of clusters (Q) and a fixed sparsity level.
 
-R6 class for normal-block model with unknown Q (number of groups)
+R6 class for a collection of normal-block models with different number of clusters (Q) and a fixed sparsity level.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

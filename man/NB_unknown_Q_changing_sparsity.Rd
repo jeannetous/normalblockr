@@ -3,11 +3,11 @@
 %   R/NB_unknown_Q_changing_sparsity_collection_class.R
 \name{NB_unknown_Q_changing_sparsity}
 \alias{NB_unknown_Q_changing_sparsity}
-\title{R6 class for normal-block model with unknown Q (number of groups)}
+\title{R6 class for a collection of normal-block models with different number of clusters (Q) and different sparsity levels.}
 \description{
-R6 class for normal-block model with unknown Q (number of groups)
+R6 class for a collection of normal-block models with different number of clusters (Q) and different sparsity levels.
 
-R6 class for normal-block model with unknown Q (number of groups)
+R6 class for a collection of normal-block models with different number of clusters (Q) and different sparsity levels.
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

@@ -2,7 +2,7 @@
 ##  CLASS ZINB_fixed_Q ###############
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for zero-inflated normal-block model with fixed number of groups#'
+#' R6 class for zero-inflated normal-block model with a fixed number of clusters (but unknown clustering).
 #' @export
 ZINB_fixed_Q <- R6::R6Class(
   classname = "ZINB_fixed_Q",

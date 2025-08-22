@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_fixed_Q-Class.R
 \name{NB_fixed_Q}
 \alias{NB_fixed_Q}
-\title{R6 class for normal-block model with fixed number of groups}
+\title{R6 class for a normal-block model with fixed number of clusters (but unknown clustering).}
 \description{
-R6 class for normal-block model with fixed number of groups
+R6 class for a normal-block model with fixed number of clusters (but unknown clustering).
 
-R6 class for normal-block model with fixed number of groups
+R6 class for a normal-block model with fixed number of clusters (but unknown clustering).
 }
 \section{Super class}{
 \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_Q}

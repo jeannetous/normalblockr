@@ -2,11 +2,11 @@
 % Please edit documentation in R/NB_fixed_blocks-Class.R
 \name{NB_fixed_blocks}
 \alias{NB_fixed_blocks}
-\title{R6 class for normal-block model with known block}
+\title{R6 class for a normal-block model with known clustering.}
 \description{
-R6 class for normal-block model with known block
+R6 class for a normal-block model with known clustering.
 
-R6 class for normal-block model with known block
+R6 class for a normal-block model with known clustering.
 }
 \section{Super class}{
 \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{NB_fixed_blocks}

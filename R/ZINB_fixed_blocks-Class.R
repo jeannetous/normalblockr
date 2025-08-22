@@ -2,7 +2,7 @@
 ##  CLASS ZINB_fixed_blocks_fixed_sparsity ############
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for a generic normal model
+#' R6 class for a Zero-Inflated normal-block model with a known clustering.
 #' @export
 ZINB_fixed_blocks <- R6::R6Class(
   classname = "ZINB_fixed_blocks",

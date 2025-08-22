@@ -54,5 +54,5 @@ A named list with the following element
    - kappa: vector of ZI inflation proabilities (one per variable)
 }
 \description{
-A function to draw data from the normal block model (see details). The function return both the generated data and the corrresponding model parameters, in a list.
+A function to draw data from the normal block model (see details). The function returns both the generated data and the corrresponding model parameters, in a list.
 }

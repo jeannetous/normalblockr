@@ -1,8 +1,8 @@
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-##  CLASS NB_fixed_blocks                ###############
+##  CLASS NB_fixed_blocks ##############################
 ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' R6 class for normal-block model with known block
+#' R6 class for a normal-block model with known clustering.
 #' @export
 NB_fixed_blocks <- R6::R6Class(
   classname = "NB_fixed_blocks",

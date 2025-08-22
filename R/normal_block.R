@@ -1,7 +1,7 @@
 #' Normal-block model
 #'
 #' Fit a normal-block model with a variational or heuristic algorithm
-#' @param data NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d).
+#' @param data NB_data object, contains the matrix of responses (Y, n x p) and the design matrix (X, n x d), must be created with NB_data$new.
 #' @param blocks either a integer (number of blocks), a vector of integer (list of possible number of block)
 #'  or a p * Q matrix (for indicating block membership when its known)
 #' @param sparsity either TRUE to run the optimization for different sparsity penalty values
@@ -9,7 +9,7 @@
 #' @param zero_inflation boolean to indicate if Y is zero-inflated and adjust fitted model as a consequence
 #' @param control a list-like structure for detailed control on parameters should be
 #' generated with NB_control().
-#' @return an R6 object with one of the NB classes
+#' @return an R6 object with one of the NB classes (or a collection of NB objects).
 #' @examples
 #' ## Normal Data
 #' ex_data <- generate_normal_block_data(n=50, p=50, d=1, Q=3)

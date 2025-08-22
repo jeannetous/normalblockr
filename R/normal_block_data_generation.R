@@ -105,7 +105,7 @@ generate_normal_block_param <- function(X = matrix(rnorm(100*p), 100, p),
 
 #' Generate Normal Block Data
 #'
-#' A function to draw data from the normal block model (see details). The function return both the generated data and the corrresponding model parameters, in a list.
+#' A function to draw data from the normal block model (see details). The function returns both the generated data and the corrresponding model parameters, in a list.
 #'
 #' @param n number of individuals. Default to 100.
 #' @param p number of variables. Default to 40.

@@ -2,11 +2,11 @@
 % Please edit documentation in R/ZINB_fixed_Q-Class.R
 \name{ZINB_fixed_Q}
 \alias{ZINB_fixed_Q}
-\title{R6 class for zero-inflated normal-block model with fixed number of groups#'}
+\title{R6 class for zero-inflated normal-block model with a fixed number of clusters (but unknown clustering).}
 \description{
-R6 class for zero-inflated normal-block model with fixed number of groups#'
+R6 class for zero-inflated normal-block model with a fixed number of clusters (but unknown clustering).
 
-R6 class for zero-inflated normal-block model with fixed number of groups#'
+R6 class for zero-inflated normal-block model with a fixed number of clusters (but unknown clustering).
 }
 \section{Super class}{
 \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{ZINB_fixed_Q}

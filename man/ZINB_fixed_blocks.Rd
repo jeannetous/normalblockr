@@ -2,11 +2,11 @@
 % Please edit documentation in R/ZINB_fixed_blocks-Class.R
 \name{ZINB_fixed_blocks}
 \alias{ZINB_fixed_blocks}
-\title{R6 class for a generic normal model}
+\title{R6 class for a Zero-Inflated normal-block model with a known clustering.}
 \description{
-R6 class for a generic normal model
+R6 class for a Zero-Inflated normal-block model with a known clustering.
 
-R6 class for a generic normal model
+R6 class for a Zero-Inflated normal-block model with a known clustering.
 }
 \section{Super class}{
 \code{\link[normalblockr:NB]{normalblockr::NB}} -> \code{ZINB_fixed_blocks}
