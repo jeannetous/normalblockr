@@ -41,7 +41,6 @@ export(normal_block_sequential)
 import(dplyr)
 import(ggplot2)
 import(purrr)
-import(tibble)
 importFrom(Matrix,
   Matrix,
   symmpart
@@ -67,5 +66,6 @@ importFrom(stats,
   sigma,
   var
 )
+importFrom(tibble,tibble)
 importFrom(tidyr,gather)
 useDynLib(normalblockr, .registration = TRUE)

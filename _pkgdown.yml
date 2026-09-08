@@ -78,6 +78,5 @@ reference:
     - '`NormalBlockCollectionClusters`'
     - '`NormalBlockCollectionSparsity`'
     - '`NormalBlockCollectionClustersSparsity`'
-    - '`SelectionNClusters`'
     - '`get_model`'
     - '`isNB`'
