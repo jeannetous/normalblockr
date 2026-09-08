@@ -36,8 +36,7 @@ NormalBlockMeanCollectionClustersSparsity <- R6::R6Class(
       control_ <- control
 
       self$models <- map(seq_along(q_list), function(rank) {
-        ## a list means one explicit clustering per q; anything else (a
-        ## heuristic name, or NULL) applies identically to every q
+        ## a list means one explicit clustering per q; anything else applies identically to every q
         if (is.list(control$clustering_init))
           control_$clustering_init <- control$clustering_init[[rank]]
         NormalBlockMeanCollectionSparsity$new(mydata, q_list[rank], control_)

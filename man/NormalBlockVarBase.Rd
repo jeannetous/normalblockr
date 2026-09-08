@@ -8,7 +8,7 @@ R6 abstract class for the sparse Normal-Block models, where the clustering
 structures the latent covariance.
 }
 \examples{
-# An internal abstract base class, never instantiated directly -- see
+# An internal abstract base class, never instantiated directly. See
 # normal_block() for how concrete models (NormalBlockVarKnownClusters,
 # NormalBlockVarUnknownClusters, and their zero-inflated variants) are
 # actually created and fitted.
@@ -37,12 +37,10 @@ coefficients on the internal fitting scale.}
 (1 / Var(Y_j)), converted back to Y's original units. Use
 `model_par$dm1` instead for the internal fitting scale. With
 `noise_covariance = "spherical"`, `model_par$dm1` is a single value
-repeated p times (one shared variance on the fitting scale); once
+repeated p times; once
 converted back per-variable, the p values returned here generally
 differ from one another whenever Y's columns were rescaled by
-different factors -- correctly so, since a single shared *scaled*
-variance does not correspond to a single shared variance in the
-original, heterogeneous-scale units.}
+different factors.}
   }
   \if{html}{\out{</div>}}
 }
@@ -114,8 +112,6 @@ is skipped entirely, since it would otherwise never be used downstream.}
 already-optimized model with the same q, instead of a fresh heuristic
 clustering. Used by [NormalBlockVarCollectionSparsity] to warm-start
 each penalty in a sparsity path from the previous one's solution.
-`B0`/`kappa` (zero-inflation) are left untouched: they depend only on
-the data, already set correctly and independently on every model.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{NormalBlockVarBase$warm_start_from(other)}

@@ -200,11 +200,8 @@ kmeans_clustering_path <- function(R, q_list) {
 }
 
 # Clusters R into every q in q_list by cutting a SINGLE hierarchical tree,
-# rather than rebuilding it once per q. The tree (cor + dist + hclust) does
-# not depend on q at all -- only the cut does -- so a collection over 30 q
-# values used to throw 29 identical trees away (9% of a q = 1:30 collection on
-# `brca_rppa`). cutree() can return fewer than q groups on exactly tied merge
-# heights; that q is left to the model's own heuristic_clustering().
+# rather than rebuilding it once per q. cutree() can return fewer than q groups
+# on exactly tied merge heights; that q is left to the model's own heuristic_clustering().
 ward2_clustering_path <- function(R, q_list) {
   tree <- ward2_tree(R)
   stats::setNames(lapply(q_list, function(q) stats::cutree(tree, q)), q_list)
@@ -239,7 +236,7 @@ spectral_clustering_path <- function(R, q_list) {
 
 # Precomputes, for a collection over q_list, whatever part of the requested
 # clustering heuristic is shared across q, and returns one clustering per q
-# (named by q). Returns NULL when nothing can be shared -- "best_of_inits" is
+# (named by q). Returns NULL when nothing can be shared. "best_of_inits" is
 # the model's own business, and an explicit clustering needs no help -- and
 # every model then runs its own heuristic_clustering() as before.
 #
@@ -290,4 +287,3 @@ clustering_path_for_family <- function(mydata, q_list, family = c("var", "mean")
 # best_of_inits() in NormalBlockVarBase.R). identical() keeps this safe when
 # clustering_init is a list or an explicit clustering.
 uses_best_of_inits <- function(control) identical(control$clustering_init, "best_of_inits")
-

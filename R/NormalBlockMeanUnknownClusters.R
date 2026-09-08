@@ -52,8 +52,7 @@ NormalBlockMeanUnknownClusters <- R6::R6Class(
         private$C <- private$heuristic_clustering(self$data$X %*% reg_res$B)
       tau <- private$C
       ## soften the hard indicator away from 0/1: compute_loglik()'s entropy
-      ## term (tau * log(tau)) is evaluated on this tau before any
-      ## tau_estimator() update, and 0 * log(0) is NaN
+      ## term (tau * log(tau)) is initialized on this tau
       tau <- check_one_boundary(check_zero_boundary(tau))
       tau <- tau / rowSums(tau)
       B   <- private$heuristic_cluster_B_from_variable_B(reg_res$B, tau)
@@ -119,8 +118,7 @@ NormalBlockMeanUnknownClusters <- R6::R6Class(
     },
 
     ## Sequential (Gauss-Seidel) sweep over the rows of tau: each row's
-    ## softmax maximizes the ELBO exactly (its quadratic terms cancel),
-    ## so a sweep can't decrease it -- updating all rows at once can cycle.
+    ## softmax maximizes the ELBO exactly.
     tau_estimator = function(Omega = private$Omega,
                              B     = private$B,
                              alpha = private$alpha,
@@ -189,7 +187,7 @@ NormalBlockMeanUnknownClusters <- R6::R6Class(
            Psi = res$Psi, Phi = res$Phi, Lambda = res$Lambda, ll_list = res$objective)
     },
 
-    ## Reference R implementation of the same recursion, kept while the C++
+    ## Reference R implementation of the same recursion, kept since the C++
     ## port is being validated against it (test-cpp-normal-block-mean.R).
     EM_optimize_R = function(control){
       init_params <- private$optim_initialize()
@@ -259,4 +257,3 @@ NormalBlockMeanUnknownClusters <- R6::R6Class(
     {paste(private$res_covariance, "normal-block-mean model with", self$q, "unknown blocks")}
   )
 )
-

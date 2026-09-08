@@ -7,8 +7,7 @@
 R6 class for a collection of mean-block models ([NormalBlockMeanBase])
 with different numbers of clusters (q). Inherits its scaffolding
 (`print()`/`summary()`/`plot()`/`optimize()`, the `criteria` table) from
-[NormalBlockCollection], which despite its name is generic across
-both model families -- unlike [NormalBlockVarCollectionClusters], there
+[NormalBlockCollection]. Unlike [NormalBlockVarCollectionClusters], there
 is no SBM-path shortcut here: the shared clustering-heuristic registry's
 cov()/correlation-based methods are ill-suited to the mean-block family
 (see [NormalBlockMeanBase]'s own default), so each q is fit

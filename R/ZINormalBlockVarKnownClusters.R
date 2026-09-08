@@ -57,7 +57,7 @@ ZINormalBlockVarKnownClusters <- R6::R6Class(
     },
 
     ## Runs the EM recursion via the Rcpp/Armadillo core (src/exports.cpp,
-    ## ZINormalBlockVarKnownClusters_fit); see inst/normal_block_models.qmd §6/§7.
+    ## ZINormalBlockVarKnownClusters_fit).
     EM_optimize = function(control) {
       init <- private$optim_initialize()
       res  <- ZINormalBlockVarKnownClusters_fit(
@@ -113,4 +113,3 @@ ZINormalBlockVarKnownClusters <- R6::R6Class(
     {paste("zero-inflated", private$res_covariance, "normal-block-var model with fixed blocks")}
   )
 )
-

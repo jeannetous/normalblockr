@@ -28,23 +28,17 @@ NormalBlockMeanBase <- R6::R6Class(
     #' @return A new [`NormalBlockMeanBase`] object
     initialize = function(data, q, sparsity = 0, control = NB_control(),
                           zero_inflation = FALSE) {
-      ## family default for the initial clustering (benchmarked better than
-      ## the variance-block family's "ward2" here)
+      ## family default for the initial clustering
       if (is.null(control$clustering_init)) control$clustering_init <- "kmeans"
-      ## "diagonal" by default: a full Sigma costs p(p+1)/2 parameters that
-      ## drown the mean structure BIC/ICL are trying to weigh, so it selects q
-      ## markedly worse as p approaches n (simulation study, 12 replicates:
-      ## 10/12 correct selections against 6/12 at n/p = 1.3, even when the
-      ## generative Sigma *is* full). Clustering quality at fixed q is the same
-      ## either way. Asking for sparsity means asking for off-diagonal
+      ## "diagonal" by default. Asking for sparsity means asking for off-diagonal
       ## structure, so it implies a full Sigma unless one was named explicitly.
       if (is.null(control$noise_covariance))
         control$noise_covariance <- if (isTRUE(sparsity > 0) && !zero_inflation) "full" else "diagonal"
       private$res_covariance <- control$noise_covariance
       ## A full Sigma ties the variables together within each row, and the
       ## zero-inflation mask leaves a different set of them observed in every
-      ## row: each row would then need its own submatrix inverse -- a
-      ## missing-data EM rather than the reweighting the diagonal shape allows.
+      ## row: each row would then need its own submatrix inverse (a
+      ## missing-data EM rather than the reweighting the diagonal shape allows).
       stopifnot(
         "zero-inflated mean-block models only support noise_covariance = 'diagonal' or 'spherical'" =
           !(zero_inflation && control$noise_covariance == "full"),
@@ -55,10 +49,8 @@ NormalBlockMeanBase <- R6::R6Class(
         "sparsity > 0 needs noise_covariance = 'full': a diagonal or spherical Sigma has no off-diagonal coefficient for the graphical lasso to penalize" =
           !(isTRUE(sparsity > 0) && control$noise_covariance != "full")
       )
-      ## A full Sigma is p x p and estimated from n residuals: singular as
-      ## soon as n <= p, which would only surface as a cryptic chol() failure.
-      ## The graphical lasso regularizes it, and the diagonal/spherical
-      ## variants never invert anything -- hence both exemptions.
+      ## A full Sigma is p x p and estimated from n residuals, singular as
+      ## soon as n <= p. The graphical lasso regularizes it.
       if (control$noise_covariance == "full" && !isTRUE(sparsity > 0) && data$n <= data$p)
         stop("mean-block models estimate a full p x p covariance from n observations, ",
              "so they need n > p (here n = ", data$n, ", p = ", data$p,
@@ -111,7 +103,7 @@ NormalBlockMeanBase <- R6::R6Class(
     #' depend on q, so they carry over unchanged; only C (tau) and B (one
     #' column per cluster) are affected. Variables are split by their
     #' current noise variance (1 / diag(Omega)) around its within-cluster
-    #' median -- the same criterion [NormalBlockVarBase]'s `split()` uses
+    #' median, the same criterion [NormalBlockVarBase]'s `split()` uses
     #' via `dm1`, since `diag(Omega)` plays the same per-variable-precision
     #' role here.
     #' @param index index (integer) of the cluster to split
@@ -151,8 +143,6 @@ NormalBlockMeanBase <- R6::R6Class(
     merge = function(indices, in_place = FALSE) {
       indices <- sort(indices)
 
-      ## drop = FALSE: merging q = 2 down to q = 1 would otherwise silently
-      ## drop these to a plain vector/scalar.
       new_C <- private$C[, -indices[2], drop = FALSE]
       new_C[, indices[1]] <- private$C[, indices[1]] + private$C[, indices[2]]
 
@@ -171,7 +161,6 @@ NormalBlockMeanBase <- R6::R6Class(
   ),
 
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
   ## PRIVATE MEMBERS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   private = list(
@@ -183,8 +172,7 @@ NormalBlockMeanBase <- R6::R6Class(
     Lambda            = NA,
 
     ## Precision matrix for the requested shape of Sigma. Mirrors
-    ## omega_from_residuals() in src/normal_block_mean_base.h (which skips
-    ## forming the full p x p Sigma for the diagonal/spherical variants).
+    ## omega_from_residuals() in src/normal_block_mean_base.h
     omega_from_sigma = function(Sigma) {
       switch(private$res_covariance,
              "full"      = private$get_Omega(Sigma),
@@ -215,9 +203,7 @@ NormalBlockMeanBase <- R6::R6Class(
     },
 
     ## Masked counterpart of multivariate_normal_inference(), used by the ZI
-    ## subclasses to initialize: a per-variable weighted fit of B under the
-    ## zero-inflation mask (R/utils.R), whose dm1 is already the diagonal
-    ## precision the model carries.
+    ## subclasses to initialize.
     zi_mean_inference = function() {
       fit <- self$data$zi_ols_fit()
       list(B = fit$B, Omega = private$omega_from_sigma(diag(1 / fit$dm1, self$p)), R = fit$R)
@@ -232,7 +218,7 @@ NormalBlockMeanBase <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalMeanBlockData(scale = TRUE)`) -- use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalMeanBlockData(scale = TRUE)`): use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.
     model_par = function() list(B = private$B, Omega = private$Omega),
     #' @field nb_param number of parameters in the model
     nb_param = function() {

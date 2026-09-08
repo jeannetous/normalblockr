@@ -5,7 +5,7 @@
 #' Zero-Inflated Mean-Block Model with Known Clustering
 #'
 #' R6 class for a zero-inflated Normal-Block-Mean model with a known
-#' clustering. Sigma is diagonal or spherical here -- see
+#' clustering. Sigma is diagonal or spherical here. See
 #' [NormalBlockMeanBase] for why a full one is out of reach under a mask.
 #' @examples
 #' ex <- generate_normal_block_mean_data(n = 50, p = 20, d = 1, q = 3)
