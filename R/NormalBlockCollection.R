@@ -138,10 +138,7 @@ NormalBlockCollection <- R6::R6Class(
   active = list(
     #' @field criteria a data frame with the values of some criteria for the collection of models
     criteria = function() purrr::map_df(self$models, "criteria"),
-    #' @field loglik not defined for a collection (which of its models?) --
-    #' accessing it raises an informative error instead of silently
-    #' returning `NULL`. Use `logLik()` for every model's log-likelihood, or
-    #' `$get_best_model()$loglik` for a single one.
+    #' @field loglik not defined for a collection: accessing it raises an informative error. Use `logLik()` for every model's log-likelihood, or `$get_best_model()$loglik` for a single one.
     loglik = function() {
       stop(
         "`$loglik` is not defined for a collection of models (which one?) -- ",

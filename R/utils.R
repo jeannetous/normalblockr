@@ -210,14 +210,26 @@ ward2_clustering_path <- function(R, q_list) {
   stats::setNames(lapply(q_list, function(q) stats::cutree(tree, q)), q_list)
 }
 
-# Same idea for the spectral heuristic: the eigendecomposition of cov(R) is
-# q-independent, only the number of leading vectors kept and the kmeans that
-# follows are not.
+# cov(R)'s eigendecomposition plus its numerical rank, shared by the spectral
+# heuristic's two call sites (private$clustering_methods$spectral in
+# R/NormalBlockBase.R, and spectral_clustering_path() below). Eigenvectors
+# past the rank are an arbitrary completion of the null space, not derived
+# from the data at all, so capping at the rank rather than at whatever q was
+# asked for matters: R = X %*% B for the mean-block family is routinely
+# rank << q (d small, q explored well above it).
+spectral_eig_rank <- function(R) {
+  eig <- eigen(stats::cov(R), symmetric = TRUE)
+  list(vectors = eig$vectors, rank = max(1L, sum(eig$values > 1e-8 * max(eig$values))))
+}
+
+# The eigendecomposition above is q-independent, only the number of leading
+# vectors kept and the kmeans that follows are not -- computed once and
+# reused across the whole q_list rather than once per q.
 spectral_clustering_path <- function(R, q_list) {
-  U_all <- eigen(stats::cov(R), symmetric = TRUE)$vectors
+  eig <- spectral_eig_rank(R)
   stats::setNames(
     lapply(q_list, function(q) {
-      U <- U_all[, seq_len(q), drop = FALSE]
+      U <- eig$vectors[, seq_len(min(q, eig$rank)), drop = FALSE]
       U <- U / pmax(sqrt(rowSums(U^2)), 1e-10)
       stats::kmeans(U, q, nstart = 30, iter.max = 50)$cluster
     }),

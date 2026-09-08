@@ -42,7 +42,7 @@ stage to the other.
 Fits the two model families one after the other: a mean-block model
 ([NormalBlockMeanBase]) groups the variables by how they respond to the
 covariates, then a variance-block model ([NormalBlockVarBase]) groups the
-*residuals* of that fit by how they co-vary. The two answer different
+residuals of that fit by how they co-vary. The two answer different
 questions and generally return unrelated partitions, so running both is
 often more informative than choosing one.
 }

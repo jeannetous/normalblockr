@@ -261,3 +261,25 @@ test_that("zero-inflated collections also use the shared sbm path, clustering on
   }
   expect_no_error(coll$optimize(control = list(niter = 3, threshold = -1, verbose = FALSE)))
 })
+
+test_that("spectral_clustering_path() shares the rank cap with the single-q heuristic", {
+  ## Same regime as the rank-cap test in test-clustering-heuristics.R: R with
+  ## rank << max(q_list). Without the cap, kmeans still returns q clusters
+  ## (no error, no visible collapse), just built partly from noise directions
+  ## -- the failure mode is silent, so this checks agreement with the
+  ## single-q path rather than an error.
+  set.seed(41)
+  ex <- generate_normal_block_mean_data(n = 100, p = 30, d = 2, q = 5)
+  d  <- NormalBlockData$new(ex$Y, ex$X)
+  R  <- d$X %*% d$ols_fit()$B
+  q_list <- 2:7
+
+  path <- normalblockr:::spectral_clustering_path(R, q_list)
+  expect_equal(length(path), length(q_list))
+  for (i in seq_along(q_list)) expect_equal(length(unique(path[[i]])), q_list[i])
+
+  ## and a mean-block collection over that range actually runs
+  coll <- normal_block(d, blocks = q_list, model = "mean",
+                       control = NB_control(verbose = FALSE, clustering_init = "spectral"))
+  expect_true(all(sapply(coll$models, function(m) length(unique(m$clustering))) == q_list))
+})

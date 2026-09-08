@@ -13,8 +13,8 @@
 #' @param zeros an optional n x p 0/1 matrix marking the structural zeros of
 #' Y. By default they are read off Y itself (`Y == 0`), which is what a
 #' zero-inflated model expects. Pass it explicitly when the matrix handed
-#' to the model is no longer the one carrying the zeros -- typically the
-#' residuals of a first stage, see [normal_block_sequential()].
+#' to the model is no longer the one carrying the zeros (typically the
+#' residuals of a first stage, see [normal_block_sequential()]).
 #' @param scale whether to rescale each column of Y by its own standard
 #' deviation before fitting (default TRUE). Columns are *not* centered: the
 #' model's own intercept (the constant or group-indicator columns a user is
