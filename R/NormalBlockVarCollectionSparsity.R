@@ -187,9 +187,9 @@ NormalBlockVarCollectionSparsity <- R6::R6Class(
     },
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      paste0("Collection of ",
-             ifelse(self$control$zero_inflation, " zero-inflated ", ""),
-                    self$control$noise_covariance, " normal-block-var models with ",
+      nc <- if (is.null(self$control$noise_covariance)) "diagonal" else self$control$noise_covariance
+      zi <- if (isTRUE(self$control$zero_inflation)) "zero-inflated " else ""
+      paste0("Collection of ", zi, nc, " normal-block-var models with ",
              ifelse(is.matrix(private$blocks_), "fixed blocks", "fixed q"),
         ", with different sparsity penalties.")}
   )

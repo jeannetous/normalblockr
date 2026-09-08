@@ -59,10 +59,10 @@ NormalBlockVarCollectionClustersSparsity <- R6::R6Class(
   active = list(
     #' @field who_am_I a method to print what model is being fitted
     who_am_I  = function(){
-      paste("Collection of ",
-            ifelse(self$control$zero_inflation, " zero-inflated", ""),
-            self$control$noise_covariance,
-            "normal-block-var models with different values of q and different penalties.")
+      nc <- if (is.null(self$control$noise_covariance)) "diagonal" else self$control$noise_covariance
+      zi <- if (isTRUE(self$control$zero_inflation)) "zero-inflated " else ""
+      paste0("Collection of ", zi, nc,
+             " normal-block-var models with different values of q and different penalties.")
     }
 
   )

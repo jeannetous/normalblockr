@@ -135,7 +135,7 @@ cluster counts explored as a collection, then select by ICL.
 m_unknown <- normal_block(data, blocks = 2:20)
 ```
 
-    Fitting a  normal-block-var model with unknown q 
+    Fitting a diagonal normal-block-var model with unknown q 
          number of blocks = 2           
          number of blocks = 3           
          number of blocks = 4           
@@ -192,7 +192,7 @@ actually worth visualizing.
 m_sparse <- normal_block(data, blocks = group, sparsity = TRUE)
 ```
 
-    Fitting a Collection of  normal-block-var models with fixed blocks, with different sparsity penalties. 
+    Fitting a Collection of diagonal normal-block-var models with fixed blocks, with different sparsity penalties. 
          penalty = 0.2565018           
          penalty = 0.2188391           
          penalty = 0.1867065           
@@ -248,7 +248,7 @@ data_zi <- NormalBlockData$new(Y_zi, X_zi)
 m_zi    <- normal_block(data_zi, blocks = 2:8, zero_inflation = TRUE)
 ```
 
-    Fitting a  normal-block-var model with unknown q 
+    Fitting a diagonal normal-block-var model with unknown q 
          number of blocks = 2           
          number of blocks = 3           
          number of blocks = 4           
