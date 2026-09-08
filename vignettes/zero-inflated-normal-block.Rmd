@@ -1,5 +1,5 @@
 ---
-title: "Zero-inflated Normal-Block models: a worked example with fish biomass data"
+title: "Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data"
 author: "Julien Chiquet & Jeanne Tous"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Zero-inflated Normal-Block models: a worked example with fish biomass data}
+  %\VignetteIndexEntry{Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data}
   %\VignetteEncoding{UTF-8}
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: "Analyzing multivariate Gaussian data with the Normal-Block model - First steps"
+title: "Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps"
 author: "Jeanne Tous, Julien Chiquet"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Analyzing multivariate Gaussian data with the Normal-Block model - First steps}
+  %\VignetteIndexEntry{Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -25,6 +25,8 @@ knitr::opts_chunk$set(
 This vignette illustrates the use of the `normal_block()` function and the methods accompanying its R6 classes.
 
 From a statistical point of view, the `normal_block()` function fits a multivariate Normal-Block model (a Gaussian graphical model with a latent clustering structure) to a table of observations, possibly after correcting for the effect of covariates. Depending on the arguments given, the function uses a clustering supplied by the user or infers one, includes zero-inflation or not, infers a sparse network or not, and so on. Parameter inference can either be done with an integrated variational Expectation-Maximization approach (recommended) or with a faster heuristic approach.
+
+This vignette covers the default family, where the clustering structures the *covariance* of the variables (`model = "var"`). A complementary family clusters variables by their *response to covariates* instead (`model = "mean"`); see `vignette("mean-block-breast-cancer")`.
 
 Theoretical explanations for this model can be found in @tous2026. See `inst/normal_block_models.qmd` in the package sources for the full estimation details (criteria, E/M updates).
 

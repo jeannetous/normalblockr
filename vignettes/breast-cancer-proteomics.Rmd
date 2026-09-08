@@ -1,5 +1,5 @@
 ---
-title: "Normal-Block models: a worked example with breast cancer proteomics data"
+title: "Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data"
 author: "Julien Chiquet & Jeanne Tous"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Normal-Block models: a worked example with breast cancer proteomics data}
+  %\VignetteIndexEntry{Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data}
   %\VignetteEncoding{UTF-8}
 ---
 
