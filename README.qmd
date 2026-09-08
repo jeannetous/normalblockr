@@ -18,6 +18,12 @@ knitr::opts_chunk$set(
   echo       = TRUE,
   cache      = TRUE,
   cache.lazy = FALSE, # R6 model objects don't survive knitr's lazy-load cache promises
+  # ... and a cached R6 object is only as good as the class definition that
+  # made it: a chunk whose code hasn't changed is restored as-is, so an object
+  # built by an older normalblockr keeps that version's methods while the
+  # chunks around it run against the new one. Keying the cache on the
+  # installed package makes every reinstall invalidate it.
+  cache.extra = file.mtime(system.file("Meta", "package.rds", package = "normalblockr")),
   fig.path   = "man/figures/README-",
   fig.width  = 7, fig.height = 5
 )
@@ -34,7 +40,7 @@ knitr::opts_chunk$set(
 - **Sparse (graphical-lasso) network**: an $\ell_1$ penalty[^2] on the inter-cluster precision matrix, for a single penalty value or a path explored as a collection.
 - **Zero-inflated extension**: an excess-of-zeros layer for data (e.g. abundance/biomass tables) with more exact zeros than a plain Normal model can represent.
 
-Any combination of these is reached through the same `normal_block()` function -- known or unknown clustering, sparse or not, zero-inflated or not are independent choices, not separate model classes to learn.
+Any combination of these is reached through the same `normal_block()` function: known or unknown clustering, sparse or not, zero-inflated or not are independent choices, not separate model classes to learn.
 
 Since version 0.3.0 the package also fits a second, complementary family, reached with `normal_block(..., model = "mean")`:
 
@@ -90,12 +96,13 @@ m_known
 Leave the clustering for the model to infer, over a range of candidate cluster counts explored as a collection, then select by ICL.
 
 ```{r unknown}
-m_unknown <- normal_block(data, blocks = 2:10)
+m_unknown <- normal_block(data, blocks = 2:20)
+m_unknown$refine(verbose = FALSE)
 m_unknown$plot(c("deviance", "BIC", "ICL", "EBIC"))
 ```
 
 ```{r unknown-best}
-m_unknown$get_best_model("ICL")
+m_unknown$get_best_model("EBIC")
 ```
 
 ### Sparse network

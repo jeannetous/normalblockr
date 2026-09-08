@@ -44,7 +44,7 @@ the same `normal_block()`/`NormalBlockData` interface:
   Normal model can represent.
 
 Any combination of these is reached through the same `normal_block()`
-function – known or unknown clustering, sparse or not, zero-inflated or
+function: known or unknown clustering, sparse or not, zero-inflated or
 not are independent choices, not separate model classes to learn.
 
 Since version 0.3.0 the package also fits a second, complementary
@@ -107,7 +107,7 @@ group <- cutree(hc, 6) |> normalblockr:::as_indicator()
 m_known <- normal_block(data, blocks = group)
 ```
 
-    Fitting a diagonal normal-block model with fixed blocks 
+    Fitting a diagonal normal-block-var model with fixed blocks 
 
     DONE
 
@@ -115,7 +115,7 @@ m_known <- normal_block(data, blocks = group)
 m_known
 ```
 
-    A diagonal normal-block model with fixed blocks .
+    A diagonal normal-block-var model with fixed blocks .
     ===========================================================================
      nb_param q n_edges sparsity    loglik deviance      BIC      ICL   EBIC niter
           999 6      15        0 -70387.84 140775.7 146616.3 144073.3 146670    14
@@ -124,7 +124,7 @@ m_known
         $model_par, $posterior_par / $var_par, $clustering 
         $loglik, $BIC, $ICL, $objective, $nb_param, $criteria
     * Useful S3 methods
-        print(), coef(), sigma(), fitted(), predict() 
+        print(), summary(), plot(), coef(), sigma(), fitted(), predict() 
 
 ### Unknown number of clusters
 
@@ -132,10 +132,10 @@ Leave the clustering for the model to infer, over a range of candidate
 cluster counts explored as a collection, then select by ICL.
 
 ``` r
-m_unknown <- normal_block(data, blocks = 2:10)
+m_unknown <- normal_block(data, blocks = 2:20)
 ```
 
-    Fitting a diagonal normal-block model with unknown q 
+    Fitting a  normal-block-var model with unknown q 
          number of blocks = 2           
          number of blocks = 3           
          number of blocks = 4           
@@ -145,30 +145,41 @@ m_unknown <- normal_block(data, blocks = 2:10)
          number of blocks = 8           
          number of blocks = 9           
          number of blocks = 10           
+         number of blocks = 11           
+         number of blocks = 12           
+         number of blocks = 13           
+         number of blocks = 14           
+         number of blocks = 15           
+         number of blocks = 16           
+         number of blocks = 17           
+         number of blocks = 18           
+         number of blocks = 19           
+         number of blocks = 20           
     DONE
 
 ``` r
+m_unknown$refine(verbose = FALSE)
 m_unknown$plot(c("deviance", "BIC", "ICL", "EBIC"))
 ```
 
 ![](man/figures/README-unknown-1.png)
 
 ``` r
-m_unknown$get_best_model("ICL")
+m_unknown$get_best_model("EBIC")
 ```
 
-    A diagonal normal-block model with 10 unknown blocks .
+    A diagonal normal-block-var model with 16 unknown blocks .
     ===========================================================================
      nb_param  q n_edges sparsity    loglik deviance      BIC      ICL     EBIC
-         1042 10      45        0 -68179.63 136359.3 142451.2 139402.8 142658.5
+         1129 16     120        0 -67374.79 134749.6 141350.2 137746.6 142015.6
      niter
-        16
+        32
     ===========================================================================
     * Useful fields
         $model_par, $posterior_par / $var_par, $clustering 
         $loglik, $BIC, $ICL, $objective, $nb_param, $criteria
     * Useful S3 methods
-        print(), coef(), sigma(), fitted(), predict() 
+        print(), summary(), plot(), coef(), sigma(), fitted(), predict() 
 
 ### Sparse network
 
@@ -181,7 +192,7 @@ actually worth visualizing.
 m_sparse <- normal_block(data, blocks = group, sparsity = TRUE)
 ```
 
-    Fitting a Collection of diagonal normal-block models with fixed blocks, with different sparsity penalties. 
+    Fitting a Collection of  normal-block-var models with fixed blocks, with different sparsity penalties. 
          penalty = 0.2565018           
          penalty = 0.2188391           
          penalty = 0.1867065           
@@ -237,7 +248,7 @@ data_zi <- NormalBlockData$new(Y_zi, X_zi)
 m_zi    <- normal_block(data_zi, blocks = 2:8, zero_inflation = TRUE)
 ```
 
-    Fitting a diagonal normal-block model with unknown q 
+    Fitting a  normal-block-var model with unknown q 
          number of blocks = 2           
          number of blocks = 3           
          number of blocks = 4           
@@ -251,7 +262,7 @@ m_zi    <- normal_block(data_zi, blocks = 2:8, zero_inflation = TRUE)
 m_zi$get_best_model("ICL")
 ```
 
-    A zero-inflated diagonal normal-block model with 6 unknown blocks .
+    A zero-inflated diagonal normal-block-var model with 6 unknown blocks .
     ===========================================================================
      nb_param q n_edges sparsity    loglik deviance      BIC      ICL     EBIC
           210 6      15        0 -13519.35 27038.71 28296.39 27090.47 28350.14
@@ -262,7 +273,7 @@ m_zi$get_best_model("ICL")
         $model_par, $posterior_par / $var_par, $clustering 
         $loglik, $BIC, $ICL, $objective, $nb_param, $criteria
     * Useful S3 methods
-        print(), coef(), sigma(), fitted(), predict() 
+        print(), summary(), plot(), coef(), sigma(), fitted(), predict() 
 
 ## Learning more
 
