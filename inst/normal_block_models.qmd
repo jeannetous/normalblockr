@@ -16,23 +16,23 @@ header-includes:
 \newcommand{\bO}{\Omega}
 :::
 
-This document is a reference card for every Normal-Block variant implemented in `src/` (C++/RcppArmadillo core) and validated against the R6 reference implementation. It follows the notation of the *normal_block_calculations* manuscript and chapter 3 of the thesis : $\odot$ Hadamard product, $\oslash$ term-to-term inverse, $A_i$ the (column) transpose of the $i$-th row of $A$, and
+This document is a reference card for every Normal-Block variant implemented in `src/` (C++/RcppArmadillo core) and validated against the R6 reference implementation. It follows the notation of @tousPhD2026 : $\odot$ Hadamard product, $\oslash$ term-to-term inverse, $A_i$ the (column) transpose of the $i$-th row of $A$, and
 
 $$A_{\mathrm{row\text{-}sum}} = \Big(\sum_i A_{i\cdot}\Big)^\top, \qquad
 A_{\mathrm{col\text{-}sum}} = \sum_j A_{\cdot j}, \qquad
 A_{\mathrm{total\text{-}sum}} = \sum_{ij} A_{ij}.$$
 
-For each variant we give: the generative model, the optimized criterion (log-likelihood or ELBO), and the explicit E/M (or VE/M) updates exactly as implemented in `src/`. All formulas below have been checked against `nb_block.pdf` (chapter 3) and validated numerically against the R6 classes (`NormalBlockVarKnownClusters`, `NormalBlockVarUnknownClusters`, `ZINormalBlockVarKnownClusters`, `ZINormalBlockVarUnknownClusters`) in `tests/testthat/test-cpp-normal-block.R` and `test-cpp-zi-normal-block.R`.
-
-> **Note on two known documentation typos in `nb_block.pdf`**, corrected here: the $\alpha$ estimator for the zero-inflated unknown-clusters model (§3.C.2) normalizes by $p$ (number of variables), not $n$; and the leading constant of the unknown-clusters ELBO (p.60) is $-\tfrac{np}{2}\log(2\pi)$, not $-\tfrac{n}{2}\log(2\pi)$ (consistent with the known-clusters criterion on p.58). See the PR/commit discussion for the full derivation.
-
-> **Note on a fixed sign bug in the known-clusters criteria (§1, §2, §6, §7).** The shipped `objective()` for `NormalBlockVarKnownClusters`/`ZINormalBlockVarKnownClusters` computed `+log|\Omega+C^\top D^{-1}C|` (i.e. `+log|\Gamma^{-1}|`) where the formula below needs `+log|\Gamma|`. The error was invisible exactly on the EM's own trajectory: it happened to be masked there by a compensating omission of the quadratic residual term (see the boxed remark after each criterion below), so every fit's `B`/`dm1`/`Omegaq` was unaffected, but the *reported* `loglik`/`deviance`/`BIC`/`ICL`/`EBIC` were wrong off that exact path -- including, on inspection, even at full EM convergence on real data (thousands of log-lik units on `brca_rppa`, not a rounding-level discrepancy). `objective()` for both classes now computes the general criterion directly (no profiled shortcut, no sign bug, valid at any $\theta$ -- verified against a brute-force multivariate-normal evaluation), at the cost of one extra $q\times q$ (or, for the ZI variant, $n$ row-wise $q\times q$) factorization per call -- negligible next to the $O(np)$ work already done elsewhere in a (V)EM step. `NormalBlockVarUnknownClusters`/`ZINormalBlockVarUnknownClusters` (§3, §4, §8, §9) use a structurally different mean-field entropy term ($\sum\log(S)$, $S$ the variational *variance*, not a precision) and were checked to *not* have this bug.
+For each variant we give: the generative model, the optimized criterion (log-likelihood or ELBO), and the explicit E/M (or VE/M) updates exactly as implemented in `src/`. All formulas below have been checked against @tousPhD2026, @tous2026 and @ngalala2026, and validated numerically against the original reference implementation in `tests/testthat/test-cpp-normal-block.R` and `test-cpp-zi-normal-block.R`.
 
 # Part I -- The models
 
-This part is the mathematical reference: for each variant, the generative model, the criterion being optimized, and the explicit updates. Nothing here depends on how any of it is computed; everything that does -- algebraic shortcuts, caching, acceleration, initialization, solver choices -- is in Part II.
+This part is the mathematical reference: for each variant, the generative model, the criterion being optimized, and the explicit updates.
 
-## 0. Two families, one skeleton
+## Normal-Block models (variance clustering)
+
+The clustering structures the *latent covariance*: two variables are in the same block when they respond identically to a shared latent factor, i.e. when they **covary** the same way (§§0-9). This is the model of @tousPhD2026 and @tous2026, and the one the package (and this document) are named after.
+
+### 0. The generative model
 
 $$\begin{aligned}
 \text{Latent space:} \quad & W_i \sim \mathcal N(0, \Omega^{-1}), \quad W_i \in \mathbb R^q \\
@@ -41,9 +41,7 @@ $$\begin{aligned}
 
 $Y$ ($n\times p$), $X$ ($n\times d$), $W$ ($n\times q$, stacked row-wise). $C$ ($p\times q$) is either a fixed 0/1 clustering matrix (**known clusters**), or a matrix of $\mathrm{Mult}(1,\alpha)$ membership probabilities $\tau$ (**unknown clusters**, inferred jointly with everything else). $D$ is the residual covariance: $D = \mathrm{diag}(d^{-1})$ (**diagonal** noise) or $D = \xi^{-1} I_p$ (**spherical** noise, i.e. $d$ constant across variables).
 
-Throughout, `dm1` denotes $d$ (the precision vector $1/\mathrm{diag}(D)$, of length $p$, constant across entries in the spherical case) -- this is the field named `dm1_` in every C++ class (`src/noise_models.h`, `src/zi_noise_models.h`).
-
-## 1. Known clusters, diagonal noise (EM)
+### 1. Known clusters, diagonal noise (EM)
 
 R6: `NormalBlockVarKnownClusters` (`noise_covariance = "diagonal"`).
 
@@ -72,7 +70,7 @@ $$J = -\frac{np}{2}\log(2\pi) + \frac{n}{2}\sum_j \log(d_j) + \frac{n}{2}\log|\O
 
 > **On the relation to a simpler, M-step-only formula.** At a point where $d$ is exactly the M-step's own argmax for *this same* $\mu/\Gamma$ (i.e. right after a real E-step/M-step pair, as in plain EM -- but *not*, e.g., at a SQUAREM-extrapolated candidate), the bracketed quadratic term collapses to the constant $np$, and $J$ reduces to $-\frac{np}{2}\log(2\pi e) + \frac n2\sum_j\log(d_j) + \frac n2\log|\Omega| + \frac n2\log|\Gamma|$ -- the formula this document used to present (and still correct, as a special case; it was the *implementation*, not this formula, that had the sign bug noted above). The general form above is what `objective()` now actually computes, since it remains valid off that trajectory.
 
-## 2. Known clusters, spherical noise (EM)
+### 2. Known clusters, spherical noise (EM)
 
 R6: `NormalBlockVarKnownClusters` (`noise_covariance = "spherical"`).
 
@@ -84,7 +82,7 @@ $$\xi^{-1} = \frac{1}{p}\sum_j \hat d_j = \frac{(R_\mu^2)_{\mathrm{total\text{-}
 
 ($\hat d$ as in §1, before collapsing to a scalar.) The criterion is the same formula as §1 with $d_j = \xi$ for all $j$ (so $\sum_j\log(d_j) = p\log(\xi)$, and the weighted SSQ collapses to $\xi\cdot(R^2)_{\mathrm{total\text{-}sum}}$).
 
-## 3. Unknown clusters, diagonal noise (VEM)
+### 3. Unknown clusters, diagonal noise (VEM)
 
 R6: `NormalBlockVarUnknownClusters` (`noise_covariance = "diagonal"`).
 
@@ -122,7 +120,7 @@ $$\hat\alpha = \mathrm{mean}_{\text{cols}}(\tau)$$
 $$J = -\frac{np}{2}\log(2\pi e) + \frac{n}{2}\sum_j\log(d_j) + \frac{n}{2}\log|\Omega| + \frac{n}{2}\sum_k\log(S_k)
     + \sum_j \tau_{j\cdot}\log(\alpha) - \sum_{jk}\tau_{jk}\log(\tau_{jk})$$
 
-## 4. Unknown clusters, spherical noise (VEM)
+### 4. Unknown clusters, spherical noise (VEM)
 
 R6: `NormalBlockVarUnknownClusters` (`noise_covariance = "spherical"`).
 
@@ -132,7 +130,7 @@ Identical to §3 with $d_j = \xi$ for all $j$:
 
 $$\xi^{-1} = \frac{1}{p}\sum_j \hat d_j = \frac{A_{\mathrm{total\text{-}sum}}}{np}$$
 
-## 5. Zero-inflation extension
+### 5. Zero-inflation extension
 
 R6: `ZINormalBlockVarKnownClusters`, `ZINormalBlockVarUnknownClusters`. C++: `ZINormalBlockData` (`src/zi_normal_block_data.h`), `ZINormalBlockVarKnownClusters` / `ZINormalBlockVarUnknownClusters`.
 
@@ -151,7 +149,7 @@ is carried through the C++ core (`ZINormalBlockData::zi_cond_mean`).
 
 Throughout, $W = \mathbf 1_Y \odot D^{-1}$ (broadcast $d$ over rows, masked by $\mathbf 1_Y$) is the "masked weight" matrix used in every closed-form solve below (`dm1_mat` / `DM1` in the code).
 
-## 6. ZI, known clusters, diagonal noise (EM)
+### 6. ZI, known clusters, diagonal noise (EM)
 
 C++: `zi_norm_block_var_cov_diag_noise_known_clusters` (`src/zi_normal_block_var_known_clusters.h`).
 
@@ -189,13 +187,13 @@ $$J = -\frac{npY}{2}\log(2\pi e) + \frac12 \sum_j nY_j \log(d_j) + \frac{n}{2}\l
 
 (the formula this document used to present; see the boxed note in §1 -- the same sign bug applied here, on the $\log|\Gamma^{(i)}|$ term, now fixed identically).
 
-## 7. ZI, known clusters, spherical noise (EM)
+### 7. ZI, known clusters, spherical noise (EM)
 
 C++: `zi_norm_block_var_cov_spherical_noise_known_clusters`. Identical to §6 with:
 
 $$\xi^{-1} = \frac{npY}{(\mathbf 1_Y \odot A)_{\mathrm{total\text{-}sum}}}$$
 
-## 8. ZI, unknown clusters, diagonal noise (VEM)
+### 8. ZI, unknown clusters, diagonal noise (VEM)
 
 C++: `zi_norm_block_var_cov_diag_noise_unknown_clusters` (`src/zi_normal_block_var_unknown_clusters.h`).
 
@@ -236,13 +234,17 @@ J &= -\frac{npY}{2}\log(2\pi e) + \frac12\sum_j nY_j\log(d_j) + \frac{n}{2}\log|
 
 ($\sum_{ik}\log(S_{ik})$ now ranges over all $n\times q$ entries, since $S$ is row-dependent.)
 
-## 9. ZI, unknown clusters, spherical noise (VEM)
+### 9. ZI, unknown clusters, spherical noise (VEM)
 
 C++: `zi_norm_block_var_cov_spherical_noise_unknown_clusters`. Identical to §8 with:
 
 $$\xi^{-1} = \frac{npY}{(\mathbf 1_Y\odot A)_{\mathrm{total\text{-}sum}}}$$
 
-## 10. The mean-block family
+## Mean-Block models (response clustering)
+
+The clustering structures the *mean*: two variables are in the same block when they respond identically to the covariates, i.e. when they share a **regression profile** ($\S\S10$-11). See @ngalala2026 for the model's original derivation.
+
+### 10. The generative model
 
 R6: `NormalBlockMeanKnownClusters`, `NormalBlockMeanUnknownClusters` (`normal_block(..., model = "mean")`).
 
@@ -264,7 +266,7 @@ The two families are complementary, not variants of one another:
 
 Because there is **no latent variable**, the known-clusters case is not an EM at all: it is block coordinate ascent on the exact log-likelihood, alternating $B$ and $\Sigma$ (the C++ `E_step()` is a deliberate no-op there). Only the unknown-clusters case needs a variational treatment, and only for $C$.
 
-### 10.1 Known clusters
+#### 10.1 Known clusters
 
 **M-step.** Maximizing $-\tfrac12\mathrm{tr}\big((Y-XBC^\top)\Omega(Y-XBC^\top)^\top\big)$ in $B$ gives the normal equations $X^\top Y\,\Omega C = X^\top X\, B\, C^\top\Omega C$, hence
 
@@ -276,7 +278,7 @@ $$R = Y - XBC^\top, \qquad \hat\Sigma = \frac1n R^\top R \qquad \text{(shape-res
 
 $$J = -\frac{np}{2}\log(2\pi) + \frac n2 \log|\Omega| - \frac12 \mathrm{tr}\big(R\,\Omega\,R^\top\big)$$
 
-### 10.2 Unknown clusters (VEM)
+#### 10.2 Unknown clusters (VEM)
 
 Mean-field $\mathbb P(C\mid Y)\approx\prod_j \pi(C_j)$ with $C_j\sim\mathrm{Mult}(1,\tau_{j\cdot})$ and prior $\alpha$. Write $w = \mathrm{diag}(\Omega)$ and $M = B^\top X^\top X B$ ($q\times q$).
 
@@ -312,7 +314,7 @@ $$J = -\frac{np}{2}\log(2\pi) + \frac n2\log|\Omega|
   + \sum_{jk}\tau_{jk}\log\alpha_k - \sum_{jk}\tau_{jk}\log\tau_{jk}
   - \frac12\Big(\mathrm{tr}(\bar R\,\Omega\,\bar R^\top) + \mathrm{tr}(\Phi M)\Big)$$
 
-### 10.3 The shape of $\Sigma$
+#### 10.3 The shape of $\Sigma$
 
 $\Sigma$ is $p\times p$ here, not $q\times q$, so its shape is a modelling decision rather than a detail. Writing $S = \tfrac1n\bar R^\top\bar R + \Lambda$ (or $\tfrac1n R^\top R$ for known clusters):
 
@@ -326,7 +328,7 @@ $\Sigma$ is $p\times p$ here, not $q\times q$, so its shape is a modelling decis
 
 Two consequences of the restricted shapes: they never invert anything, so unlike `"full"` they carry no $n > p$ requirement; and with $\Omega$ diagonal, $\Psi$ collapses to $\mathrm{Diag}(\tau^\top w)$ and the $\tau$-dependence in $\eta$ above cancels, making the VE-step a genuine one-shot softmax. Asking for `sparsity > 0` implies `"full"`: there are no off-diagonal terms for the graphical lasso to penalize otherwise.
 
-## 11. Zero-inflated mean-block
+### 11. Zero-inflated mean-block
 
 R6: `ZINormalBlockMeanKnownClusters`, `ZINormalBlockMeanUnknownClusters`. C++: `zi_norm_block_mean_known_clusters`, `zi_norm_block_mean_unknown_clusters` (`src/zi_normal_block_mean_base.h`).
 
@@ -364,13 +366,17 @@ plus $\sum_{jk}\tau_{jk}\log\alpha_k - \sum_{jk}\tau_{jk}\log\tau_{jk}$ for unkn
 
 As a check on the mask handling: on data with no zeros at all, $\kappa = 0$, `zi_cond_mean` $=0$, and these reduce exactly to §10 -- verified numerically to $10^{-5}$ in `tests/testthat/test-ZINormalBlockMean*.R`.
 
-## 12. Sequential mean-then-variance fits
+## Combining both families
+
+The two remaining topics apply across both families rather than to one: chaining them (\S12), and the sparsity penalty (\S13) shared by every variant that carries a full precision matrix to regularize (\S\S1-9's cluster-level $\Omega$, \S10's variable-level one under `noise_covariance = "full"`).
+
+### 12. Sequential mean-then-variance fits
 
 `normal_block_sequential()` fits the two families one after the other: a mean-block model on $Y$, then a variance-block model on its residuals with an intercept-only design (the covariate effects having been removed by the first stage). This is a heuristic two-stage estimator, not a joint model.
 
 It is worth naming because it answers a question the two families raise together. On a positive control carrying two genuinely distinct structures it recovers both exactly (ARI $=1$ on each). On `brca_rppa` the two partitions are unrelated (ARI $0.018$), so a joint model forcing them equal would be badly misspecified -- but the covariance clustering is largely unchanged by removing the mean structure first (ARI $0.712$ against fitting it directly), which suggests the two structures are *separable* rather than competing. A genuinely joint mean+covariance model, with free or linked partitions, remains open; see `inst/mean_block_analyses/`.
 
-## 13. Sparse precision matrix (graphical lasso)
+### 13. Sparse precision matrix (graphical lasso)
 
 In every variant above, whenever `sparsity` $>0$, $\hat\Omega$ is no longer the exact inverse of $\hat\Sigma$ (or $\hat\Sigma_q$): it is estimated by the graphical lasso (`src/graphical_lasso.h`, reached through `nb_omega::estimate()` in `src/omega_estimation.h`) applied to $\hat\Sigma$ with penalty $\lambda \odot W_\lambda$ ($W_\lambda$ a $q\times q$ matrix of per-pair weights, `sparsity_weights`, diagonal excluded from the penalty, and $\lambda$ the scalar `sparsity`).
 
