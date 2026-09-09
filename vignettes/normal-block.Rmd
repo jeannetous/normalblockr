@@ -1,6 +1,6 @@
 ---
 title: "Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps"
-author: "Jeanne Tous, Julien Chiquet"
+author: "Jeanne Tous and Julien Chiquet"
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
@@ -28,7 +28,7 @@ From a statistical point of view, the `normal_block()` function fits a multivari
 
 This vignette covers the default family, where the clustering structures the *covariance* of the variables (`model = "var"`). A complementary family clusters variables by their *response to covariates* instead (`model = "mean"`); see `vignette("mean-block-breast-cancer")`.
 
-Theoretical explanations for this model can be found in @tous2026. See `inst/normal_block_models.qmd` in the package sources for the full estimation details (criteria, E/M updates).
+Theoretical explanations for this model and  full estimation details (criteria, E/M updates) can be found in @tous2026.
 
 ### Requirements
 
@@ -64,8 +64,8 @@ omega_structure = "erdos-renyi" # Network structure.
 u_v = c(0.3, 0.1) # Parameters to generate an association matrix from a graph, details given in the bibliography.
 SNR = 0.75 # Signal to Noise Ratio, defines the relative weight of the covariates and the variance
 alpha = rep(1/q, q) # Vector giving probabilities of belonging to each cluster
-range_X = c(0, 10)  # Min and max values for the covariates 
-range_D = c(0.5, 1.5) # Min and max values for the individual entities variances 
+range_X = c(0, 10)  # Min and max values for the covariates
+range_D = c(0.5, 1.5) # Min and max values for the individual entities variances
 ```
 
 ## Simulation 1 (no zero-inflation)
@@ -77,7 +77,7 @@ my_nb_data <- generate_normal_block_var_data(n, p, d, q, kappa, omega_structure,
 ```
 
 ```{r, simulation1-visualization}
-pheatmap::pheatmap(my_nb_data$Y, 
+pheatmap::pheatmap(my_nb_data$Y,
                    color =paletteer::paletteer_c("ggthemes::Orange-Gold", n = 100), cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE)
 ```
 
@@ -279,5 +279,3 @@ aricode::ARI(my_NB_zi$clustering,
 ```
 
 # References
-
-
