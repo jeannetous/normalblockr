@@ -50,10 +50,7 @@ normal_block <- function(data,
   model <- match.arg(model)
   stopifnot(is.numeric(blocks) | is.matrix(blocks))
   if (is.numeric(blocks) && !is.matrix(blocks) && length(blocks) > 1 && anyDuplicated(blocks))
-    stop("`blocks` looks like a vector of cluster labels; a known clustering must be passed as a ",
-         "p x q indicator matrix (e.g. model.matrix(~ 0 + factor(labels))). A numeric vector is ",
-         "read as the range of cluster counts to explore, so its values must be distinct.",
-         call. = FALSE)
+    stop("`blocks` looks like a vector of cluster labels; a known clustering must be passed as a ", "p x q indicator matrix (e.g. model.matrix(~ 0 + factor(labels))). A numeric vector is ", "read as the range of cluster counts to explore, so its values must be distinct.", call. = FALSE)
   stopifnot(is.null(control$sparsity_weights) | is.matrix(control$sparsity_weights))
   if (!is.null(control$sparsity_weights)) stopifnot(isSymmetric(control$sparsity_weights))
   if (is.list(control$clustering_init)) stopifnot(length(control$clustering_init) == length(blocks))

@@ -1,5 +1,5 @@
 ---
-title: "Normal-Block models: a worked example with breast cancer proteomics data"
+title: "Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data"
 author: "Julien Chiquet & Jeanne Tous"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Normal-Block models: a worked example with breast cancer proteomics data}
+  %\VignetteIndexEntry{Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -22,9 +22,7 @@ knitr::opts_chunk$set(
 
 # Preliminaries
 
-This vignette walks through a real-data analysis with the Normal-Block model, using the `brca_rppa` dataset shipped with the package (see `?brca_rppa`): reverse-phase protein array measurements of 163 proteins across 346 breast cancer tumor samples from The Cancer Genome Atlas, together with each sample's PAM50 molecular subtype. See the `normal-block` vignette (`vignette("normal-block")`) for a general introduction to the package on simulated data; this one focuses on a single real dataset, illustrated first with a known clustering of the proteins, then with the clustering left for the model to infer, and finally with the post-hoc `refine()` step.
-
-This dataset is also the running example of @tous2026, which includes a biological-enrichment analysis of the inferred clusters (`enrichKEGG`/`compareCluster`, via `clusterProfiler`) -- not reproduced here, since it pulls in several heavy Bioconductor dependencies and network queries; see `inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd` in the package sources for the full analysis, enrichment included.
+This vignette walks through a real-data analysis with the Normal-Block model, using the `brca_rppa` dataset shipped with the package (see `?brca_rppa`): reverse-phase protein array measurements of 163 proteins across 346 breast cancer tumor samples from The Cancer Genome Atlas, together with each sample's PAM50 molecular subtype. See the `normal-block` vignette (`vignette("normal-block")`) for a general introduction to the package on simulated data; this one focuses on a single real dataset, illustrated first with a known clustering of the proteins, then with the clustering left for the model to infer, and finally with the post-hoc `refine()` step.^[This dataset is also the running example of @tous2026, which includes a biological-enrichment analysis of the inferred clusters (`enrichKEGG`/`compareCluster`, via `clusterProfiler`) -- not reproduced here, since it pulls in several heavy Bioconductor dependencies and network queries; see `inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd` in the package sources for the full analysis, enrichment included.]
 
 ### Requirements
 
@@ -41,9 +39,7 @@ $$\begin{aligned}
 \text{observation space:} \quad & Y_i \mid W_i \sim \mathcal{N}(C W_i + B^\top X_i,\ D)
 \end{aligned}$$
 
-$C \in \{0,1\}^{p \times q}$ assigns every protein to exactly one of the $q$ clusters; it is either given (known clustering, e.g. from an independent source) or itself unknown and inferred jointly with everything else, in which case the model carries a variational posterior distribution over $C$ rather than a single point estimate. $D$ is the residual (idiosyncratic) covariance of each protein, taken diagonal here. The key structural assumption is that two proteins in the same cluster share the *same* latent factor: their covariance is driven entirely by $\mathrm{Var}(W_k) = (\Omega^{-1})_{kk}$, a single value for the whole cluster, rather than by a separate pairwise term for every pair of proteins. $\Omega$, the latent factors' precision matrix, is what `plot_network()` displays: the inferred association network *between clusters*, not between individual proteins. In its plain (non-regularized) form, that network is dense and not very informative to look at directly -- we only visualize it at the end of this vignette, after regularizing it with a graphical lasso penalty (the "Sparse precision matrix" section of `inst/normal_block_models.qmd`).
-
-See @tous2026 for the model itself, and `inst/normal_block_models.qmd` (the package's reference card) for the full estimation details (criteria, E/M updates, and the accelerated variational EM recursion used to fit it).
+$C \in \{0,1\}^{p \times q}$ assigns every protein to exactly one of the $q$ clusters; it is either given (known clustering, e.g. from an independent source) or itself unknown and inferred jointly with everything else, in which case the model carries a variational posterior distribution over $C$ rather than a single point estimate. $D$ is the residual (idiosyncratic) covariance of each protein, taken diagonal here. The key structural assumption is that two proteins in the same cluster share the *same* latent factor: their covariance is driven entirely by $\mathrm{Var}(W_k) = (\Omega^{-1})_{kk}$, a single value for the whole cluster, rather than by a separate pairwise term for every pair of proteins. $\Omega$, the latent factors' precision matrix, is what `plot_network()` displays: the inferred association network *between clusters*, not between individual proteins. In its plain (non-regularized) form, that network is dense and not very informative to look at directly -- we only visualize it at the end of this vignette, after regularizing it with a graphical lasso penalty. See @tous2026 for the model itself and for the full estimation details.
 
 # The data
 
@@ -74,7 +70,7 @@ rect.hclust(hc_expr, k = 6, border = "red")
 group <- cutree(hc_expr, 6) |> normalblockr:::as_indicator()
 ```
 
-This fixed grouping is then handed to `normal_block()` as a known clustering -- the model only estimates the association network between the 6 blocks, not the grouping itself.
+This fixed grouping is then handed to `normal_block()` as a known clustering: the model only estimates the association network between the 6 blocks, not the grouping itself.
 
 ```{r, running-normal-block-known-group, fig.width=7, fig.height=5}
 NB_prot_group <- normal_block(data_subtype, blocks = group)
@@ -89,7 +85,7 @@ print(NB_prot_group)
 
 ## Fitting a collection over a range of cluster counts
 
-When the clustering is left unknown, `normal_block()` accepts a range of candidate cluster counts and returns a collection of models, one per $q$, fitted independently, each cold-started from a clustering heuristic on the residuals (`ward2` by default). Different heuristics can converge to substantially different (V)EM local optima at the same $q$; `NB_control(clustering_init = "best_of_inits")` tries several and keeps the best-ELBO fit, at extra cost -- worth it when `refine()` (next section) won't also be applied, but on this dataset's full range `refine()` alone already recovers most of what it would add (see `inst/clustering_initialization_benchmark`), so we stick with the default here.
+When the clustering is left unknown, `normal_block()` accepts a range of candidate cluster counts and returns a collection of models, one per $q$, fitted independently, each cold-started from a clustering heuristic on the residuals (`ward2` by default).^[Different heuristics can converge to substantially different (V)EM local optima at the same $q$; `NB_control(clustering_init = "best_of_inits")` tries several and keeps the best-ELBO fit, at extra cost. Worth it when `refine()` (next section) won't also be applied, but on this dataset's full range `refine()` alone already recovers most of what it would add, so we stick with the default here.]
 
 ```{r, running-normal-block, fig.width=7, fig.height=5}
 NB_prot_subtype <- normal_block(data_subtype, blocks = 1:30)
@@ -108,7 +104,7 @@ paste0("ICL selects ", selected_NB$q, " clusters.")
 
 # Refining the clustering
 
-Every model in the collection above was fitted independently, cold-started from its own clustering heuristic -- which, on real data, can settle into a milder local optimum than an incremental, neighbor-seeded search would. `refine()` tries, for every $q$ beyond the collection's extremes, a short split-and-reoptimize trial seeded from its already-fitted $q-1$ neighbor and/or a short merge-and-reoptimize trial seeded from its $q+1$ neighbor, keeping a candidate only if it strictly improves the deviance. It runs unconditionally over the whole range and discards whatever doesn't help, so it can only improve (or leave unchanged) each model it touches.
+Every model in the collection above was fitted independently, cold-started from its own clustering heuristic: on real data, it can settle into a milder local optimum than an incremental, neighbor-seeded search would. `refine()` tries, for every $q$ beyond the collection's extremes, a short split-and-reoptimize trial seeded from its already-fitted $q-1$ neighbor and/or a short merge-and-reoptimize trial seeded from its $q+1$ neighbor, keeping a candidate only if it strictly improves the deviance. It runs unconditionally over the whole range and discards whatever doesn't help, so it can only improve (or leave unchanged) each model it touches.
 
 ```{r, refine}
 NB_prot_subtype$refine()
@@ -123,11 +119,11 @@ selected_NB_refined <- NB_prot_subtype$get_best_model("ICL")
 paste0("After refine(), ICL selects ", selected_NB_refined$q, " clusters.")
 ```
 
-On this dataset, `refine()` moves the ICL-selected number of clusters -- a reminder that the collection-wide local search is not just cosmetic: a clustering that looked locally optimal in isolation can still be improved once its neighbors in $q$ are available as alternative starting points.
+On this dataset, `refine()` moves the ICL-selected number of clusters, a reminder that the collection-wide local search is not just cosmetic: a clustering that looked locally optimal in isolation can still be improved once its neighbors in $q$ are available as alternative starting points.
 
 # Sparsifying the network of the selected clustering
 
-The association network $\Omega$ of the ICL-selected model above is dense (no penalty was applied), which makes it hard to read directly. Treating that clustering as fixed, we can refit the model once more with the graphical-lasso penalty on $\Omega$ explored over a path of values (`sparsity = TRUE`, see the "Sparse precision matrix" section of `inst/normal_block_models.qmd`), and pick the sparsity level with the best BIC.
+The association network $\Omega$ of the ICL-selected model above is dense (no penalty was applied), which makes it hard to read directly. Treating that clustering as fixed, we can refit the model once more with the graphical-lasso penalty on $\Omega$ explored over a path of values (`sparsity = TRUE`), and pick the sparsity level with the best BIC.
 
 ```{r, sparsify}
 group_selected <- selected_NB_refined$clustering |> normalblockr:::as_indicator()

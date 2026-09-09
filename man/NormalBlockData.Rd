@@ -85,7 +85,7 @@ c(n = data$n, p = data$p, d = data$d)
       \item{\code{X0}}{zero-inflation design matrix, if applicable.}
       \item{\code{formula}}{describes the relationship between Y and X, useful if not all of X's covariates should be used.}
       \item{\code{scale}}{whether to rescale each column of Y by its own standard
-deviation (no centering). Default TRUE -- see the class-level
+deviation (no centering). Default TRUE, see the class-level
 documentation for the rationale and its limits.}
       \item{\code{zeros}}{an optional 0/1 matrix of structural zeros, overriding the
 default `Y == 0`.}
@@ -99,9 +99,7 @@ default `Y == 0`.}
 \if{latex}{\out{\hypertarget{method-NormalBlockData-ols_fit}{}}}
 \subsection{\code{NormalBlockData$ols_fit()}}{
   Ordinary-least-squares fit of Y on X, with its residuals
-and their covariance. Computed once and memoized: it depends only on
-the data, yet every model in a collection over q used to recompute it
-(measured at 9% of a q = 1:30 variance-block collection on `brca_rppa`).
+and their covariance. Computed once and memoized.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{NormalBlockData$ols_fit()}
@@ -119,9 +117,8 @@ the data, yet every model in a collection over q used to recompute it
 \subsection{\code{NormalBlockData$zi_ols_fit()}}{
   Masked counterpart of `ols_fit()`: a per-variable weighted
 least-squares fit of B under the zero-inflation mask, with its inverse
-residual variances and residuals (see `zi_weighted_fit()`). Memoized for
-the same reason -- every zero-inflated model in a collection over q used
-to redo the same IRLS.
+residual variances and residuals (see `zi_weighted_fit()`).
+Computed once and memoized.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{NormalBlockData$zi_ols_fit()}
@@ -139,10 +136,7 @@ to redo the same IRLS.
   Zero-inflation component: `p` independent logistic
 regressions of each variable's zero pattern on `X0`, and the fixed
 contribution they make to the log-likelihood. The (V)EM never revisits
-these, so they are a property of the data rather than of a model --
-hence computed once and memoized here. Every model in a collection over
-q used to refit all `p` regressions (measured at 53% of a q = 2:8
-zero-inflated mean-block collection).
+these, so they are a property of the data rather than of a model.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{NormalBlockData$zi_fit()}

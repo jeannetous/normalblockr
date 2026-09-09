@@ -73,6 +73,12 @@ NormalBlockVarCollectionClusters <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
     #' @field who_am_I a method to print what model is being fitted
-    who_am_I  = function(){paste0(self$control$noise_covariance, " normal-block-var model with unknown q")}
+    ## self$control$noise_covariance stays NULL unless the caller set it
+    ## explicitly: each model resolves its own "diagonal" default locally,
+    ## never writing it back to the collection's control.
+    who_am_I  = function(){
+      nc <- if (is.null(self$control$noise_covariance)) "diagonal" else self$control$noise_covariance
+      paste0(nc, " normal-block-var model with unknown q")
+    }
   )
 )

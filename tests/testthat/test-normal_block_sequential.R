@@ -1,5 +1,4 @@
 ###############################################################################
-###############################################################################
 ## normal_block_sequential() fits a mean-block model, then a variance-block one
 ## on its residuals. The positive control below carries two genuinely distinct
 ## structures (unrelated partitions in the mean and in the covariance); the

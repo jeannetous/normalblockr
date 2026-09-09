@@ -1,6 +1,6 @@
 ---
-title: "Analyzing multivariate Gaussian data with the Normal-Block model - First steps"
-author: "Jeanne Tous, Julien Chiquet"
+title: "Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps"
+author: "Jeanne Tous and Julien Chiquet"
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Analyzing multivariate Gaussian data with the Normal-Block model - First steps}
+  %\VignetteIndexEntry{Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -26,7 +26,9 @@ This vignette illustrates the use of the `normal_block()` function and the metho
 
 From a statistical point of view, the `normal_block()` function fits a multivariate Normal-Block model (a Gaussian graphical model with a latent clustering structure) to a table of observations, possibly after correcting for the effect of covariates. Depending on the arguments given, the function uses a clustering supplied by the user or infers one, includes zero-inflation or not, infers a sparse network or not, and so on. Parameter inference can either be done with an integrated variational Expectation-Maximization approach (recommended) or with a faster heuristic approach.
 
-Theoretical explanations for this model can be found in @tous2026. See `inst/normal_block_models.qmd` in the package sources for the full estimation details (criteria, E/M updates).
+This vignette covers the default family, where the clustering structures the *covariance* of the variables (`model = "var"`). A complementary family clusters variables by their *response to covariates* instead (`model = "mean"`); see `vignette("mean-block-breast-cancer")`.
+
+Theoretical explanations for this model and  full estimation details (criteria, E/M updates) can be found in @tous2026.
 
 ### Requirements
 
@@ -62,8 +64,8 @@ omega_structure = "erdos-renyi" # Network structure.
 u_v = c(0.3, 0.1) # Parameters to generate an association matrix from a graph, details given in the bibliography.
 SNR = 0.75 # Signal to Noise Ratio, defines the relative weight of the covariates and the variance
 alpha = rep(1/q, q) # Vector giving probabilities of belonging to each cluster
-range_X = c(0, 10)  # Min and max values for the covariates 
-range_D = c(0.5, 1.5) # Min and max values for the individual entities variances 
+range_X = c(0, 10)  # Min and max values for the covariates
+range_D = c(0.5, 1.5) # Min and max values for the individual entities variances
 ```
 
 ## Simulation 1 (no zero-inflation)
@@ -75,7 +77,7 @@ my_nb_data <- generate_normal_block_var_data(n, p, d, q, kappa, omega_structure,
 ```
 
 ```{r, simulation1-visualization}
-pheatmap::pheatmap(my_nb_data$Y, 
+pheatmap::pheatmap(my_nb_data$Y,
                    color =paletteer::paletteer_c("ggthemes::Orange-Gold", n = 100), cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE)
 ```
 
@@ -277,5 +279,3 @@ aricode::ARI(my_NB_zi$clustering,
 ```
 
 # References
-
-

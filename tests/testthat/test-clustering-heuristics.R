@@ -99,3 +99,29 @@ test_that("the heuristics reach comparable optima on a zero-inflated model", {
   expect_gte(aricode::ARI(model_kmeans$clustering, model_sbm$clustering)  , 0.49)
   expect_gte(aricode::ARI(model_kmeans$clustering, model_ward2$clustering), 0.99)
 })
+
+test_that("spectral() caps its eigenvector count at cov(R)'s numerical rank", {
+  ## R = X %*% B (the mean-block family's own clustering input) is rank <= d
+  ## by construction; eigen() still returns q vectors when asked for more
+  ## than that, completing the null space arbitrarily -- not from the data at
+  ## all. Using them pollutes the embedding kmeans clusters on. This is the
+  ## regime the mean-block family is routinely in (small d, q well above it).
+  set.seed(1)
+  ex   <- generate_normal_block_mean_data(n = 100, p = 30, d = 2, q = 5)
+  data <- NormalBlockData$new(ex$Y, ex$X)
+  R    <- data$X %*% data$ols_fit()$B
+
+  expect_equal(sum(eigen(cov(R), symmetric = TRUE, only.values = TRUE)$values > 1e-8), 2)
+
+  priv <- NormalBlockMeanUnknownClusters$new(data, 5, control = NB_control(verbose = FALSE))$.__enclos_env__$private
+  cl   <- priv$clustering_methods$spectral(R, 5)
+  expect_length(unique(cl), 5) # still produces the requested number of clusters
+
+  ## a full-rank input (the variance-block family's residuals) is untouched:
+  ## the cap never binds there, so behaviour for that family doesn't change
+  exv   <- generate_normal_block_var_data(n = 100, p = 30, d = 1, q = 4)
+  datav <- NormalBlockData$new(exv$Y, exv$X)
+  Rv    <- ols_residuals(datav)
+  expect_equal(sum(eigen(cov(Rv), symmetric = TRUE, only.values = TRUE)$values > 1e-8 * max(eigen(cov(Rv), symmetric = TRUE, only.values = TRUE)$values)),
+               ncol(Rv))
+})

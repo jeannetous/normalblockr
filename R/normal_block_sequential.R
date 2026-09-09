@@ -7,7 +7,7 @@
 #' Fits the two model families one after the other: a mean-block model
 #' ([NormalBlockMeanBase]) groups the variables by how they respond to the
 #' covariates, then a variance-block model ([NormalBlockVarBase]) groups the
-#' *residuals* of that fit by how they co-vary. The two answer different
+#' residuals of that fit by how they co-vary. The two answer different
 #' questions and generally return unrelated partitions, so running both is
 #' often more informative than choosing one.
 #'
@@ -54,8 +54,6 @@ normal_block_sequential <- function(data, blocks_mean, blocks_var,
   residuals <- data$Y * matrix(data$Y_scale, data$n, data$p, byrow = TRUE) - fitted(fit_mean)
 
   intercept <- matrix(1, data$n, 1, dimnames = list(NULL, "(Intercept)"))
-  ## the zeros live in Y, not in the residuals: carry the mask over rather than
-  ## letting the second stage re-derive it from a matrix that has none.
   data_var  <- NormalBlockData$new(residuals, intercept, zeros = data$zeros)
   fit_var   <- pick(normal_block(data_var, blocks_var,
                                  zero_inflation = zero_inflation, control = control_var))

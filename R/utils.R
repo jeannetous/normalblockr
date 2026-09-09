@@ -200,24 +200,33 @@ kmeans_clustering_path <- function(R, q_list) {
 }
 
 # Clusters R into every q in q_list by cutting a SINGLE hierarchical tree,
-# rather than rebuilding it once per q. The tree (cor + dist + hclust) does
-# not depend on q at all -- only the cut does -- so a collection over 30 q
-# values used to throw 29 identical trees away (9% of a q = 1:30 collection on
-# `brca_rppa`). cutree() can return fewer than q groups on exactly tied merge
-# heights; that q is left to the model's own heuristic_clustering().
+# rather than rebuilding it once per q. cutree() can return fewer than q groups
+# on exactly tied merge heights; that q is left to the model's own heuristic_clustering().
 ward2_clustering_path <- function(R, q_list) {
   tree <- ward2_tree(R)
   stats::setNames(lapply(q_list, function(q) stats::cutree(tree, q)), q_list)
 }
 
-# Same idea for the spectral heuristic: the eigendecomposition of cov(R) is
-# q-independent, only the number of leading vectors kept and the kmeans that
-# follows are not.
+# cov(R)'s eigendecomposition plus its numerical rank, shared by the spectral
+# heuristic's two call sites (private$clustering_methods$spectral in
+# R/NormalBlockBase.R, and spectral_clustering_path() below). Eigenvectors
+# past the rank are an arbitrary completion of the null space, not derived
+# from the data at all, so capping at the rank rather than at whatever q was
+# asked for matters: R = X %*% B for the mean-block family is routinely
+# rank << q (d small, q explored well above it).
+spectral_eig_rank <- function(R) {
+  eig <- eigen(stats::cov(R), symmetric = TRUE)
+  list(vectors = eig$vectors, rank = max(1L, sum(eig$values > 1e-8 * max(eig$values))))
+}
+
+# The eigendecomposition above is q-independent, only the number of leading
+# vectors kept and the kmeans that follows are not -- computed once and
+# reused across the whole q_list rather than once per q.
 spectral_clustering_path <- function(R, q_list) {
-  U_all <- eigen(stats::cov(R), symmetric = TRUE)$vectors
+  eig <- spectral_eig_rank(R)
   stats::setNames(
     lapply(q_list, function(q) {
-      U <- U_all[, seq_len(q), drop = FALSE]
+      U <- eig$vectors[, seq_len(min(q, eig$rank)), drop = FALSE]
       U <- U / pmax(sqrt(rowSums(U^2)), 1e-10)
       stats::kmeans(U, q, nstart = 30, iter.max = 50)$cluster
     }),
@@ -227,7 +236,7 @@ spectral_clustering_path <- function(R, q_list) {
 
 # Precomputes, for a collection over q_list, whatever part of the requested
 # clustering heuristic is shared across q, and returns one clustering per q
-# (named by q). Returns NULL when nothing can be shared -- "best_of_inits" is
+# (named by q). Returns NULL when nothing can be shared. "best_of_inits" is
 # the model's own business, and an explicit clustering needs no help -- and
 # every model then runs its own heuristic_clustering() as before.
 #
@@ -278,4 +287,3 @@ clustering_path_for_family <- function(mydata, q_list, family = c("var", "mean")
 # best_of_inits() in NormalBlockVarBase.R). identical() keeps this safe when
 # clustering_init is a list or an explicit clustering.
 uses_best_of_inits <- function(control) identical(control$clustering_init, "best_of_inits")
-

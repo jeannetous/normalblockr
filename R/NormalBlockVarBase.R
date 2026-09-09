@@ -7,7 +7,7 @@
 #' R6 abstract class for the sparse Normal-Block models, where the clustering
 #' structures the latent covariance.
 #' @examples
-#' # An internal abstract base class, never instantiated directly -- see
+#' # An internal abstract base class, never instantiated directly. See
 #' # normal_block() for how concrete models (NormalBlockVarKnownClusters,
 #' # NormalBlockVarUnknownClusters, and their zero-inflated variants) are
 #' # actually created and fitted.
@@ -53,8 +53,6 @@ NormalBlockVarBase <- R6::R6Class(
     #' already-optimized model with the same q, instead of a fresh heuristic
     #' clustering. Used by [NormalBlockVarCollectionSparsity] to warm-start
     #' each penalty in a sparsity path from the previous one's solution.
-    #' `B0`/`kappa` (zero-inflation) are left untouched: they depend only on
-    #' the data, already set correctly and independently on every model.
     #' @param other a [NormalBlockVarBase] object, already optimized
     #' @return Update the current object in place with `other`'s parameters
     warm_start_from = function(other) {
@@ -98,7 +96,7 @@ NormalBlockVarBase <- R6::R6Class(
       new_C <- new_C / rowSums(new_C)
 
       ## New block starts as a copy of its parent's M/S column; split1/split2
-      ## index *variables* (length p) and must not be reused on M/S, which
+      ## index variables (length p) and must not be reused on M/S, which
       ## are indexed by *individuals* (length n).
       new_M <- cbind(private$M, private$M[, index])
 
@@ -119,9 +117,7 @@ NormalBlockVarBase <- R6::R6Class(
                              c(weights_cl, 0))
       }
 
-      ## Precision matrix: re-derived from new_M/new_S (already consistent
-      ## with the split), not hand-edited from the parent's Omega -- see
-      ## omega_from_M_S().
+      ## Precision matrix re-derived from new_M/new_S.
       new_Omega <- private$omega_from_M_S(new_M, new_S, new_weights)
 
       ## Mark as already initialized so optim_initialize() reuses this state
@@ -150,8 +146,6 @@ NormalBlockVarBase <- R6::R6Class(
       ## sorting by increasing group label
       indices <- sort(indices)
 
-      ## drop = FALSE: merging q = 2 down to q = 1 would otherwise silently
-      ## drop these to a plain vector/scalar.
       new_C <- private$C[, -indices[2], drop = FALSE]
       new_C[, indices[1]] <- private$C[, indices[1]] + private$C[, indices[2]]
 
@@ -171,9 +165,7 @@ NormalBlockVarBase <- R6::R6Class(
       ## Sparsity weights
       new_weights <-  private$weights[-indices[2], -indices[2], drop = FALSE]
 
-      ## Precision matrix: re-derived from new_M/new_S (already consistent
-      ## with the merge), not hand-edited from the parent's Omega -- see
-      ## omega_from_M_S().
+      ## Precision matrix re-derived from new_M/new_S.
       new_Omega <- private$omega_from_M_S(new_M, new_S, new_weights)
 
       ## See split()'s comment: mark as warm-started so optim_initialize()
@@ -282,7 +274,7 @@ NormalBlockVarBase <- R6::R6Class(
     clustering_methods = list(
       kmeans   = function(R, q) kmeans(t(R), q, nstart = 30, iter.max = 50)$cluster,
       ## ward2_tree() (R/utils.R) also backs sbm_clustering_path()'s own
-      ## fallback -- same computation, shared rather than duplicated.
+      ## fallback. Same computation, shared rather than duplicated.
       ward2    = function(R, q) cutree(ward2_tree(R), q),
       sbm      = function(R, q) {
         options <- list(verbosity = 0, exploreMin = q, exploreMax = q, plot = FALSE, nbCores = 1)
@@ -345,12 +337,10 @@ NormalBlockVarBase <- R6::R6Class(
     #' (1 / Var(Y_j)), converted back to Y's original units. Use
     #' `model_par$dm1` instead for the internal fitting scale. With
     #' `noise_covariance = "spherical"`, `model_par$dm1` is a single value
-    #' repeated p times (one shared variance on the fitting scale); once
+    #' repeated p times; once
     #' converted back per-variable, the p values returned here generally
     #' differ from one another whenever Y's columns were rescaled by
-    #' different factors -- correctly so, since a single shared *scaled*
-    #' variance does not correspond to a single shared variance in the
-    #' original, heterogeneous-scale units.
+    #' different factors.
     dm1_original = function() private$rescale_to_original(private$dm1, power = -2)
   )
 )

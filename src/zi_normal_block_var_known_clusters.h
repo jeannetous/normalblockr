@@ -39,8 +39,8 @@ class ZINormalBlockVarKnownClusters : public NormalBlockVarBase {
 
     // Same shape as solve_M_ridge()'s loop (zi_closed_form_solvers.h): one
     // q x q system per row, Omega fixed, only its diagonal moving. The full
-    // inverse is genuinely needed here -- M_step() reads both each slice's
-    // diagonal and their sum -- but the two temporaries the naive form
+    // inverse is genuinely needed here: M_step() reads both each slice's
+    // diagonal and their sum, but the two temporaries the naive form
     // allocated per row are not.
     const arma::vec omega_diag = Omega_.diag();
     arma::mat A = Omega_;

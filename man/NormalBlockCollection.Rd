@@ -33,10 +33,7 @@ and provide their own `get_best_model()`, delegating the (row of
   \describe{
     \item{\code{criteria}}{a data frame with the values of some criteria for the collection of models}
 
-    \item{\code{loglik}}{not defined for a collection (which of its models?) --
-accessing it raises an informative error instead of silently
-returning `NULL`. Use `logLik()` for every model's log-likelihood, or
-`$get_best_model()$loglik` for a single one.}
+    \item{\code{loglik}}{not defined for a collection: accessing it raises an informative error. Use `logLik()` for every model's log-likelihood, or `$get_best_model()$loglik` for a single one.}
   }
   \if{html}{\out{</div>}}
 }

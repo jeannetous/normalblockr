@@ -1,14 +1,14 @@
 ###############################################################################
-###############################################################################
+## NormalBlockVarCollectionSparsity (R/NormalBlockVarCollectionSparsity.R):
+## a sparsity path at fixed q (known or unknown clusters), StARS stability
+## selection, and the M-step warm-starting each penalty from the previous
+## one's converged parameters (fewer total EM iterations, same BIC path).
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; q <- ncol(C)
 
-
-###############################################################################
-###############################################################################
 data <- NormalBlockData$new(Y, X)
 
 test_that("normal block with changing sparsity, integrated inference", {

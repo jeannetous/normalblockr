@@ -1,16 +1,4 @@
 ###############################################################################
-###############################################################################
-## Use pre-save testdata (seed are hard to handle in testhat)
-testdata <- readRDS("testdata/testdata_normal_mean_block.RDS")
-Y <- testdata$Y
-X <- testdata$X
-C <- testdata$parameters$C ; q <- ncol(C)
-
-niter     <- 6
-threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
-
-###############################################################################
-###############################################################################
 ## These tests check that the Rcpp/RcppArmadillo (V)EM core
 ## (NormalBlockMeanKnownClusters_fit / NormalBlockMeanUnknownClusters_fit,
 ## src/exports.cpp) reproduces *exactly* (up to numerical precision) the
@@ -29,6 +17,14 @@ threshold <- -1 # never trigger early stopping: forces exactly `niter` iteration
 ## private$optim_initialize() returns the same starting point: the clustering
 ## is passed explicitly (rather than re-derived by a randomized heuristic) for
 ## the unknown-clusters case.
+## Use pre-save testdata (seed are hard to handle in testhat)
+testdata <- readRDS("testdata/testdata_normal_mean_block.RDS")
+Y <- testdata$Y
+X <- testdata$X
+C <- testdata$parameters$C ; q <- ncol(C)
+
+niter     <- 6
+threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
 
 test_that("NormalBlockMeanKnownClusters_fit matches the R recursion (unpenalized/sparse)", {
   data <- NormalBlockData$new(Y, X)

@@ -1,5 +1,5 @@
 ---
-title: "Zero-inflated Normal-Block models: a worked example with fish biomass data"
+title: "Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data"
 author: "Julien Chiquet & Jeanne Tous"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
 bibliography: references.bib
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{Zero-inflated Normal-Block models: a worked example with fish biomass data}
+  %\VignetteIndexEntry{Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(
 
 This vignette walks through a real-data analysis with the zero-inflated extension of the Normal-Block model, using the `onema` dataset shipped with the package (see `?onema`): fish biomass per species, summed per sampling station, together with environmental covariates. See the `normal-block` vignette (`vignette("normal-block")`) for a general introduction to the Normal-Block model on simulated data; this one focuses on what changes when the observations are zero-inflated.
 
-Many entries of `onema$biomass` are exactly zero: a species simply absent from a given station, not a small positive biomass rounded down. A plain (log-)Normal model cannot represent an excess of exact zeros beyond what its own variance would produce, which biases both the variable-level noise estimates and the inferred clustering. The next section spells out precisely how the zero-inflation extension addresses this; see @tous2026 for the Normal-Block model itself, and `inst/normal_block_models.qmd` (the package's reference card) for the full estimation details.
+Many entries of `onema$biomass` are exactly zero: a species simply absent from a given station, not a small positive biomass rounded down. A plain (log-)Normal model cannot represent an excess of exact zeros beyond what its own variance would produce, which biases both the variable-level noise estimates and the inferred clustering. The next section spells out precisely how the zero-inflation extension addresses this; see @tous2026 for the Normal-Block model itself and additional estimation details.
 
 # Mathematical background
 
@@ -56,9 +56,9 @@ so that $\mathbb P(Y_{ij} = 0) \geq \kappa_{ij}$: an excess of zeros beyond what
 
 ## The zero-inflation probabilities $\kappa$
 
-$\kappa_{ij} = \mathrm{logit}^{-1}(x_{0,i}^\top b_{0,j})$: each variable $j$ has its own logistic regression coefficients $b_{0,j}$ on a zero-inflation design matrix $X_0$ (the `X0` argument of `NormalBlockData$new()`), so $\kappa$ can in general vary across both samples and variables. By default, as in this vignette, `X0` is left unspecified and defaults to an intercept-only column: $x_{0,i}$ is then the same constant for every station, so $\kappa_{ij}$ collapses to a single probability per species, $\kappa_j$ -- and, since an intercept-only logistic regression's fitted probability is just the response's empirical mean, $\kappa_j$ turns out to be exactly that species' empirical proportion of zeros (checked numerically below). Supplying a non-trivial `X0` (e.g. some of the same environmental covariates used in `X`) would instead let a species' propensity to be absent vary across stations.
+$\kappa_{ij} = \mathrm{logit}^{-1}(x_{0,i}^\top b_{0,j})$: each variable $j$ has its own logistic regression coefficients $b_{0,j}$ on a zero-inflation design matrix $X_0$ (the `X0` argument of `NormalBlockData$new()`), so $\kappa$ can in general vary across both samples and variables. By default, as in this vignette, `X0` is left unspecified and defaults to an intercept-only column: $x_{0,i}$ is then the same constant for every station, so $\kappa_{ij}$ collapses to a single probability per species, $\kappa_j$. Since an intercept-only logistic regression's fitted probability is just the response's empirical mean, $\kappa_j$ turns out to be exactly that species' empirical proportion of zeros. Supplying a non-trivial `X0` (e.g. some of the same environmental covariates used in `X`) would instead let a species' propensity to be absent vary across stations.
 
-Unlike $B$, $\Omega$ and the clustering, which are refined together by the variational EM recursion below, $\kappa$ (equivalently, $b_0$) is estimated *once, upfront*, via $p$ independent logistic regressions -- it does not change across (V)EM iterations, and so never appears in the optimization trace or convergence plots.
+Unlike $B$, $\Omega$ and the clustering, which are refined together by the variational EM recursion below, $\kappa$ (equivalently, $b_0$) is estimated *once, upfront*, via $p$ independent logistic regressions: it does not change across (V)EM iterations, and so never appears in the optimization trace or convergence plots.
 
 ### Requirements
 
@@ -124,7 +124,7 @@ out$plot(criteria = c("BIC", "EBIC", "deviance"))
 
 ## Refining the collection
 
-Each model in the collection above is initialized independently (a heuristic clustering on the zero-inflation-aware residuals, see `?NB_control`'s `clustering_init`), which can occasionally settle into a milder local optimum than a neighboring number of clusters' solution would. `refine()` tries a short split/merge trial from each model's already-fitted neighbors and keeps it only if it strictly improves -- see `?NormalBlockVarCollectionClusters` for the full rationale. It is not run by default (it adds real cost), so it is called explicitly here:
+Each model in the collection above is initialized independently (a heuristic clustering on the zero-inflation-aware residuals, see `?NB_control`'s `clustering_init`), which can occasionally settle into a milder local optimum than a neighboring number of clusters' solution would. `refine()` tries a short split/merge trial from each model's already-fitted neighbors and keeps it only if it strictly improves. See `?NormalBlockVarCollectionClusters` for the full rationale. It is not run by default (it adds real cost), so it is called explicitly here:
 
 ```{r, refine-zi}
 out$refine()

@@ -70,7 +70,7 @@ NormalBlockVarUnknownClusters <- R6::R6Class(
     },
 
     ## Runs the VEM recursion via the Rcpp/Armadillo core (src/exports.cpp,
-    ## NormalBlockVarUnknownClusters_fit); see inst/normal_block_models.qmd §3/§4.
+    ## NormalBlockVarUnknownClusters_fit).
     EM_optimize = function(control) {
       init <- private$optim_initialize()
       res  <- NormalBlockVarUnknownClusters_fit(

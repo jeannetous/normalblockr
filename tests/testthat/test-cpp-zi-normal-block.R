@@ -1,16 +1,4 @@
 ###############################################################################
-###############################################################################
-## Use pre-saved zero-inflated testdata (seed are hard to handle in testthat)
-testdata <- readRDS("testdata/testdata_normal_zi.RDS")
-Y <- testdata$Y
-X <- testdata$X
-C <- testdata$parameters$C ; q <- ncol(C)
-
-niter     <- 5
-threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
-
-###############################################################################
-###############################################################################
 ## These tests check that calling the Rcpp/RcppArmadillo zero-inflated (V)EM
 ## core directly (ZINormalBlockVarKnownClusters_fit / ZINormalBlockVarUnknownClusters_fit,
 ## src/exports.cpp) reproduces *closely* (up to numerical precision) what the
@@ -25,6 +13,14 @@ threshold <- -1 # never trigger early stopping: forces exactly `niter` iteration
 ## initialization (private method optim_initialize) is reached into via R6's
 ## `.__enclos_env__` so that both implementations start from the very same
 ## point.
+## Use pre-saved zero-inflated testdata (seed are hard to handle in testthat)
+testdata <- readRDS("testdata/testdata_normal_zi.RDS")
+Y <- testdata$Y
+X <- testdata$X
+C <- testdata$parameters$C ; q <- ncol(C)
+
+niter     <- 5
+threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
 
 test_that("ZINormalBlockVarKnownClusters_fit matches ZINormalBlockVarKnownClusters (diagonal/spherical, unpenalized/sparse)", {
   data <- NormalBlockData$new(Y, X)

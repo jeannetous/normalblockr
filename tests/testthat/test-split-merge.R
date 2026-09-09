@@ -1,7 +1,7 @@
 ###############################################################################
 ## Tests for the split/merge cluster-search machinery (NormalBlockVarBase$split(),
-## $merge(), $candidates_split(), $candidates_merge()) and the SelectionNClusters
-## class that drives them. This machinery only applies to NormalBlockVarUnknownClusters
+## $merge(), $candidates_split(), $candidates_merge()), which NormalBlockCollection
+## Clusters$refine() drives. This machinery only applies to NormalBlockVarUnknownClusters
 ## (the clustering -- and hence M/S/C -- is variational, unlike the fixed-C
 ## known-clusters models), and previously had no test coverage at all.
 set.seed(42)
@@ -158,17 +158,4 @@ test_that("candidates_merge() requires at least two clusters", {
   model <- NormalBlockVarUnknownClusters$new(data, 1, control = NB_control(verbose = FALSE))
   model$optimize(control = list(niter = 5, threshold = -1))
   expect_error(model$candidates_merge(), "at least two clusters")
-})
-
-test_that("SelectionNClusters explores the requested range and returns a consistent best model", {
-  selection <- SelectionNClusters$new(data, n_clusters_range = c(2, 4),
-                                      control = NB_control(verbose = FALSE))
-  expect_no_error(selection$fit())
-
-  expect_true(all(selection$ICL_explored$n_clusters >= 2))
-  expect_true(all(selection$ICL_explored$n_clusters <= 4))
-
-  best <- selection$best_model
-  expect_true(isNB(best))
-  expect_equal(best$ICL, min(selection$best_models$ICL))
 })

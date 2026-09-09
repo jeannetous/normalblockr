@@ -30,13 +30,13 @@
 //
 //  1. When S carries no off-diagonal mass the problem separates exactly and
 //     Theta is diagonal. glassoFast returns 1 / max(L_ii, eps) there, dropping
-//     S_ii entirely -- so with an unpenalized diagonal (our default) it hands
+//     S_ii entirely: with an unpenalized diagonal (our default) it hands
 //     back ~9.09e15 instead of 1 / S_ii. That is a bug, not a convention, and
 //     it is reachable: any 1 x 1 problem (q = 1) takes this branch. We return
 //     the correct 1 / (S_ii + L_ii).
 //  2. The inner coordinate descent is guaranteed to terminate. In the Fortran
 //     it is an unbounded `do` loop whose only exit is `dlx < thrLasso`, which
-//     is never true once a NaN reaches `dlx` -- a non-finite input hangs the
+//     is never true once a NaN reaches `dlx`, hence, a non-finite input hangs the
 //     process rather than failing. We reject non-finite input and
 //     non-positive S_ii + L_ii up front (together the only ways to reach that
 //     state), break on a non-finite `dlx`, and keep a far-off backstop cap, so
@@ -61,7 +61,7 @@ constexpr double kEps = 1.1e-16;
 // Last-resort backstop on the inner coordinate descent, not a working limit:
 // termination is guaranteed structurally instead (non-finite input and a
 // non-positive S_ii + L_ii are both rejected up front, and a non-finite dlx
-// breaks the loop). It is set far above what a well-posed problem needs --
+// breaks the loop). It is set far above what a well-posed problem needs:
 // weak penalties genuinely take thousands of passes, up to ~15k measured over
 // a 432-case sweep, and an earlier 10k cap silently degraded two of them.
 constexpr int kMaxInner = 500000;
@@ -81,16 +81,12 @@ struct Result {
 // pays: the outer loop stops on `dw <= shr`, how much a whole sweep moved W
 // rather than how far W still is from the optimum, so resuming both takes
 // fewer sweeps and, at the tightened threshold that affords, lands closer to
-// the optimum than a cold start at the looser one. Measured over 124
-// consecutive M-steps of a real sparsity path: 1.355s at 6.1e-05 from the
-// exact solution cold, 0.589s at 8.9e-07 warm.
+// the optimum than a cold start at the looser one.
 //
 // A warm start is never load-bearing, though. On an ill-conditioned Sigma a
 // bad one can send the coordinate descent below to infinity where a cold
 // start on the same problem converges in a few sweeps, so nb_omega::estimate()
 // retries cold on a non-finite result rather than treating it as failure.
-// Also exposed to R (graphical_lasso_fit's w_init/wi_init), matching the
-// interface glassoFast offered.
 struct State {
   arma::mat W;
   arma::mat X;

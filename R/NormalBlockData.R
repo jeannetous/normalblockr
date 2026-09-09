@@ -11,16 +11,13 @@
 #' @param X0 zero-inflation design matrix, if applicable.
 #' @param formula describes the relationship between Y and X, and X0 if applicable, useful if not all of X's or X0's covariates should be used, should be formatted ~ X1 + X2... | Z1 + Z2... with the Normal formula before the | and the ZI formula after the |
 #' @param zeros an optional n x p 0/1 matrix marking the structural zeros of
-#' Y. By default they are read off Y itself (`Y == 0`), which is what a
-#' zero-inflated model expects. Pass it explicitly when the matrix handed
-#' to the model is no longer the one carrying the zeros -- typically the
-#' residuals of a first stage, see [normal_block_sequential()].
+#' Y. By default they are read off Y itself (`Y == 0`). Pass it explicitly
+#' when the matrix handed to the model is no longer the one carrying the zeros
+#' (typically the residuals of a first stage, see [normal_block_sequential()]).
 #' @param scale whether to rescale each column of Y by its own standard
-#' deviation before fitting (default TRUE). Columns are *not* centered: the
-#' model's own intercept (the constant or group-indicator columns a user is
-#' expected to include in X) already absorbs each variable's mean, so
-#' centering here would be redundant -- unless X has no such column, in
-#' which case the residual model is misspecified regardless of this setting.
+#' deviation before fitting (default TRUE). Columns are not centered: the
+#' model's own intercept already absorbs each variable's mean, so
+#' centering here would be redundant.
 #' Rescaling matters because the normal-block model assumes a single shared
 #' covariance value within each block (`Cov(Y_j, Y_j') = Var(W_k)` for j, j'
 #' in block k); on the raw scale, that assumption is swamped whenever
@@ -81,7 +78,7 @@ NormalBlockData <- R6::R6Class(
     #' @param X0 zero-inflation design matrix, if applicable.
     #' @param formula describes the relationship between Y and X, useful if not all of X's covariates should be used.
     #' @param scale whether to rescale each column of Y by its own standard
-    #' deviation (no centering). Default TRUE -- see the class-level
+    #' deviation (no centering). Default TRUE, see the class-level
     #' documentation for the rationale and its limits.
     #' @param zeros an optional 0/1 matrix of structural zeros, overriding the
     #' default `Y == 0`.
@@ -131,9 +128,7 @@ NormalBlockData <- R6::R6Class(
     },
 
     #' @description Ordinary-least-squares fit of Y on X, with its residuals
-    #' and their covariance. Computed once and memoized: it depends only on
-    #' the data, yet every model in a collection over q used to recompute it
-    #' (measured at 9% of a q = 1:30 variance-block collection on `brca_rppa`).
+    #' and their covariance. Computed once and memoized.
     #' @return a list with `B` (d x p), `R` (n x p residuals) and `Sigma`
     #' (p x p residual covariance)
     ols_fit = function() {
@@ -147,9 +142,8 @@ NormalBlockData <- R6::R6Class(
 
     #' @description Masked counterpart of `ols_fit()`: a per-variable weighted
     #' least-squares fit of B under the zero-inflation mask, with its inverse
-    #' residual variances and residuals (see `zi_weighted_fit()`). Memoized for
-    #' the same reason -- every zero-inflated model in a collection over q used
-    #' to redo the same IRLS.
+    #' residual variances and residuals (see `zi_weighted_fit()`).
+    #' Computed once and memoized.
     #' @return a list with `B` (d x p), `dm1` (p) and `R` (n x p masked residuals)
     zi_ols_fit = function() {
       if (is.null(private$zi_ols_cache)) private$zi_ols_cache <- zi_weighted_fit(self)
@@ -159,20 +153,12 @@ NormalBlockData <- R6::R6Class(
     #' @description Zero-inflation component: `p` independent logistic
     #' regressions of each variable's zero pattern on `X0`, and the fixed
     #' contribution they make to the log-likelihood. The (V)EM never revisits
-    #' these, so they are a property of the data rather than of a model --
-    #' hence computed once and memoized here. Every model in a collection over
-    #' q used to refit all `p` regressions (measured at 53% of a q = 2:8
-    #' zero-inflated mean-block collection).
+    #' these, so they are a property of the data rather than of a model.
     #' @return a list with `B0` (d0 x p), `kappa` (n x p zero-inflation
     #' probabilities) and `ZI_cond_mean` (a scalar)
     zi_fit = function() {
       if (is.null(private$zi_cache)) {
-        ## d0 x p, one column of coefficients per variable. Built with an
-        ## explicit matrix() rather than t(sapply(...)): sapply collapses to a
-        ## plain vector when d0 == 1 and returns d0 x p when d0 > 1, so the
-        ## transpose that made the first case work broke the second (a
-        ## non-conformable X0 %*% B0 as soon as a second zero-inflation
-        ## covariate was supplied).
+        ## d0 x p, one column of coefficients per variable.
         no_zeros <- self$npY == self$n * self$p
         B0 <- if (!no_zeros) {
           coefs <- lapply(1:self$p, function(j) {

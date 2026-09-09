@@ -70,7 +70,7 @@ ZINormalBlockVarUnknownClusters <- R6::R6Class(
     },
 
     ## Runs the VEM recursion via the Rcpp/Armadillo core (src/exports.cpp,
-    ## ZINormalBlockVarUnknownClusters_fit); see inst/normal_block_models.qmd §8/§9.
+    ## ZINormalBlockVarUnknownClusters_fit).
     EM_optimize = function(control) {
       init <- private$optim_initialize()
       res  <- ZINormalBlockVarUnknownClusters_fit(
@@ -127,4 +127,3 @@ ZINormalBlockVarUnknownClusters <- R6::R6Class(
     {paste("zero-inflated", private$res_covariance, "normal-block-var model with", self$q, "unknown blocks")}
   )
 )
-

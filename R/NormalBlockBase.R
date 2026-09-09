@@ -33,8 +33,7 @@ NormalBlockBase <- R6::R6Class(
       self$data <- data
       stopifnot("There cannot be more blocks than there are entities to cluster" = q <= ncol(self$data$Y))
 
-      ## pointer to the chosen optimization function (a plain if/else: ifelse()
-      ## is vectorized and mangles function objects)
+      ## pointer to the chosen optimization function
       private$optimizer <- if (control$heuristic) private$heuristic_optimize else private$EM_optimize
       stopifnot("this model family does not implement NB_control(heuristic = TRUE)" =
                   is.function(private$optimizer))
@@ -42,9 +41,7 @@ NormalBlockBase <- R6::R6Class(
 
 
       ## control$clustering_init is either the name of a clustering heuristic
-      ## (a single string, deferred to heuristic_clustering(), looked up in
-      ## private$clustering_methods) or an actual clustering to use directly
-      ## (a vector of labels or a p x q indicator matrix).
+      ## or an actual clustering to use directly
       cl0 <- control$clustering_init
       if (is.character(cl0) && length(cl0) == 1) {
         private$clustering_approx <- cl0
@@ -98,7 +95,7 @@ NormalBlockBase <- R6::R6Class(
     #' @param ll_list  list of log-lik (elbo) values
     #' @param warm_started whether `optim_initialize()` should treat the model as
     #' already initialized (reuse B/Omega/dm1/C/alpha/M/S as they stand)
-    #' rather than recomputing a fresh heuristic initialization -- set by
+    #' rather than recomputing a fresh heuristic initialization. Set by
     #' [warm_start_from()] and by [split()]/[merge()].
     #' @param clustering_init initial clustering
     #' @return Update the current [`normal`] object
@@ -208,8 +205,7 @@ NormalBlockBase <- R6::R6Class(
       candidates <- map((1:self$q)[self$cluster_sizes > 1], self$split)
       # keep candidates with at least 2 guys per cluster and non empty split.
       # Compared against the number of currently *live* (non-empty) clusters
-      # rather than self$q: the (V)EM can converge to an empty cluster (a
-      # known general failure mode, e.g. plot_network()'s cluster_sizes fix),
+      # rather than self$q: the (V)EM can converge to an empty cluster,
       # in which case self$q overcounts and every split would otherwise look
       # invalid, silently stalling explore_forward() before n_clusters_range[2].
       clustering_sizes <- map(candidates, "clustering") %>% map(table)
@@ -226,7 +222,7 @@ NormalBlockBase <- R6::R6Class(
     #' @description generate and select a set of candidate models
     #' by merging the clusters of the current model
     #' @param max_candidates merge candidates are, unlike split's, quadratic
-    #' in q (`choose(q, q-2)` pairs) -- beyond `max_candidates` pairs, only
+    #' in q (`choose(q, q-2)` pairs): beyond `max_candidates` pairs, only
     #' the most promising ones are actually built and trial-optimized, ranked
     #' by the family's own `private$merge_score()`. Set to `Inf` to always
     #' try every pair.
@@ -275,7 +271,7 @@ NormalBlockBase <- R6::R6Class(
     ## Graphical methods------------------
     #' @param show_increment whether to add a second panel with the (log10)
     #' absolute increment between iterations and the convergence `threshold`
-    #' -- distinguishes true convergence from a flat-looking objective trace.
+    #' (distinguishes true convergence from a flat-looking objective trace).
     #' @description plots the evolution of the objective (log-likelihood or ELBO)
     #' across the (V)EM iterations of the last call to `optimize()`.
     #' @return a [`ggplot2::ggplot`] graph
@@ -428,7 +424,7 @@ NormalBlockBase <- R6::R6Class(
     ZI_cond_mean      = NA, # fixed contribution of the ZI component to the log-likelihood
     B                 = NA, # regression matrix
     C                 = NA, # the matrix of posterior probabilities (tau) or group affectation
-    Omega            = NA, # precision matrix for clusters or variables
+    Omega             = NA, # precision matrix for clusters or variables
     alpha             = NA, # vector of clusters probabilities
     optimizer         = NA, # a link to the function that perform the optimization
     ll_list           = NA, # list of log-likelihoods or ELBOs
@@ -438,8 +434,7 @@ NormalBlockBase <- R6::R6Class(
     clustering_approx = NA, # name of the clustering heuristic, key into clustering_methods
     niter             = NA, # number of EM iterations required by the inference, if applicable
     niter_max         = NA, # niter cap passed to the last optimize() call (for plot_loglik()'s
-    # and warn_if_not_converged()'s "did it actually converge or just
-    # hit the cap?" diagnostic)
+    # and warn_if_not_converged()'s diagnostic)
     threshold         = NA, # convergence threshold passed to the last optimize() call (idem)
     warm_started      = FALSE, # set by warm_start_from() and by split()/merge(): tells
     # optim_initialize() to reuse the current B/dm1/Omega (and
@@ -475,9 +470,7 @@ NormalBlockBase <- R6::R6Class(
     ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     ## Zero-inflation probabilities, never revisited by the (V)EM: only their
     ## fixed log-likelihood contribution (ZI_cond_mean) reaches the recursion.
-    ## They depend on nothing but the data, so the fit itself lives on (and is
-    ## memoized by) NormalBlockData -- every model in a collection over q would
-    ## otherwise refit the same p logistic regressions.
+    ## They depend on nothing but the data, so the fit itself lives on NormalBlockData
     fit_zi_component = function() {
       zi <- self$data$zi_fit()
       private$B0           <- zi$B0
@@ -515,28 +508,21 @@ NormalBlockBase <- R6::R6Class(
     ## Registry of clustering heuristics used to turn the OLS/ZI residuals R
     ## (n x p) into an initial clustering of the p variables into self$q
     ## groups (a vector of length p with values in 1:q). One single table
-    ## instead of one ad hoc private method per algorithm -- selectable via
+    ## instead of one ad hoc private method per algorithm, selectable via
     ## NB_control(clustering_init = ...) ("ward2"/"kmeans"/"sbm"/"spectral").
-    ## Benchmarked on three real datasets
-    ## (inst/clustering_initialization_benchmark): no single method dominates
-    ## everywhere, but combining each method's BIC rank with how often its
-    ## deviance path violates the model's theoretical guarantee (deviance is
-    ## non-increasing in q) favors ward2 as the most reliable single default
-    ## -- kmeans has a marginally better raw BIC rank on average but violates
-    ## that monotonicity far more often and with much larger jumps, i.e. its
-    ## apparent edge partly reflects less reliable (V)EM convergence rather
-    ## than a systematically better fit. A 5th method, kmeansvar (from the
-    ## ClustOfVar package), was dropped after that same benchmark showed it
-    ## was both the worst-ranked and the least reliable by this monotonicity
-    ## measure on every dataset tested -- removing it also drops ClustOfVar
-    ## from the package's dependencies.
+    ## Benchmarked separately per family (the two cluster genuinely different
+    ## quantities: residual covariance vs. mean trajectory). For the
+    ## variance-block family, on three real datasets: no single method
+    ## dominates everywhere, but combining each method's BIC rank with how
+    ## often its deviance path violates the model's theoretical guarantee
+    ## (deviance is non-increasing in q) favors ward2 as the most reliable
+    ## default (NormalBlockVarBase$initialize()) -- kmeans has a marginally
+    ## better raw BIC rank on average but violates that monotonicity far more
+    ## often. For the mean-block family, kmeans is the default instead
+    ## (NormalBlockMeanBase$initialize()): it consistently lands in a better
+    ## ELBO basin than ward2 or spectral there (inst/mean_block_analyses/).
     ## spectral clusters the eigenvectors of cov(R) (top q, each row rescaled
-    ## to unit L2 norm -- the classic Ng-Jordan-Weiss normalization) instead
-    ## of the residuals themselves: the model's clustering target is the
-    ## *covariance* structure, not the residual values, so an eigen-embedding
-    ## of cov(R) is a closer match (and far cheaper than sbm). Without the
-    ## row normalization it is mediocre everywhere; with it, it is
-    ## competitive on university webpages at a fraction of sbm's cost.
+    ## to unit L2 norm, the classic Ng-Jordan-Weiss normalization).
     clustering_methods = list(
       ## compress_columns() is exact here: kmeans sees only the distances
       ## between R's columns, which it preserves (R/utils.R)
@@ -550,8 +536,14 @@ NormalBlockBase <- R6::R6Class(
         mySBM$setModel(q)
         mySBM$memberships
       },
+      ## spectral_eig_rank() (R/utils.R) caps the eigenvectors used at
+      ## cov(R)'s numerical rank -- see its comment for why: R = X %*% B for
+      ## the mean-block family is routinely rank << q, and eigenvectors past
+      ## the rank are arbitrary, not data-derived. Shared with
+      ## spectral_clustering_path(), the collection-level analogue.
       spectral = function(R, q) {
-        U <- eigen(cov(R), symmetric = TRUE)$vectors[, seq_len(q), drop = FALSE]
+        eig <- spectral_eig_rank(R)
+        U <- eig$vectors[, seq_len(min(q, eig$rank)), drop = FALSE]
         U <- U / pmax(sqrt(rowSums(U^2)), 1e-10)
         kmeans(U, q, nstart = 30, iter.max = 50)$cluster
       }

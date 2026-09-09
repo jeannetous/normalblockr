@@ -73,7 +73,7 @@ NormalBlockMeanKnownClusters <- R6::R6Class(
     },
 
     ## Moment-based fit (NB_control(heuristic = TRUE)): the heuristic
-    ## initialization *is* the moment estimate, so there is nothing to iterate.
+    ## initialization is the moment estimate, so there is nothing to iterate.
     ## No likelihood is computed, hence no ll_list (see NormalBlockBase's
     ## `loglik`, NA in this mode).
     heuristic_optimize = function(control) {
@@ -96,7 +96,7 @@ NormalBlockMeanKnownClusters <- R6::R6Class(
       list(B = res$B, Omega = res$Omega, ll_list = res$objective)
     },
 
-    ## Reference R implementation of the same recursion, kept while the C++
+    ## Reference R implementation of the same recursion, kept since the C++
     ## port is being validated against it (test-cpp-normal-block-mean.R).
     EM_optimize_R = function(control){
       init_params <- private$optim_initialize()
@@ -137,4 +137,3 @@ NormalBlockMeanKnownClusters <- R6::R6Class(
     {paste(private$res_covariance, "normal-block-mean model with fixed blocks")}
   )
 )
-

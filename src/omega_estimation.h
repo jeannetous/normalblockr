@@ -9,23 +9,15 @@
 // estimate the precision matrix of the blocks from its covariance estimate
 // Sigma_hat (q x q). When `sparsity <= 0`, this is a plain matrix inversion;
 // otherwise it runs the in-package graphical lasso (src/graphical_lasso.h).
-// That solver used to be glassoFast, reached by calling back into R from
-// inside this loop -- see graphical_lasso.h for why it isn't any more.
 namespace nb_omega {
 
-// Tighter than glassoFast's 1e-4 default, which a warm start pays for in
-// accuracy rather than time -- see estimate() below. MUST match
-// NB_GLASSO_THRESHOLD (R/utils.R), which the R reference recursion uses:
-// the two are compared trace-for-trace at 1e-8 in test-cpp-normal-block-mean.R,
-// so drift between them fails there rather than silently.
+// MUST match NB_GLASSO_THRESHOLD (R/utils.R), which the R reference recursion uses: the two are compared trace-for-trace at 1e-8 in test-cpp-normal-block-mean.R
 constexpr double kGlassoThreshold = 1e-6;
 
 // Armadillo equivalent of ensure_pd() (R/utils.R): the graphical lasso can
 // return a precision matrix that is not quite positive definite (an EM
 // iterate's Sigma can be badly conditioned, especially for the p x p Sigma of
-// the mean-block family), which would then make log_det_sympd() throw. The
-// Cholesky attempt makes the common case free; only a failing candidate pays
-// for the eigendecomposition.
+// the mean-block family), which would then make log_det_sympd() throw
 inline arma::mat ensure_pd(const arma::mat& M, double floor_value = 1e-6) {
   arma::mat sym = arma::symmatu(M), R;
   if (arma::chol(R, sym)) return sym;
@@ -39,12 +31,9 @@ inline arma::mat ensure_pd(const arma::mat& M, double floor_value = 1e-6) {
 // `warm`, when given, carries the previous M-step's (W, X) so the graphical
 // lasso can resume from it. Consecutive M-steps solve nearly the same problem,
 // and the solver's stopping rule measures per-sweep progress rather than
-// distance to the optimum -- so a warm start both converges in fewer sweeps
+// distance to the optimum, so a warm start both converges in fewer sweeps
 // and, at the tightened threshold this affords, lands closer to the optimum
-// than a cold start at the looser one. Measured over 124 consecutive M-steps
-// of a mean-block sparsity path: 1.355s at 6.1e-05 cold, 0.589s at 8.9e-07
-// warm. `warm` must belong to the model, not be shared between fits: it is
-// only ever a starting point, but a stale one costs sweeps.
+// than a cold start at the looser one.
 inline arma::mat estimate(const arma::mat& Sigma_hat, double sparsity,
                           const arma::mat& sparsity_weights,
                           nb_glasso::State* warm = nullptr,
@@ -61,7 +50,7 @@ inline arma::mat estimate(const arma::mat& Sigma_hat, double sparsity,
   // infinity where a cold start on the very same problem converges in a
   // handful of sweeps (observed on the mean-block p x p Sigma, and it is why
   // this retry exists rather than a direct fall-through to the unpenalized
-  // inverse -- that would silently swap the model being fitted).
+  // inverse.
   if (glasso_out.X.has_nan() && warm != nullptr && warm->usable_for(Sigma_hat.n_rows)) {
     glasso_out = nb_glasso::solve(Sigma_hat, penalty, thr, 10000, nullptr);
   }

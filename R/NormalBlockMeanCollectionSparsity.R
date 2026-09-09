@@ -8,7 +8,7 @@
 #' a fixed clustering (or a fixed number of blocks) and different sparsity
 #' levels applied to the p x p precision matrix of the variables. Mirrors
 #' [NormalBlockVarCollectionSparsity], minus the StARS/stability selection
-#' path, which relies on `fixed_tau` -- not supported by the mean-block VEM.
+#' path, which relies on `fixed_tau`, not supported by the mean-block VEM.
 #' @examples
 #' ex <- generate_normal_block_mean_data(n = 60, p = 20, d = 1, q = 3)
 #' data <- NormalBlockData$new(ex$Y, ex$X)
@@ -41,10 +41,7 @@ NormalBlockMeanCollectionSparsity <- R6::R6Class(
                     (min(control$sparsity_penalties) > 0))
         sparsity <- control$sparsity_penalties
       } else {
-        ## The variance-block path reads its scale off a short unpenalized fit;
-        ## here that fit is exactly what sparsity is meant to rescue when
-        ## n <= p (Sigma singular), so the scale is taken directly from the OLS
-        ## residual covariance -- the quantity the fitted Omega inverts anyway.
+        ## The variance-block path reads its scale off a short unpenalized fit.
         Sigma    <- stats::cov(ols_residuals(mydata))
         weights  <- matrix(1, mydata$p, mydata$p)
         diag(weights) <- 0
