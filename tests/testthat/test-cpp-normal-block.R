@@ -1,16 +1,4 @@
 ###############################################################################
-###############################################################################
-## Use pre-save testdata (seed are hard to handle in testhat)
-testdata <- readRDS("testdata/testdata_normal.RDS")
-Y <- testdata$Y
-X <- testdata$X
-C <- testdata$parameters$C ; q <- ncol(C)
-
-niter     <- 6
-threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
-
-###############################################################################
-###############################################################################
 ## These tests check that the Rcpp/RcppArmadillo (V)EM core
 ## (NormalBlockVarKnownClusters_fit / NormalBlockVarUnknownClusters_fit, src/exports.cpp)
 ## reproduces *exactly* (up to numerical precision) the EM/VEM recursion
@@ -20,6 +8,14 @@ threshold <- -1 # never trigger early stopping: forces exactly `niter` iteration
 ## src/omega_estimation.h and src/graphical_lasso.h). The R6 heuristic initialization
 ## (private method optim_initialize) is reached into via R6's `.__enclos_env__`
 ## so that both implementations start from the very same point.
+## Use pre-save testdata (seed are hard to handle in testhat)
+testdata <- readRDS("testdata/testdata_normal.RDS")
+Y <- testdata$Y
+X <- testdata$X
+C <- testdata$parameters$C ; q <- ncol(C)
+
+niter     <- 6
+threshold <- -1 # never trigger early stopping: forces exactly `niter` iterations
 
 test_that("NormalBlockVarKnownClusters_fit matches NormalBlockVarKnownClusters (diagonal/spherical, unpenalized/sparse)", {
   data <- NormalBlockData$new(Y, X)

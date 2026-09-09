@@ -1,5 +1,8 @@
 ###############################################################################
-###############################################################################
+## ZINormalBlockVarKnownClusters with a covariate-dependent zero-inflation
+## layer, i.e. X0 != NULL (R/NormalBlockData.R): the excess-zero probability
+## is regressed on its own design matrix rather than fit as one intercept per
+## variable. Known clusters, diagonal covariance, with and without sparsity.
 testdata <- readRDS("testdata/testdata_normal_covardep_zi.RDS")
 Y  <- testdata$Y
 X  <- testdata$X

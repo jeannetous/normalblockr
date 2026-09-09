@@ -1,11 +1,13 @@
 ###############################################################################
-###############################################################################
+## NormalBlockVarCollectionClusters (R/NormalBlockVarCollectionClusters.R,
+## R/NormalBlockCollectionClusters.R): fitting a
+## collection over several q at once, including a per-q clustering_init list
+## and the heuristic path. The second half of the file exercises refine()
+## (candidates_split()/candidates_merge()) on the collection.
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y ; X <- testdata$X
 C <- testdata$parameters$C ; q <- ncol(C)
-
-###############################################################################
 
 test_that("normal block with diagonal residual covariance and unknown q", {
   clustering_init_3 <- normalblockr:::get_clusters(C)

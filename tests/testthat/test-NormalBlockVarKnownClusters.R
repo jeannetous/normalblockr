@@ -1,12 +1,13 @@
 ###############################################################################
-###############################################################################
+## NormalBlockVarKnownClusters (R/NormalBlockVarKnownClusters.R): diagonal and
+## spherical residual covariance, with and without sparsity, the moment-based
+## heuristic fit, and that setting $sparsity and re-optimizing lands on the
+## same fit as constructing the sparse model directly.
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C
-
-###############################################################################
 
 test_that("normal block with diagonal residual covariance and known clusters", {
   data <- NormalBlockData$new(Y, X)

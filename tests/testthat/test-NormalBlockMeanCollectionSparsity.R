@@ -1,5 +1,9 @@
 ###############################################################################
-###############################################################################
+## NormalBlockMeanCollectionSparsity/ClustersSparsity (R/NormalBlockMeanCollection*.R):
+## the sparsity path over the p x p Omega under noise_covariance = "full",
+## its interaction with q (crossed sparsity/clusters), get_best_model()/plot(),
+## the n > p requirement a full Sigma imposes unless sparsity regularizes it,
+## and the noise_covariance/sparsity consistency checks.
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal_mean_block.RDS")
 Y <- testdata$Y
@@ -7,9 +11,6 @@ X <- testdata$X
 C <- testdata$parameters$C ; q <- ncol(C)
 
 fast <- NB_control(verbose = FALSE, n_sparsity_penalties = 5, niter = 20)
-
-###############################################################################
-###############################################################################
 data <- NormalBlockData$new(Y, X)
 
 test_that("mean-block sparsity path sparsifies Omega monotonically", {

@@ -1,14 +1,13 @@
 ###############################################################################
-###############################################################################
+## NormalBlockVarUnknownClusters (R/NormalBlockVarUnknownClusters.R): the
+## variational (VEM) counterpart of test-NormalBlockVarKnownClusters.R --
+## diagonal and spherical covariance, with and without sparsity, the
+## heuristic fit, and that the recovered clustering matches ground truth.
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; q <- ncol(C)
-
-
-###############################################################################
-###############################################################################
 
 test_that("normal block with diagonal residual covariance and unknown clusters", {
   data <- NormalBlockData$new(Y, X)

@@ -1,5 +1,8 @@
 ###############################################################################
-###############################################################################
+## ZINormalBlockVarKnownClusters with intercept-only zero-inflation (formula's
+## right-hand side is `| 1`, unlike test-covar-ZINormalBlockVarKnownClusters.R's
+## X0-dependent one): diagonal and spherical residual covariance, with and
+## without sparsity, and the moment-based heuristic fit.
 testdata <- readRDS("testdata/testdata_normal_zi.RDS")
 Y <- testdata$Y
 X <- testdata$X ; X <- cbind(X, rnorm(nrow(X))) ; colnames(X) <- c("X1", "X2")

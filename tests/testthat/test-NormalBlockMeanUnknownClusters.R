@@ -1,5 +1,10 @@
 ###############################################################################
-###############################################################################
+## NormalBlockMeanUnknownClusters (R/NormalBlockMeanUnknownClusters.R): a
+## convergence smoke test, then three behaviors specific to the R6 layer
+## rather than the recursion itself -- predict() reshaping cluster-level
+## predictions back to the p variables, the heuristic (moment-based, no VEM)
+## fit path, and fixed_tau leaving tau untouched (used by stability
+## selection). See test-cpp-normal-block-mean.R for numerical accuracy.
 testdata <- readRDS("testdata/testdata_normal_mean_block.RDS")
 Y <- testdata$Y
 X <- testdata$X

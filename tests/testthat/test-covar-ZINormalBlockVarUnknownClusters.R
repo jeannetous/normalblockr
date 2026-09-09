@@ -1,5 +1,8 @@
 ###############################################################################
-###############################################################################
+## Same covariate-dependent zero-inflation layer as
+## test-covar-ZINormalBlockVarKnownClusters.R (X0 != NULL), but with unknown
+## clusters (variational). clustering_init is pinned to "ward2" below --
+## see the note on that line for why.
 testdata <- readRDS("testdata/testdata_normal_covardep_zi.RDS")
 Y  <- testdata$Y
 X  <- testdata$X

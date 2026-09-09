@@ -1,14 +1,12 @@
 ###############################################################################
-###############################################################################
+## NormalBlockVarCollectionClustersSparsity (R/NormalBlockVarCollectionClustersSparsity.R):
+## a collection crossing several q with a sparsity path at each, both the
+## plain VEM path and the moment-based heuristic one.
 ## Use pre-save testdata (seed are hard to handle in testhat)
 testdata <- readRDS("testdata/testdata_normal.RDS")
 Y <- testdata$Y
 X <- testdata$X
 C <- testdata$parameters$C ; q <- ncol(C)
-
-
-###############################################################################
-###############################################################################
 
 data  <- normalblockr:::NormalBlockData$new(Y, X)
 

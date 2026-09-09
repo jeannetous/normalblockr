@@ -10,7 +10,7 @@
 // (mean-field on the cluster membership). Equivalent of the R6 class
 // NormalBlockMeanUnknownClusters (R/NormalBlockMeanUnknownClusters.R); see
 // the intern's report (inst/normalblockmean) for the derivations, eq.
-// (2.32)-(2.41).
+// (2.32)-(2.40).
 class NormalBlockMeanUnknownClusters : public NormalBlockMeanBase {
   arma::mat tau_;      // p x q, variational membership probabilities
   arma::vec alpha_;    // q, prior cluster probabilities
