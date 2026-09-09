@@ -278,8 +278,15 @@ test_that("spectral_clustering_path() shares the rank cap with the single-q heur
   expect_equal(length(path), length(q_list))
   for (i in seq_along(q_list)) expect_equal(length(unique(path[[i]])), q_list[i])
 
-  ## and a mean-block collection over that range actually runs
-  coll <- normal_block(d, blocks = q_list, model = "mean",
-                       control = NB_control(verbose = FALSE, clustering_init = "spectral"))
-  expect_true(all(sapply(coll$models, function(m) length(unique(m$clustering))) == q_list))
+  ## and a mean-block collection over that range actually runs -- not that
+  ## every model still has exactly q distinct clusters *after* the VEM: at
+  ## q's beyond the true generative q = 5, and with rank(R) = 2, that's
+  ## asking the optimizer never to collapse a cluster in a regime it's
+  ## structurally prone to (the same EM degeneracy noted in §0 of
+  ## inst/normal_block_models.qmd), which is sensitive to BLAS/RNG
+  ## differences across platforms/R versions and made this flaky on CI
+  ## (windows-latest, ubuntu oldrel-1) without ever failing locally.
+  expect_no_error(
+    normal_block(d, blocks = q_list, model = "mean",
+                 control = NB_control(verbose = FALSE, clustering_init = "spectral")))
 })
