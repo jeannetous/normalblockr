@@ -80,6 +80,8 @@ hitting intermittently on Linux.
 
 ## normalblockr 0.2.1
 
+CRAN release: 2026-09-03
+
 First CRAN submission
 
 - S3 methods [`print()`](https://rdrr.io/r/base/print.html),

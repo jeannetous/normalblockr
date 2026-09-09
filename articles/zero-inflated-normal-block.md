@@ -1,4 +1,4 @@
-# Zero-inflated Normal-Block models: a worked example with fish biomass data
+# Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data
 
 ## Preliminaries
 
@@ -17,9 +17,8 @@ A plain (log-)Normal model cannot represent an excess of exact zeros
 beyond what its own variance would produce, which biases both the
 variable-level noise estimates and the inferred clustering. The next
 section spells out precisely how the zero-inflation extension addresses
-this; see Tous and Chiquet (2026) for the Normal-Block model itself, and
-`inst/normal_block_models.qmd` (the package’s reference card) for the
-full estimation details.
+this; see Tous and Chiquet (2026) for the Normal-Block model itself and
+additional estimation details.
 
 ## Mathematical background
 
@@ -80,18 +79,17 @@ on a zero-inflation design matrix $`X_0`$ (the `X0` argument of
 samples and variables. By default, as in this vignette, `X0` is left
 unspecified and defaults to an intercept-only column: $`x_{0,i}`$ is
 then the same constant for every station, so $`\kappa_{ij}`$ collapses
-to a single probability per species, $`\kappa_j`$ – and, since an
+to a single probability per species, $`\kappa_j`$. Since an
 intercept-only logistic regression’s fitted probability is just the
 response’s empirical mean, $`\kappa_j`$ turns out to be exactly that
-species’ empirical proportion of zeros (checked numerically below).
-Supplying a non-trivial `X0` (e.g. some of the same environmental
-covariates used in `X`) would instead let a species’ propensity to be
-absent vary across stations.
+species’ empirical proportion of zeros. Supplying a non-trivial `X0`
+(e.g. some of the same environmental covariates used in `X`) would
+instead let a species’ propensity to be absent vary across stations.
 
 Unlike $`B`$, $`\Omega`$ and the clustering, which are refined together
 by the variational EM recursion below, $`\kappa`$ (equivalently,
 $`b_0`$) is estimated *once, upfront*, via $`p`$ independent logistic
-regressions – it does not change across (V)EM iterations, and so never
+regressions: it does not change across (V)EM iterations, and so never
 appears in the optimization trace or convergence plots.
 
 #### Requirements
@@ -184,7 +182,7 @@ models, one per number of clusters:
 ``` r
 
 out <- normal_block(data, blocks = 2:8, zero_inflation = TRUE)
-#> Fitting a  normal-block-var model with unknown q 
+#> Fitting a diagonal normal-block-var model with unknown q 
 #>   number of blocks = 2                number of blocks = 3                number of blocks = 4                number of blocks = 5                number of blocks = 6                number of blocks = 7                number of blocks = 8           
 #> DONE
 ```
@@ -204,7 +202,7 @@ heuristic clustering on the zero-inflation-aware residuals, see
 can occasionally settle into a milder local optimum than a neighboring
 number of clusters’ solution would. `refine()` tries a short split/merge
 trial from each model’s already-fitted neighbors and keeps it only if it
-strictly improves – see
+strictly improves. See
 [`?NormalBlockVarCollectionClusters`](../reference/NormalBlockVarCollectionClusters.md)
 for the full rationale. It is not run by default (it adds real cost), so
 it is called explicitly here:
@@ -310,7 +308,7 @@ inter-cluster association network (see Tous and Chiquet 2026).
 ``` r
 
 out_sp <- normal_block(data, blocks = myModel$q, sparsity = TRUE, zero_inflation = TRUE)
-#> Fitting a Collection of  zero-inflated  normal-block-var models with fixed q, with different sparsity penalties. 
+#> Fitting a Collection of zero-inflated diagonal normal-block-var models with fixed q, with different sparsity penalties. 
 #>   penalty = 0.03319511                penalty = 0.028321              penalty = 0.02416257                penalty = 0.02061473                penalty = 0.01758782                penalty = 0.01500536                penalty = 0.01280209                penalty = 0.01092234                penalty = 0.009318585               penalty = 0.007950317               penalty = 0.006782955               penalty = 0.005786999               penalty = 0.004937282               penalty = 0.00421233                penalty = 0.003593825               penalty = 0.003066136               penalty = 0.002615928               penalty = 0.002231826               penalty = 0.001904122               penalty = 0.001624536               penalty = 0.001386002               penalty = 0.001182492               penalty = 0.001008864               penalty = 0.0008607306              penalty = 0.0007343476              penalty = 0.0006265218              penalty = 0.0005345283              penalty = 0.0004560423              penalty = 0.0003890807              penalty = 0.0003319511           
 #> DONE
 out_sp$plot(c("BIC", "EBIC"))

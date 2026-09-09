@@ -121,7 +121,5 @@ reference; not part of the user-facing API
   Base Class for a Collection of Models over a Sparsity Path
 - [`NormalBlockCollectionClustersSparsity`](NormalBlockCollectionClustersSparsity.md)
   : Base Class for a Collection over Cluster Counts and Sparsity Levels
-- [`SelectionNClusters`](SelectionNClusters.md) : Select the Number of
-  Clusters by Split/Merge Search
 - [`get_model()`](get_model.md) : Create a Normal-Block Model Object
 - [`isNB()`](isNB.md) : Check if an Object is a Normal-Block Model

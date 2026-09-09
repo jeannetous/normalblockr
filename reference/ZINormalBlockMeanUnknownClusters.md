@@ -2,7 +2,7 @@
 
 R6 class for a zero-inflated Normal-Block-Mean model with a fixed number
 of clusters (but unknown clustering), inferred by variational EM. Sigma
-is diagonal or spherical here – see \[NormalBlockMeanBase\] for why a
+is diagonal or spherical here. See \[NormalBlockMeanBase\] for why a
 full one is out of reach under a mask.
 
 ## Super classes

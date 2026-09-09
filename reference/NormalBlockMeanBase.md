@@ -14,7 +14,7 @@ structures the mean (mu_i = C B' X_i).
   a list with the matrices of the model parameters: B (covariates), dm1
   (species variance), Omega (groups precision matrix)). On the internal
   fitting scale (\`self\$data\$Y\`, possibly column-rescaled by
-  \`NormalMeanBlockData(scale = TRUE)\`) – use
+  \`NormalMeanBlockData(scale = TRUE)\`): use
   \`\$B_original\`/\`\$dm1_original\` for the same quantities converted
   back to Y's original units.
 
@@ -152,7 +152,7 @@ splitting cluster \`index\`. Unlike the variance-block family, Omega and
 the sparsity weights are p x p here and do not depend on q, so they
 carry over unchanged; only C (tau) and B (one column per cluster) are
 affected. Variables are split by their current noise variance (1 /
-diag(Omega)) around its within-cluster median – the same criterion
+diag(Omega)) around its within-cluster median, the same criterion
 \[NormalBlockVarBase\]'s \`split()\` uses via \`dm1\`, since
 \`diag(Omega)\` plays the same per-variable-precision role here.
 

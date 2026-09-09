@@ -20,11 +20,12 @@ structures the latent covariance."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -82,12 +83,10 @@ coefficients on the internal fitting scale.</p></dd>
 (1 / Var(Y_j)), converted back to Y's original units. Use
 `model_par$dm1` instead for the internal fitting scale. With
 `noise_covariance = "spherical"`, `model_par$dm1` is a single value
-repeated p times (one shared variance on the fitting scale); once
+repeated p times; once
 converted back per-variable, the p values returned here generally
 differ from one another whenever Y's columns were rescaled by
-different factors – correctly so, since a single shared *scaled*
-variance does not correspond to a single shared variance in the
-original, heterogeneous-scale units.</p></dd>
+different factors.</p></dd>
 
 
 </dl><p></p></div>
@@ -158,9 +157,7 @@ is skipped entirely, since it would otherwise never be used downstream.</p></dd>
 <p>Seed this model's starting parameters from another,
 already-optimized model with the same q, instead of a fresh heuristic
 clustering. Used by [NormalBlockVarCollectionSparsity] to warm-start
-each penalty in a sparsity path from the previous one's solution.
-`B0`/`kappa` (zero-inflation) are left untouched: they depend only on
-the data, already set correctly and independently on every model.</p><div class="section">
+each penalty in a sparsity path from the previous one's solution.</p><div class="section">
 <h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">NormalBlockVarBase</span><span class="op">$</span><span class="fu">warm_start_from</span><span class="op">(</span><span class="va">other</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
@@ -245,7 +242,7 @@ default FALSE (send a copy)</p></dd>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># An internal abstract base class, never instantiated directly -- see</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># An internal abstract base class, never instantiated directly. See</span></span></span>
 <span class="r-in"><span><span class="co"># normal_block() for how concrete models (NormalBlockVarKnownClusters,</span></span></span>
 <span class="r-in"><span><span class="co"># NormalBlockVarUnknownClusters, and their zero-inflated variants) are</span></span></span>
 <span class="r-in"><span><span class="co"># actually created and fitted.</span></span></span>

@@ -1,4 +1,4 @@
-# Normal-Block models: a worked example with breast cancer proteomics data
+# Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data
 
 ## Preliminaries
 
@@ -12,15 +12,7 @@ subtype. See the `normal-block` vignette
 general introduction to the package on simulated data; this one focuses
 on a single real dataset, illustrated first with a known clustering of
 the proteins, then with the clustering left for the model to infer, and
-finally with the post-hoc `refine()` step.
-
-This dataset is also the running example of Tous and Chiquet (2026),
-which includes a biological-enrichment analysis of the inferred clusters
-(`enrichKEGG`/`compareCluster`, via `clusterProfiler`) – not reproduced
-here, since it pulls in several heavy Bioconductor dependencies and
-network queries; see
-`inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd` in the
-package sources for the full analysis, enrichment included.
+finally with the post-hoc `refine()` step.[^1]
 
 #### Requirements
 
@@ -60,13 +52,8 @@ what `plot_network()` displays: the inferred association network
 *between clusters*, not between individual proteins. In its plain
 (non-regularized) form, that network is dense and not very informative
 to look at directly – we only visualize it at the end of this vignette,
-after regularizing it with a graphical lasso penalty (the “Sparse
-precision matrix” section of `inst/normal_block_models.qmd`).
-
-See Tous and Chiquet (2026) for the model itself, and
-`inst/normal_block_models.qmd` (the package’s reference card) for the
-full estimation details (criteria, E/M updates, and the accelerated
-variational EM recursion used to fit it).
+after regularizing it with a graphical lasso penalty. See Tous and
+Chiquet (2026) for the model itself and for the full estimation details.
 
 ## The data
 
@@ -120,7 +107,7 @@ group <- cutree(hc_expr, 6) |> normalblockr:::as_indicator()
 ```
 
 This fixed grouping is then handed to
-[`normal_block()`](../reference/normal_block.md) as a known clustering –
+[`normal_block()`](../reference/normal_block.md) as a known clustering:
 the model only estimates the association network between the 6 blocks,
 not the grouping itself.
 
@@ -158,19 +145,12 @@ When the clustering is left unknown,
 [`normal_block()`](../reference/normal_block.md) accepts a range of
 candidate cluster counts and returns a collection of models, one per
 $`q`$, fitted independently, each cold-started from a clustering
-heuristic on the residuals (`ward2` by default). Different heuristics
-can converge to substantially different (V)EM local optima at the same
-$`q`$; `NB_control(clustering_init = "best_of_inits")` tries several and
-keeps the best-ELBO fit, at extra cost – worth it when `refine()` (next
-section) won’t also be applied, but on this dataset’s full range
-`refine()` alone already recovers most of what it would add (see
-`inst/clustering_initialization_benchmark`), so we stick with the
-default here.
+heuristic on the residuals (`ward2` by default).[^2]
 
 ``` r
 
 NB_prot_subtype <- normal_block(data_subtype, blocks = 1:30)
-#> Fitting a  normal-block-var model with unknown q 
+#> Fitting a diagonal normal-block-var model with unknown q 
 #>   number of blocks = 1                number of blocks = 2                number of blocks = 3                number of blocks = 4                number of blocks = 5                number of blocks = 6                number of blocks = 7                number of blocks = 8                number of blocks = 9                number of blocks = 10               number of blocks = 11               number of blocks = 12               number of blocks = 13               number of blocks = 14               number of blocks = 15               number of blocks = 16               number of blocks = 17               number of blocks = 18               number of blocks = 19               number of blocks = 20               number of blocks = 21               number of blocks = 22               number of blocks = 23               number of blocks = 24               number of blocks = 25               number of blocks = 26               number of blocks = 27               number of blocks = 28               number of blocks = 29               number of blocks = 30           
 #> DONE
 ```
@@ -194,15 +174,15 @@ paste0("ICL selects ", selected_NB$q, " clusters.")
 ## Refining the clustering
 
 Every model in the collection above was fitted independently,
-cold-started from its own clustering heuristic – which, on real data,
-can settle into a milder local optimum than an incremental,
-neighbor-seeded search would. `refine()` tries, for every $`q`$ beyond
-the collection’s extremes, a short split-and-reoptimize trial seeded
-from its already-fitted $`q-1`$ neighbor and/or a short
-merge-and-reoptimize trial seeded from its $`q+1`$ neighbor, keeping a
-candidate only if it strictly improves the deviance. It runs
-unconditionally over the whole range and discards whatever doesn’t help,
-so it can only improve (or leave unchanged) each model it touches.
+cold-started from its own clustering heuristic: on real data, it can
+settle into a milder local optimum than an incremental, neighbor-seeded
+search would. `refine()` tries, for every $`q`$ beyond the collection’s
+extremes, a short split-and-reoptimize trial seeded from its
+already-fitted $`q-1`$ neighbor and/or a short merge-and-reoptimize
+trial seeded from its $`q+1`$ neighbor, keeping a candidate only if it
+strictly improves the deviance. It runs unconditionally over the whole
+range and discards whatever doesn’t help, so it can only improve (or
+leave unchanged) each model it touches.
 
 ``` r
 
@@ -281,8 +261,8 @@ paste0("After refine(), ICL selects ", selected_NB_refined$q, " clusters.")
 #> [1] "After refine(), ICL selects 24 clusters."
 ```
 
-On this dataset, `refine()` moves the ICL-selected number of clusters –
-a reminder that the collection-wide local search is not just cosmetic: a
+On this dataset, `refine()` moves the ICL-selected number of clusters, a
+reminder that the collection-wide local search is not just cosmetic: a
 clustering that looked locally optimal in isolation can still be
 improved once its neighbors in $`q`$ are available as alternative
 starting points.
@@ -293,15 +273,13 @@ The association network $`\Omega`$ of the ICL-selected model above is
 dense (no penalty was applied), which makes it hard to read directly.
 Treating that clustering as fixed, we can refit the model once more with
 the graphical-lasso penalty on $`\Omega`$ explored over a path of values
-(`sparsity = TRUE`, see the “Sparse precision matrix” section of
-`inst/normal_block_models.qmd`), and pick the sparsity level with the
-best BIC.
+(`sparsity = TRUE`), and pick the sparsity level with the best BIC.
 
 ``` r
 
 group_selected <- selected_NB_refined$clustering |> normalblockr:::as_indicator()
 NB_prot_sparse <- normal_block(data_subtype, blocks = group_selected, sparsity = TRUE, control = NB_control(min_ratio=0.001))
-#> Fitting a Collection of  normal-block-var models with fixed blocks, with different sparsity penalties. 
+#> Fitting a Collection of diagonal normal-block-var models with fixed blocks, with different sparsity penalties. 
 #>   penalty = 0.6628733             penalty = 0.5223748             penalty = 0.4116555             penalty = 0.3244036             penalty = 0.2556451             penalty = 0.2014601             penalty = 0.1587599             penalty = 0.1251102             penalty = 0.0985926             penalty = 0.07769553                penalty = 0.06122767                penalty = 0.04825024                penalty = 0.03802342                penalty = 0.02996422                penalty = 0.02361319                penalty = 0.01860829                penalty = 0.01466419                penalty = 0.01155606                penalty = 0.009106711               penalty = 0.00717651                penalty = 0.005655422               penalty = 0.004456734               penalty = 0.003512113               penalty = 0.002767707               penalty = 0.002181081               penalty = 0.001718793               penalty = 0.001354489               penalty = 0.0010674             penalty = 0.0008411603              penalty = 0.0006628733           
 #> DONE
 ```
@@ -333,3 +311,19 @@ Tous, Jeanne, and Julien Chiquet. 2026. “An Integrated Method for
 Clustering and Association Network Inference.” *Computational Statistics
 & Data Analysis* 219: 108347.
 <https://doi.org/10.1016/j.csda.2026.108347>.
+
+[^1]: This dataset is also the running example of Tous and Chiquet
+    (2026), which includes a biological-enrichment analysis of the
+    inferred clusters (`enrichKEGG`/`compareCluster`, via
+    `clusterProfiler`) – not reproduced here, since it pulls in several
+    heavy Bioconductor dependencies and network queries; see
+    `inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd` in the
+    package sources for the full analysis, enrichment included.
+
+[^2]: Different heuristics can converge to substantially different (V)EM
+    local optima at the same $`q`$;
+    `NB_control(clustering_init = "best_of_inits")` tries several and
+    keeps the best-ELBO fit, at extra cost. Worth it when `refine()`
+    (next section) won’t also be applied, but on this dataset’s full
+    range `refine()` alone already recovers most of what it would add,
+    so we stick with the default here.

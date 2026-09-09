@@ -30,11 +30,12 @@ and provide their own `get_best_model()`, delegating the (row of
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -82,10 +83,7 @@ and provide their own `get_best_model()`, delegating the (row of
 
 
     <dt><code>loglik</code></dt>
-<dd><p>not defined for a collection (which of its models?) –
-accessing it raises an informative error instead of silently
-returning `NULL`. Use `logLik()` for every model's log-likelihood, or
-`$get_best_model()$loglik` for a single one.</p></dd>
+<dd><p>not defined for a collection: accessing it raises an informative error. Use `logLik()` for every model's log-likelihood, or `$get_best_model()$loglik` for a single one.</p></dd>
 
 
 </dl><p></p></div>

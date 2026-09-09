@@ -126,7 +126,7 @@ Create a new \[\`NormalBlockData\`\] object.
 - `scale`:
 
   whether to rescale each column of Y by its own standard deviation (no
-  centering). Default TRUE – see the class-level documentation for the
+  centering). Default TRUE, see the class-level documentation for the
   rationale and its limits.
 
 - `zeros`:
@@ -139,8 +139,7 @@ Create a new \[\`NormalBlockData\`\] object.
 ### `NormalBlockData$ols_fit()`
 
 Ordinary-least-squares fit of Y on X, with its residuals and their
-covariance. Computed once and memoized: it depends only on the data, yet
-every model in a collection over q used to recompute it (measured at 9
+covariance. Computed once and memoized.
 
 #### Usage
 
@@ -157,9 +156,8 @@ residual covariance)
 
 Masked counterpart of \`ols_fit()\`: a per-variable weighted
 least-squares fit of B under the zero-inflation mask, with its inverse
-residual variances and residuals (see \`zi_weighted_fit()\`). Memoized
-for the same reason – every zero-inflated model in a collection over q
-used to redo the same IRLS.
+residual variances and residuals (see \`zi_weighted_fit()\`). Computed
+once and memoized.
 
 #### Usage
 
@@ -177,9 +175,7 @@ residuals)
 Zero-inflation component: \`p\` independent logistic regressions of each
 variable's zero pattern on \`X0\`, and the fixed contribution they make
 to the log-likelihood. The (V)EM never revisits these, so they are a
-property of the data rather than of a model – hence computed once and
-memoized here. Every model in a collection over q used to refit all
-\`p\` regressions (measured at 53 zero-inflated mean-block collection).
+property of the data rather than of a model.
 
 #### Usage
 

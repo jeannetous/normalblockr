@@ -34,7 +34,7 @@ ex_data <- generate_normal_block_var_data(n = 50, p = 20, d = 1, q = 3)
 data <- NormalBlockData$new(ex_data$Y, ex_data$X)
 models <- normal_block(data, blocks = 2:5, control = NB_control(verbose = FALSE))
 summary(models)
-#> A  normal-block-var model with unknown q 
+#> A diagonal normal-block-var model with unknown q 
 #> ===========================================================================
 #>     q ranging from 2 to 5 
 #> ===========================================================================

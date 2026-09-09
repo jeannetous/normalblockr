@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Normal-Block models: a worked example with breast cancer proteomics data • normalblockr</title>
+<title>Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data • normalblockr</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Normal-Block models: a worked example with breast cancer proteomics data">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,12 +33,13 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -59,11 +60,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Normal-Block models: a worked example with breast cancer proteomics data</h1>
+      <h1>Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</h1>
                         <h4 data-toc-skip class="author">Julien Chiquet
 &amp; Jeanne Tous</h4>
             
-            <h4 data-toc-skip class="date">2026-09-04</h4>
+            <h4 data-toc-skip class="date">2026-09-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jchiquet/normalblockr/blob/master/vignettes/breast-cancer-proteomics.Rmd" class="external-link"><code>vignettes/breast-cancer-proteomics.Rmd</code></a></small>
       <div class="d-none name"><code>breast-cancer-proteomics.Rmd</code></div>
@@ -84,14 +85,13 @@ molecular subtype. See the <code>normal-block</code> vignette
 the package on simulated data; this one focuses on a single real
 dataset, illustrated first with a known clustering of the proteins, then
 with the clustering left for the model to infer, and finally with the
-post-hoc <code>refine()</code> step.</p>
-<p>This dataset is also the running example of <span class="citation">Tous and Chiquet (2026)</span>, which includes a
+post-hoc <code>refine()</code> step.<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;This dataset is also the running example of &lt;span class="citation"&gt;Tous and Chiquet (2026)&lt;/span&gt;, which includes a
 biological-enrichment analysis of the inferred clusters
-(<code>enrichKEGG</code>/<code>compareCluster</code>, via
-<code>clusterProfiler</code>) – not reproduced here, since it pulls in
+(&lt;code&gt;enrichKEGG&lt;/code&gt;/&lt;code&gt;compareCluster&lt;/code&gt;, via
+&lt;code&gt;clusterProfiler&lt;/code&gt;) – not reproduced here, since it pulls in
 several heavy Bioconductor dependencies and network queries; see
-<code>inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd</code> in
-the package sources for the full analysis, enrichment included.</p>
+&lt;code&gt;inst/CSDA_analyses/analysis_breast_cancer_proteomics.qmd&lt;/code&gt; in
+the package sources for the full analysis, enrichment included.&lt;/p&gt;'><sup>1</sup></a></p>
 <div class="section level4">
 <h4 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a>
 </h4>
@@ -142,14 +142,8 @@ the latent factors’ precision matrix, is what
 <em>between clusters</em>, not between individual proteins. In its plain
 (non-regularized) form, that network is dense and not very informative
 to look at directly – we only visualize it at the end of this vignette,
-after regularizing it with a graphical lasso penalty (the “Sparse
-precision matrix” section of
-<code>inst/normal_block_models.qmd</code>).</p>
-<p>See <span class="citation">Tous and Chiquet (2026)</span> for the
-model itself, and <code>inst/normal_block_models.qmd</code> (the
-package’s reference card) for the full estimation details (criteria, E/M
-updates, and the accelerated variational EM recursion used to fit
-it).</p>
+after regularizing it with a graphical lasso penalty. See <span class="citation">Tous and Chiquet (2026)</span> for the model itself and
+for the full estimation details.</p>
 </div>
 <div class="section level2">
 <h2 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
@@ -194,7 +188,7 @@ clusters is an arbitrary but visually natural cut of the dendrogram.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cutree.html" class="external-link">cutree</a></span><span class="op">(</span><span class="va">hc_expr</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">normalblockr</span><span class="fu">:::</span><span class="fu">as_indicator</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>This fixed grouping is then handed to <code><a href="../reference/normal_block.html">normal_block()</a></code> as
-a known clustering – the model only estimates the association network
+a known clustering: the model only estimates the association network
 between the 6 blocks, not the grouping itself.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NB_prot_group</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data_subtype</span>, blocks <span class="op">=</span> <span class="va">group</span><span class="op">)</span></span>
@@ -227,19 +221,17 @@ accepts a range of candidate cluster counts and returns a collection of
 models, one per
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>,
 fitted independently, each cold-started from a clustering heuristic on
-the residuals (<code>ward2</code> by default). Different heuristics can
-converge to substantially different (V)EM local optima at the same
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>;
-<code>NB_control(clustering_init = "best_of_inits")</code> tries several
-and keeps the best-ELBO fit, at extra cost – worth it when
-<code>refine()</code> (next section) won’t also be applied, but on this
-dataset’s full range <code>refine()</code> alone already recovers most
-of what it would add (see
-<code>inst/clustering_initialization_benchmark</code>), so we stick with
-the default here.</p>
+the residuals (<code>ward2</code> by default).<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;Different heuristics can converge to substantially
+different (V)EM local optima at the same
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;q&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;;
+&lt;code&gt;NB_control(clustering_init = "best_of_inits")&lt;/code&gt; tries several
+and keeps the best-ELBO fit, at extra cost. Worth it when
+&lt;code&gt;refine()&lt;/code&gt; (next section) won’t also be applied, but on this
+dataset’s full range &lt;code&gt;refine()&lt;/code&gt; alone already recovers most
+of what it would add, so we stick with the default here.&lt;/p&gt;'><sup>2</sup></a></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NB_prot_subtype</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data_subtype</span>, blocks <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">30</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting a  normal-block-var model with unknown q </span></span>
+<span><span class="co">#&gt; Fitting a diagonal normal-block-var model with unknown q </span></span>
 <span><span class="co">#&gt;   number of blocks = 1                number of blocks = 2                number of blocks = 3                number of blocks = 4                number of blocks = 5                number of blocks = 6                number of blocks = 7                number of blocks = 8                number of blocks = 9                number of blocks = 10               number of blocks = 11               number of blocks = 12               number of blocks = 13               number of blocks = 14               number of blocks = 15               number of blocks = 16               number of blocks = 17               number of blocks = 18               number of blocks = 19               number of blocks = 20               number of blocks = 21               number of blocks = 22               number of blocks = 23               number of blocks = 24               number of blocks = 25               number of blocks = 26               number of blocks = 27               number of blocks = 28               number of blocks = 29               number of blocks = 30           </span></span>
 <span><span class="co">#&gt; DONE</span></span></code></pre></div>
 </div>
@@ -259,9 +251,9 @@ the default here.</p>
 <h2 id="refining-the-clustering">Refining the clustering<a class="anchor" aria-label="anchor" href="#refining-the-clustering"></a>
 </h2>
 <p>Every model in the collection above was fitted independently,
-cold-started from its own clustering heuristic – which, on real data,
-can settle into a milder local optimum than an incremental,
-neighbor-seeded search would. <code>refine()</code> tries, for every
+cold-started from its own clustering heuristic: on real data, it can
+settle into a milder local optimum than an incremental, neighbor-seeded
+search would. <code>refine()</code> tries, for every
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
 beyond the collection’s extremes, a short split-and-reoptimize trial
 seeded from its already-fitted
@@ -340,7 +332,7 @@ touches.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"After refine(), ICL selects "</span>, <span class="va">selected_NB_refined</span><span class="op">$</span><span class="va">q</span>, <span class="st">" clusters."</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "After refine(), ICL selects 24 clusters."</span></span></code></pre></div>
 <p>On this dataset, <code>refine()</code> moves the ICL-selected number
-of clusters – a reminder that the collection-wide local search is not
+of clusters, a reminder that the collection-wide local search is not
 just cosmetic: a clustering that looked locally optimal in isolation can
 still be improved once its neighbors in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
@@ -355,14 +347,12 @@ of the ICL-selected model above is dense (no penalty was applied), which
 makes it hard to read directly. Treating that clustering as fixed, we
 can refit the model once more with the graphical-lasso penalty on
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Ω</mi><annotation encoding="application/x-tex">\Omega</annotation></semantics></math>
-explored over a path of values (<code>sparsity = TRUE</code>, see the
-“Sparse precision matrix” section of
-<code>inst/normal_block_models.qmd</code>), and pick the sparsity level
-with the best BIC.</p>
+explored over a path of values (<code>sparsity = TRUE</code>), and pick
+the sparsity level with the best BIC.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">group_selected</span> <span class="op">&lt;-</span> <span class="va">selected_NB_refined</span><span class="op">$</span><span class="va">clustering</span> <span class="op">|&gt;</span> <span class="fu">normalblockr</span><span class="fu">:::</span><span class="fu">as_indicator</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">NB_prot_sparse</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data_subtype</span>, blocks <span class="op">=</span> <span class="va">group_selected</span>, sparsity <span class="op">=</span> <span class="cn">TRUE</span>, control <span class="op">=</span> <span class="fu"><a href="../reference/NB_control.html">NB_control</a></span><span class="op">(</span>min_ratio<span class="op">=</span><span class="fl">0.001</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting a Collection of  normal-block-var models with fixed blocks, with different sparsity penalties. </span></span>
+<span><span class="co">#&gt; Fitting a Collection of diagonal normal-block-var models with fixed blocks, with different sparsity penalties. </span></span>
 <span><span class="co">#&gt;   penalty = 0.6628733             penalty = 0.5223748             penalty = 0.4116555             penalty = 0.3244036             penalty = 0.2556451             penalty = 0.2014601             penalty = 0.1587599             penalty = 0.1251102             penalty = 0.0985926             penalty = 0.07769553                penalty = 0.06122767                penalty = 0.04825024                penalty = 0.03802342                penalty = 0.02996422                penalty = 0.02361319                penalty = 0.01860829                penalty = 0.01466419                penalty = 0.01155606                penalty = 0.009106711               penalty = 0.00717651                penalty = 0.005655422               penalty = 0.004456734               penalty = 0.003512113               penalty = 0.002767707               penalty = 0.002181081               penalty = 0.001718793               penalty = 0.001354489               penalty = 0.0010674             penalty = 0.0008411603              penalty = 0.0006628733           </span></span>
 <span><span class="co">#&gt; DONE</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -387,6 +377,7 @@ Statistics &amp; Data Analysis</em> 219: 108347. <a href="https://doi.org/10.101
 </div>
 </div>
 </div>
+
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>

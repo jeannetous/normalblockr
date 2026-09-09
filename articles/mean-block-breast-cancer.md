@@ -10,9 +10,9 @@ grouped by how their expected value responds to the covariates.
 
 We use the same dataset as the `breast-cancer-proteomics` vignette
 ([`?brca_rppa`](../reference/brca_rppa.md)) on purpose, so that the two
-families can be read side by side on data you have already seen: 163
-proteins measured on 346 breast-cancer tumor samples, with each sample’s
-PAM50 molecular subtype as the covariate.
+families can be read side by side on the same data: 163 proteins
+measured on 346 breast-cancer tumor samples, with each sample’s PAM50
+molecular subtype as the covariate.
 
 ``` r
 
@@ -36,8 +36,8 @@ the $`q`$ clusters; it is either given (known clustering, e.g. from an
 independent source) or itself unknown and inferred jointly with
 everything else, in which case the model carries a variational posterior
 distribution over $`C`$ rather than a single point estimate.
-$`B \in \mathbb{R}^{d \times q}`$ holds one regression profile **per
-cluster**, so $`B^\top X_i \in \mathbb{R}^q`$ is the linear predictor of
+$`B \in \mathbb{R}^{d \times q}`$ holds one regression profile *per
+cluster*, so $`B^\top X_i \in \mathbb{R}^q`$ is the linear predictor of
 each cluster for observation $`i`$, which $`C`$ maps back onto the $`p`$
 proteins. $`\Sigma \in \mathbb{R}^{p \times p}`$ is the residual
 covariance between proteins; its shape is a modelling choice in its own
@@ -52,14 +52,13 @@ $`C`$ structures $`\mathrm{Var}(Y_i)`$ and the covariates only enter
 through a variable-wise $`B^\top X_i`$: there, two proteins are in the
 same cluster when they *covary* the same way; here, when they *respond*
 the same way. The two answer different questions and generally return
-different groupings – on this dataset they are essentially unrelated,
+different groupings: on this dataset they are essentially unrelated,
 which is a result rather than a defect.
 
 See Tous and Chiquet (2026) for the Normal-Block model itself, and
-`inst/normal_block_models.qmd` (the package’s reference card) for the
-mean-block family’s estimation details: the closed-form updates when
-$`C`$ is known, and the variational lower bound maximized when it is
-not.
+Nglala Manguitini et al. (2026) (unpublished yet) for the mean-block
+family’s estimation details: the closed-form updates when $`C`$ is
+known, and the variational lower bound maximized when it is not.
 
 ## The data
 
@@ -151,7 +150,7 @@ boundary would mean nothing.
 
 ``` r
 
-NB_means$plot(c("deviance", "BIC", "ICL"))
+NB_means$plot(c("deviance", "ICL"))
 ```
 
 ![](mean-block-breast-cancer_files/figure-html/collection-criteria-1.png)
@@ -163,12 +162,12 @@ paste0("ICL selects ", selected$q, " clusters.")
 #> [1] "ICL selects 65 clusters."
 ```
 
-That answer deserves a comment: the model groups 163 proteins into a few
-dozen clusters, i.e. only a handful of proteins per cluster. It is
-saying that subtype signatures are largely protein-specific here, with
-limited sharing – a substantive finding about this dataset, not a
-failure of the fit. The criteria do turn: they reach an interior minimum
-and rise again afterwards, which is what makes the selection meaningful.
+The model groups 163 proteins into a few dozen clusters, i.e. only a
+handful of proteins per cluster. It is saying that subtype signatures
+are largely protein-specific here, with limited sharing, a substantive
+finding about this dataset, not a failure of the fit. The criteria do
+turn: they reach an interior minimum and rise again afterwards, which is
+what makes the selection meaningful.
 
 `refine()` is available to polish a collection, trying for each $`q`$ a
 short split-and-reoptimize seeded from its $`q-1`$ neighbour and a merge
@@ -217,12 +216,7 @@ has to be inverted, so it alone requires $`n > p`$.
 
 The default is deliberate. A full $`\Sigma`$ costs
 $`p(p+1)/2 \approx 13{,}000`$ parameters here, which drown the handful
-of mean parameters that BIC and ICL are trying to weigh – in a
-simulation study over 12 replicates, selecting $`q`$ by BIC was correct
-10/12 times with a diagonal $`\Sigma`$ against 6/12 with a full one at
-$`n/p \approx 1.3`$, *even when the data were generated with a full
-$`\Sigma`$*. The quality of the clustering at a fixed $`q`$ was the same
-either way; it is the choice of $`q`$ that suffers.
+of mean parameters that BIC and ICL are trying to weigh[^1]
 
 ``` r
 
@@ -245,13 +239,13 @@ data.frame(
 BIC agrees with the default here. That is not a reason to forget the
 full $`\Sigma`$ though: the three shapes answer different questions, and
 a diagonal one says nothing about how proteins co-vary once the subtype
-and the cluster structure are accounted for – which is exactly what the
-next section looks at.
+and the cluster structure are accounted for, which is what the next
+section looks at.
 
 ## Sparsifying the residual covariance
 
 If the residual associations *are* the object of interest, the full
-$`\Sigma`$ is required – and asking for `sparsity > 0` selects it
+$`\Sigma`$ is required. Asking for `sparsity > 0` selects it
 automatically, since a penalty on a diagonal precision matrix would have
 nothing to act on. A dense $`163 \times 163`$ precision matrix is
 unreadable though, and poorly determined from 346 observations. Keeping
@@ -287,7 +281,19 @@ above, which is why a fixed penalty is used here.
 
 ## References
 
+Nglala Manguitini, Nestor, Jeanne Tous, and Julien Chiquet. 2026.
+*Modèle de Régression Log-Normale Multivarié Avec Clustering de
+Variables Intégré Dans La Moyenne*. MsC manuscript, available upon
+request.
+
 Tous, Jeanne, and Julien Chiquet. 2026. “An Integrated Method for
 Clustering and Association Network Inference.” *Computational Statistics
 & Data Analysis* 219: 108347.
 <https://doi.org/10.1016/j.csda.2026.108347>.
+
+[^1]: In a simulation study over 12 replicates, selecting $`q`$ by BIC
+    was correct 10/12 times with a diagonal $`\Sigma`$ against 6/12 with
+    a full one at $`n/p \approx 1.3`$, *even when the data were
+    generated with a full* $`\Sigma`$. The quality of the clustering at
+    a fixed $`q`$ was the same either way, it is the choice of $`q`$
+    that suffers.

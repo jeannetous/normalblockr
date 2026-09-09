@@ -20,11 +20,12 @@ mean-block ([NormalBlockMeanBase]) model families."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -263,7 +264,7 @@ models, variable-level for Normal Mean Block models) [all]</p></dd>
       <dt><code>warm_started</code></dt>
 <dd><p>whether `optim_initialize()` should treat the model as
 already initialized (reuse B/Omega/dm1/C/alpha/M/S as they stand)
-rather than recomputing a fresh heuristic initialization – set by
+rather than recomputing a fresh heuristic initialization. Set by
 [warm_start_from()] and by [split()]/[merge()].</p></dd>
 
       <dt><code>clustering_init</code></dt>
@@ -380,7 +381,7 @@ by merging the clusters of the current model</p><div class="section">
 <h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>max_candidates</code></dt>
 <dd><p>merge candidates are, unlike split's, quadratic
-in q (`choose(q, q-2)` pairs) – beyond `max_candidates` pairs, only
+in q (`choose(q, q-2)` pairs): beyond `max_candidates` pairs, only
 the most promising ones are actually built and trial-optimized, ranked
 by the family's own `private$merge_score()`. Set to `Inf` to always
 try every pair.</p></dd>
@@ -446,7 +447,7 @@ across the (V)EM iterations of the last call to `optimize()`.</p><div class="sec
 <p></p><div class="arguments"><dl><dt><code>show_increment</code></dt>
 <dd><p>whether to add a second panel with the (log10)
 absolute increment between iterations and the convergence `threshold`
-– distinguishes true convergence from a flat-looking objective trace.</p></dd>
+(distinguishes true convergence from a flat-looking objective trace).</p></dd>
 
 
 </dl><p></p></div>

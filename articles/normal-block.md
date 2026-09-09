@@ -1,4 +1,4 @@
-# Analyzing multivariate Gaussian data with the Normal-Block model - First steps
+# Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps
 
 ## Preliminaries
 
@@ -17,9 +17,14 @@ so on. Parameter inference can either be done with an integrated
 variational Expectation-Maximization approach (recommended) or with a
 faster heuristic approach.
 
-Theoretical explanations for this model can be found in Tous and Chiquet
-(2026). See `inst/normal_block_models.qmd` in the package sources for
-the full estimation details (criteria, E/M updates).
+This vignette covers the default family, where the clustering structures
+the *covariance* of the variables (`model = "var"`). A complementary
+family clusters variables by their *response to covariates* instead
+(`model = "mean"`); see
+[`vignette("mean-block-breast-cancer")`](../articles/mean-block-breast-cancer.md).
+
+Theoretical explanations for this model and full estimation details
+(criteria, E/M updates) can be found in Tous and Chiquet (2026).
 
 #### Requirements
 
@@ -58,8 +63,8 @@ omega_structure = "erdos-renyi" # Network structure.
 u_v = c(0.3, 0.1) # Parameters to generate an association matrix from a graph, details given in the bibliography.
 SNR = 0.75 # Signal to Noise Ratio, defines the relative weight of the covariates and the variance
 alpha = rep(1/q, q) # Vector giving probabilities of belonging to each cluster
-range_X = c(0, 10)  # Min and max values for the covariates 
-range_D = c(0.5, 1.5) # Min and max values for the individual entities variances 
+range_X = c(0, 10)  # Min and max values for the covariates
+range_D = c(0.5, 1.5) # Min and max values for the individual entities variances
 ```
 
 ### Simulation 1 (no zero-inflation)
@@ -77,7 +82,7 @@ my_nb_data <- generate_normal_block_var_data(n, p, d, q, kappa, omega_structure,
 
 ``` r
 
-pheatmap::pheatmap(my_nb_data$Y, 
+pheatmap::pheatmap(my_nb_data$Y,
                    color =paletteer::paletteer_c("ggthemes::Orange-Gold", n = 100), cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE)
 ```
 
@@ -258,7 +263,7 @@ one per number of clusters.
 
 my_NB_unknown <- normal_block(data = my_data,
                               blocks = 2:5)
-#> Fitting a  normal-block-var model with unknown q 
+#> Fitting a diagonal normal-block-var model with unknown q 
 #>   number of blocks = 2                number of blocks = 3                number of blocks = 4                number of blocks = 5           
 #> DONE
 ```
@@ -341,7 +346,7 @@ returns a collection of Normal-Block models, one per sparsity penalty.
 my_NB_sparse <- normal_block(data = my_data,
                              blocks = my_nb_data$parameters$C,
                              sparsity = TRUE)
-#> Fitting a Collection of  normal-block-var models with fixed blocks, with different sparsity penalties. 
+#> Fitting a Collection of diagonal normal-block-var models with fixed blocks, with different sparsity penalties. 
 #>   penalty = 0.3003413             penalty = 0.2562416             penalty = 0.2186171             penalty = 0.1865171             penalty = 0.1591304             penalty = 0.1357649             penalty = 0.1158303             penalty = 0.09882265                penalty = 0.08431231                penalty = 0.07193255                penalty = 0.06137054                penalty = 0.05235937                penalty = 0.04467133                penalty = 0.03811214                penalty = 0.03251606                penalty = 0.02774165                penalty = 0.02366829                penalty = 0.02019302                penalty = 0.01722804                penalty = 0.01469841                penalty = 0.01254021                penalty = 0.0106989             penalty = 0.00912796                penalty = 0.007787682               penalty = 0.0066442             penalty = 0.005668618               penalty = 0.004836282               penalty = 0.004126161               penalty = 0.003520308               penalty = 0.003003413           
 #> DONE
 ```
@@ -373,7 +378,7 @@ vary jointly.
 my_NB_sparse_unknown <-  normal_block(data = my_data,
                                       blocks = 2:6,
                                       sparsity = TRUE)
-#> Fitting a Collection of    normal-block-var models with different values of q and different penalties. 
+#> Fitting a Collection of diagonal normal-block-var models with different values of q and different penalties. 
 #>   number of blocks = 2                penalty = 0.300901              penalty = 0.256719              penalty = 0.2190244             penalty = 0.1868646             penalty = 0.1594269             penalty = 0.1360179             penalty = 0.1160461             penalty = 0.09900679                penalty = 0.08446941                penalty = 0.07206659                penalty = 0.0614849             penalty = 0.05245694                penalty = 0.04475457                penalty = 0.03818316                penalty = 0.03257665                penalty = 0.02779335                penalty = 0.02371239                penalty = 0.02023065                penalty = 0.01726014                penalty = 0.0147258             penalty = 0.01256358                penalty = 0.01071884                penalty = 0.009144969               penalty = 0.007802193               penalty = 0.006656581               penalty = 0.005679181               penalty = 0.004845294               penalty = 0.004133849               penalty = 0.003526867               penalty = 0.00300901                number of blocks = 3                penalty = 0.3002468             penalty = 0.2561609             penalty = 0.2185482             penalty = 0.1864583             penalty = 0.1590802             penalty = 0.1357222             penalty = 0.1157938             penalty = 0.09879153                penalty = 0.08428576                penalty = 0.0719099             penalty = 0.06135121                penalty = 0.05234288                penalty = 0.04465727                penalty = 0.03810014                penalty = 0.03250582                penalty = 0.02773292                penalty = 0.02366083                penalty = 0.02018666                penalty = 0.01722261                penalty = 0.01469378                penalty = 0.01253626                penalty = 0.01069553                penalty = 0.009125086               penalty = 0.00778523                penalty = 0.006642108               penalty = 0.005666833               penalty = 0.00483476                penalty = 0.004124861               penalty = 0.003519199               penalty = 0.003002468               number of blocks = 4                penalty = 0.4133606             penalty = 0.3526659             penalty = 0.3008832             penalty = 0.2567039             penalty = 0.2190115             penalty = 0.1868536             penalty = 0.1594175             penalty = 0.1360099             penalty = 0.1160392             penalty = 0.09900095                penalty = 0.08446443                penalty = 0.07206234                penalty = 0.06148127                penalty = 0.05245384                penalty = 0.04475193                penalty = 0.03818091                penalty = 0.03257472                penalty = 0.02779171                penalty = 0.02371099                penalty = 0.02022946                penalty = 0.01725912                penalty = 0.01472493                penalty = 0.01256283                penalty = 0.01071821                penalty = 0.009144429               penalty = 0.007801733               penalty = 0.006656188               penalty = 0.005678846               penalty = 0.004845009               penalty = 0.004133606               number of blocks = 5                penalty = 0.4229238             penalty = 0.360825              penalty = 0.3078443             penalty = 0.2626428             penalty = 0.2240784             penalty = 0.1911765             penalty = 0.1631056             penalty = 0.1391565             penalty = 0.1187238             penalty = 0.1012914             penalty = 0.08641854                penalty = 0.07372952                penalty = 0.06290366                penalty = 0.05366738                penalty = 0.04578728                penalty = 0.03906424                penalty = 0.03332835                penalty = 0.02843468                penalty = 0.02425955                penalty = 0.02069747                penalty = 0.01765842                penalty = 0.01506559                penalty = 0.01285348                penalty = 0.01096618                penalty = 0.009355989               penalty = 0.007982229               penalty = 0.006810181               penalty = 0.005810227               penalty = 0.004957099               penalty = 0.004229238               number of blocks = 6                penalty = 0.42662               penalty = 0.3639785             penalty = 0.3105348             penalty = 0.2649383             penalty = 0.2260368             penalty = 0.1928473             penalty = 0.1645312             penalty = 0.1403727             penalty = 0.1197615             penalty = 0.1021766             penalty = 0.08717382                penalty = 0.0743739             penalty = 0.06345342                penalty = 0.05413642                penalty = 0.04618745                penalty = 0.03940565                penalty = 0.03361963                penalty = 0.02868319                penalty = 0.02447158                penalty = 0.02087836                penalty = 0.01781275                penalty = 0.01519726                penalty = 0.01296582                penalty = 0.01106202                penalty = 0.009437758               penalty = 0.008051992               penalty = 0.0068697             penalty = 0.005861007               penalty = 0.005000423               penalty = 0.0042662           
 #> DONE
 ```
@@ -384,7 +389,7 @@ of clusters and different penalties.
 ``` r
 
 my_NB_sparse_unknown$who_am_I
-#> [1] "Collection of    normal-block-var models with different values of q and different penalties."
+#> [1] "Collection of diagonal normal-block-var models with different values of q and different penalties."
 ```
 
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) allows each

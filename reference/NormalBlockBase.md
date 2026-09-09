@@ -259,7 +259,7 @@ All possible parameters of the child classes
 
   whether \`optim_initialize()\` should treat the model as already
   initialized (reuse B/Omega/dm1/C/alpha/M/S as they stand) rather than
-  recomputing a fresh heuristic initialization – set by
+  recomputing a fresh heuristic initialization. Set by
   \[warm_start_from()\] and by \[split()\]/\[merge()\].
 
 - `clustering_init`:
@@ -384,7 +384,7 @@ the current model
 - `max_candidates`:
 
   merge candidates are, unlike split's, quadratic in q (\`choose(q,
-  q-2)\` pairs) – beyond \`max_candidates\` pairs, only the most
+  q-2)\` pairs): beyond \`max_candidates\` pairs, only the most
   promising ones are actually built and trial-optimized, ranked by the
   family's own \`private\$merge_score()\`. Set to \`Inf\` to always try
   every pair.
@@ -453,8 +453,8 @@ plots the evolution of the objective (log-likelihood or ELBO) across the
 - `show_increment`:
 
   whether to add a second panel with the (log10) absolute increment
-  between iterations and the convergence \`threshold\` – distinguishes
-  true convergence from a flat-looking objective trace.
+  between iterations and the convergence \`threshold\` (distinguishes
+  true convergence from a flat-looking objective trace).
 
 #### Returns
 

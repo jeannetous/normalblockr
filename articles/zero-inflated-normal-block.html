@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Zero-inflated Normal-Block models: a worked example with fish biomass data • normalblockr</title>
+<title>Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data • normalblockr</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Zero-inflated Normal-Block models: a worked example with fish biomass data">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,12 +33,13 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -59,11 +60,11 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Zero-inflated Normal-Block models: a worked example with fish biomass data</h1>
+      <h1>Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</h1>
                         <h4 data-toc-skip class="author">Julien Chiquet
 &amp; Jeanne Tous</h4>
             
-            <h4 data-toc-skip class="date">2026-09-04</h4>
+            <h4 data-toc-skip class="date">2026-09-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jchiquet/normalblockr/blob/master/vignettes/zero-inflated-normal-block.Rmd" class="external-link"><code>vignettes/zero-inflated-normal-block.Rmd</code></a></small>
       <div class="d-none name"><code>zero-inflated-normal-block.Rmd</code></div>
@@ -90,9 +91,8 @@ exact zeros beyond what its own variance would produce, which biases
 both the variable-level noise estimates and the inferred clustering. The
 next section spells out precisely how the zero-inflation extension
 addresses this; see <span class="citation">Tous and Chiquet
-(2026)</span> for the Normal-Block model itself, and
-<code>inst/normal_block_models.qmd</code> (the package’s reference card)
-for the full estimation details.</p>
+(2026)</span> for the Normal-Block model itself and additional
+estimation details.</p>
 </div>
 <div class="section level2">
 <h2 id="mathematical-background">Mathematical background<a class="anchor" aria-label="anchor" href="#mathematical-background"></a>
@@ -184,15 +184,14 @@ intercept-only column:
 is then the same constant for every station, so
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">\kappa_{ij}</annotation></semantics></math>
 collapses to a single probability per species,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\kappa_j</annotation></semantics></math>.
+Since an intercept-only logistic regression’s fitted probability is just
+the response’s empirical mean,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\kappa_j</annotation></semantics></math>
-– and, since an intercept-only logistic regression’s fitted probability
-is just the response’s empirical mean,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>κ</mi><mi>j</mi></msub><annotation encoding="application/x-tex">\kappa_j</annotation></semantics></math>
-turns out to be exactly that species’ empirical proportion of zeros
-(checked numerically below). Supplying a non-trivial <code>X0</code>
-(e.g. some of the same environmental covariates used in <code>X</code>)
-would instead let a species’ propensity to be absent vary across
-stations.</p>
+turns out to be exactly that species’ empirical proportion of zeros.
+Supplying a non-trivial <code>X0</code> (e.g. some of the same
+environmental covariates used in <code>X</code>) would instead let a
+species’ propensity to be absent vary across stations.</p>
 <p>Unlike
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math>,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Ω</mi><annotation encoding="application/x-tex">\Omega</annotation></semantics></math>
@@ -203,7 +202,7 @@ recursion below,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>b</mi><mn>0</mn></msub><annotation encoding="application/x-tex">b_0</annotation></semantics></math>)
 is estimated <em>once, upfront</em>, via
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>
-independent logistic regressions – it does not change across (V)EM
+independent logistic regressions: it does not change across (V)EM
 iterations, and so never appears in the optimization trace or
 convergence plots.</p>
 <div class="section level4">
@@ -288,7 +287,7 @@ known in advance for this kind of data, so we let
 fitted models, one per number of clusters:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">8</span>, zero_inflation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting a  normal-block-var model with unknown q </span></span>
+<span><span class="co">#&gt; Fitting a diagonal normal-block-var model with unknown q </span></span>
 <span><span class="co">#&gt;   number of blocks = 2                number of blocks = 3                number of blocks = 4                number of blocks = 5                number of blocks = 6                number of blocks = 7                number of blocks = 8           </span></span>
 <span><span class="co">#&gt; DONE</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -303,7 +302,7 @@ heuristic clustering on the zero-inflation-aware residuals, see
 occasionally settle into a milder local optimum than a neighboring
 number of clusters’ solution would. <code>refine()</code> tries a short
 split/merge trial from each model’s already-fitted neighbors and keeps
-it only if it strictly improves – see
+it only if it strictly improves. See
 <code><a href="../reference/NormalBlockVarCollectionClusters.html">?NormalBlockVarCollectionClusters</a></code> for the full rationale.
 It is not run by default (it adds real cost), so it is called explicitly
 here:</p>
@@ -395,7 +394,7 @@ with <code>sparsity = TRUE</code> explores a path of
 penalties on the inter-cluster association network <span class="citation">(see Tous and Chiquet 2026)</span>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">out_sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="va">myModel</span><span class="op">$</span><span class="va">q</span>, sparsity <span class="op">=</span> <span class="cn">TRUE</span>, zero_inflation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Fitting a Collection of  zero-inflated  normal-block-var models with fixed q, with different sparsity penalties. </span></span>
+<span><span class="co">#&gt; Fitting a Collection of zero-inflated diagonal normal-block-var models with fixed q, with different sparsity penalties. </span></span>
 <span><span class="co">#&gt;   penalty = 0.03319511                penalty = 0.028321              penalty = 0.02416257                penalty = 0.02061473                penalty = 0.01758782                penalty = 0.01500536                penalty = 0.01280209                penalty = 0.01092234                penalty = 0.009318585               penalty = 0.007950317               penalty = 0.006782955               penalty = 0.005786999               penalty = 0.004937282               penalty = 0.00421233                penalty = 0.003593825               penalty = 0.003066136               penalty = 0.002615928               penalty = 0.002231826               penalty = 0.001904122               penalty = 0.001624536               penalty = 0.001386002               penalty = 0.001182492               penalty = 0.001008864               penalty = 0.0008607306              penalty = 0.0007343476              penalty = 0.0006265218              penalty = 0.0005345283              penalty = 0.0004560423              penalty = 0.0003890807              penalty = 0.0003319511           </span></span>
 <span><span class="co">#&gt; DONE</span></span>
 <span><span class="va">out_sp</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"BIC"</span>, <span class="st">"EBIC"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>

@@ -33,12 +33,13 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+<li><a class="dropdown-item" href="../articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="../articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="../articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="../articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -63,7 +64,7 @@
                         <h4 data-toc-skip class="author">Julien Chiquet,
 Nestor Nglala Manguitini and Jeanne Tous</h4>
             
-            <h4 data-toc-skip class="date">2026-09-04</h4>
+            <h4 data-toc-skip class="date">2026-09-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/jchiquet/normalblockr/blob/master/vignettes/mean-block-breast-cancer.Rmd" class="external-link"><code>vignettes/mean-block-breast-cancer.Rmd</code></a></small>
       <div class="d-none name"><code>mean-block-breast-cancer.Rmd</code></div>
@@ -82,9 +83,9 @@ covariance</em>, this one puts it in the <em>mean</em>: variables are
 grouped by how their expected value responds to the covariates.</p>
 <p>We use the same dataset as the <code>breast-cancer-proteomics</code>
 vignette (<code><a href="../reference/brca_rppa.html">?brca_rppa</a></code>) on purpose, so that the two families
-can be read side by side on data you have already seen: 163 proteins
-measured on 346 breast-cancer tumor samples, with each sample’s PAM50
-molecular subtype as the covariate.</p>
+can be read side by side on the same data: 163 proteins measured on 346
+breast-cancer tumor samples, with each sample’s PAM50 molecular subtype
+as the covariate.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jchiquet/normalblockr" class="external-link">normalblockr</a></span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -112,7 +113,7 @@ which case the model carries a variational posterior distribution over
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
 rather than a single point estimate.
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi><mo>∈</mo><msup><mi>ℝ</mi><mrow><mi>d</mi><mo>×</mo><mi>q</mi></mrow></msup></mrow><annotation encoding="application/x-tex">B \in \mathbb{R}^{d \times q}</annotation></semantics></math>
-holds one regression profile <strong>per cluster</strong>, so
+holds one regression profile <em>per cluster</em>, so
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>B</mi><mi>⊤</mi></msup><msub><mi>X</mi><mi>i</mi></msub><mo>∈</mo><msup><mi>ℝ</mi><mi>q</mi></msup></mrow><annotation encoding="application/x-tex">B^\top X_i \in \mathbb{R}^q</annotation></semantics></math>
 is the linear predictor of each cluster for observation
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>,
@@ -140,13 +141,13 @@ and the covariates only enter through a variable-wise
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>B</mi><mi>⊤</mi></msup><msub><mi>X</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">B^\top X_i</annotation></semantics></math>:
 there, two proteins are in the same cluster when they <em>covary</em>
 the same way; here, when they <em>respond</em> the same way. The two
-answer different questions and generally return different groupings – on
+answer different questions and generally return different groupings: on
 this dataset they are essentially unrelated, which is a result rather
 than a defect.</p>
 <p>See <span class="citation">Tous and Chiquet (2026)</span> for the
-Normal-Block model itself, and <code>inst/normal_block_models.qmd</code>
-(the package’s reference card) for the mean-block family’s estimation
-details: the closed-form updates when
+Normal-Block model itself, and <span class="citation">Nglala Manguitini
+et al. (2026)</span> (unpublished yet) for the mean-block family’s
+estimation details: the closed-form updates when
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>C</mi><annotation encoding="application/x-tex">C</annotation></semantics></math>
 is known, and the variational lower bound maximized when it is not.</p>
 </div>
@@ -237,19 +238,18 @@ parameters, so the criteria stay hungry for a long time: on a narrow
 range such as <code>1:15</code> they would still be decreasing at the
 upper end, and “selecting” its boundary would mean nothing.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NB_means</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deviance"</span>, <span class="st">"BIC"</span>, <span class="st">"ICL"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">NB_means</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deviance"</span>, <span class="st">"ICL"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="mean-block-breast-cancer_files/figure-html/collection-criteria-1.png" class="r-plt" alt="" width="672"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected</span> <span class="op">&lt;-</span> <span class="va">NB_means</span><span class="op">$</span><span class="fu">get_best_model</span><span class="op">(</span><span class="st">"ICL"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"ICL selects "</span>, <span class="va">selected</span><span class="op">$</span><span class="va">q</span>, <span class="st">" clusters."</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "ICL selects 65 clusters."</span></span></code></pre></div>
-<p>That answer deserves a comment: the model groups 163 proteins into a
-few dozen clusters, i.e. only a handful of proteins per cluster. It is
-saying that subtype signatures are largely protein-specific here, with
-limited sharing – a substantive finding about this dataset, not a
-failure of the fit. The criteria do turn: they reach an interior minimum
-and rise again afterwards, which is what makes the selection
-meaningful.</p>
+<p>The model groups 163 proteins into a few dozen clusters, i.e. only a
+handful of proteins per cluster. It is saying that subtype signatures
+are largely protein-specific here, with limited sharing, a substantive
+finding about this dataset, not a failure of the fit. The criteria do
+turn: they reach an interior minimum and rise again afterwards, which is
+what makes the selection meaningful.</p>
 <p><code>refine()</code> is available to polish a collection, trying for
 each
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
@@ -305,20 +305,19 @@ matrix). Only the last one has to be inverted, so it alone requires
 costs
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo stretchy="false" form="prefix">(</mo><mi>p</mi><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mn>2</mn><mo>≈</mo><mn>13</mn><mo>,</mo><mn>000</mn></mrow><annotation encoding="application/x-tex">p(p+1)/2 \approx 13{,}000</annotation></semantics></math>
 parameters here, which drown the handful of mean parameters that BIC and
-ICL are trying to weigh – in a simulation study over 12 replicates,
-selecting
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
+ICL are trying to weigh<a class="footnote-ref" tabindex="0" data-bs-toggle="popover" data-bs-content='&lt;p&gt;In a simulation study over 12 replicates, selecting
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;q&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;
 by BIC was correct 10/12 times with a diagonal
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Σ</mi><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math>
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi mathvariant="normal"&gt;Σ&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;\Sigma&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;
 against 6/12 with a full one at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>/</mi><mi>p</mi><mo>≈</mo><mn>1.3</mn></mrow><annotation encoding="application/x-tex">n/p \approx 1.3</annotation></semantics></math>,
-<em>even when the data were generated with a full
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Σ</mi><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math></em>.
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mi&gt;n&lt;/mi&gt;&lt;mi&gt;/&lt;/mi&gt;&lt;mi&gt;p&lt;/mi&gt;&lt;mo&gt;≈&lt;/mo&gt;&lt;mn&gt;1.3&lt;/mn&gt;&lt;/mrow&gt;&lt;annotation encoding="application/x-tex"&gt;n/p \approx 1.3&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;,
+&lt;em&gt;even when the data were generated with a full&lt;/em&gt;
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi mathvariant="normal"&gt;Σ&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;\Sigma&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;.
 The quality of the clustering at a fixed
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-was the same either way; it is the choice of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-that suffers.</p>
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;q&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;
+was the same either way, it is the choice of
+&lt;math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"&gt;&lt;semantics&gt;&lt;mi&gt;q&lt;/mi&gt;&lt;annotation encoding="application/x-tex"&gt;q&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;
+that suffers.&lt;/p&gt;'><sup>1</sup></a></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">shapes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"diagonal"</span>, <span class="st">"spherical"</span>, <span class="st">"full"</span><span class="op">)</span></span>
 <span><span class="va">fits</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">shapes</span>, <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span></span>
@@ -339,8 +338,8 @@ full
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Σ</mi><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math>
 though: the three shapes answer different questions, and a diagonal one
 says nothing about how proteins co-vary once the subtype and the cluster
-structure are accounted for – which is exactly what the next section
-looks at.</p>
+structure are accounted for, which is what the next section looks
+at.</p>
 </div>
 <div class="section level2">
 <h2 id="sparsifying-the-residual-covariance">Sparsifying the residual covariance<a class="anchor" aria-label="anchor" href="#sparsifying-the-residual-covariance"></a>
@@ -348,7 +347,7 @@ looks at.</p>
 <p>If the residual associations <em>are</em> the object of interest, the
 full
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">Σ</mi><annotation encoding="application/x-tex">\Sigma</annotation></semantics></math>
-is required – and asking for <code>sparsity &gt; 0</code> selects it
+is required. Asking for <code>sparsity &gt; 0</code> selects it
 automatically, since a penalty on a diagonal precision matrix would have
 nothing to act on. A dense
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>163</mn><mo>×</mo><mn>163</mn></mrow><annotation encoding="application/x-tex">163 \times 163</annotation></semantics></math>
@@ -383,6 +382,12 @@ why a fixed penalty is used here.</p>
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-ngalala2026" class="csl-entry">
+Nglala Manguitini, Nestor, Jeanne Tous, and Julien Chiquet. 2026.
+<em>Modèle de Régression Log-Normale Multivarié Avec Clustering de
+Variables Intégré Dans La Moyenne</em>. MsC manuscript, available upon
+request.
+</div>
 <div id="ref-tous2026" class="csl-entry">
 Tous, Jeanne, and Julien Chiquet. 2026. <span>“An Integrated Method for
 Clustering and Association Network Inference.”</span> <em>Computational
@@ -390,6 +395,7 @@ Statistics &amp; Data Analysis</em> 219: 108347. <a href="https://doi.org/10.101
 </div>
 </div>
 </div>
+
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>

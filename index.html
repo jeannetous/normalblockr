@@ -35,12 +35,13 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/breast-cancer-proteomics.html">Normal-Block models: a worked example with breast cancer proteomics data</a></li>
+<li><a class="dropdown-item" href="articles/breast-cancer-proteomics.html">Normal-Block models: clustering variables by their covariance -- a worked example with breast cancer proteomics data</a></li>
     <li><a class="dropdown-item" href="articles/mean-block-breast-cancer.html">Mean-Block models: clustering variables by their response to covariates</a></li>
-    <li><a class="dropdown-item" href="articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model - First steps</a></li>
-    <li><a class="dropdown-item" href="articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models: a worked example with fish biomass data</a></li>
+    <li><a class="dropdown-item" href="articles/normal-block.html">Analyzing multivariate Gaussian data with the Normal-Block model (variance clustering) - First steps</a></li>
+    <li><a class="dropdown-item" href="articles/zero-inflated-normal-block.html">Zero-inflated Normal-Block models (variance clustering): a worked example with fish biomass data</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="normal_block_models.pdf">Technical report</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -77,7 +78,7 @@
 <li>
 <strong>Zero-inflated extension</strong>: an excess-of-zeros layer for data (e.g. abundance/biomass tables) with more exact zeros than a plain Normal model can represent.</li>
 </ul>
-<p>Any combination of these is reached through the same <code><a href="reference/normal_block.html">normal_block()</a></code> function – known or unknown clustering, sparse or not, zero-inflated or not are independent choices, not separate model classes to learn.</p>
+<p>Any combination of these is reached through the same <code><a href="reference/normal_block.html">normal_block()</a></code> function: known or unknown clustering, sparse or not, zero-inflated or not are independent choices, not separate model classes to learn.</p>
 <p>Since version 0.3.0 the package also fits a second, complementary family, reached with <code>normal_block(..., model = "mean")</code>:</p>
 <ul>
 <li>
@@ -114,12 +115,12 @@
 <code class="sourceCode R"><span><span class="va">hc</span>    <span class="op">&lt;-</span> <span class="va">brca_rppa</span><span class="op">$</span><span class="va">expr</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/scale.html" class="external-link">scale</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">hclust</a></span><span class="op">(</span><span class="st">"ward.D2"</span><span class="op">)</span></span>
 <span><span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/cutree.html" class="external-link">cutree</a></span><span class="op">(</span><span class="va">hc</span>, <span class="fl">6</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">normalblockr</span><span class="fu">:::</span><span class="fu">as_indicator</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">m_known</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="va">group</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block model with fixed blocks </span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with fixed blocks </span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>DONE</span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m_known</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>A diagonal normal<span class="sc">-</span>block model with fixed blocks .</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>A diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with fixed blocks .</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="sc">==</span><span class="er">=========================================================================</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a> nb_param q n_edges sparsity    loglik deviance      BIC      ICL   EBIC niter</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>      <span class="dv">999</span> <span class="dv">6</span>      <span class="dv">15</span>        <span class="dv">0</span> <span class="sc">-</span><span class="fl">70387.84</span> <span class="fl">140775.7</span> <span class="fl">146616.3</span> <span class="fl">144073.3</span> <span class="dv">146670</span>    <span class="dv">14</span></span>
@@ -128,15 +129,15 @@
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>    <span class="sc">$</span>model_par, <span class="sc">$</span>posterior_par <span class="sc">/</span> <span class="er">$</span>var_par, <span class="sc">$</span>clustering </span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>    <span class="sc">$</span>loglik, <span class="sc">$</span>BIC, <span class="sc">$</span>ICL, <span class="sc">$</span>objective, <span class="sc">$</span>nb_param, <span class="sc">$</span>criteria</span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="sc">*</span> Useful S3 methods</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">summary</span>(), <span class="fu">plot</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="unknown-number-of-clusters">Unknown number of clusters<a class="anchor" aria-label="anchor" href="#unknown-number-of-clusters"></a>
 </h3>
 <p>Leave the clustering for the model to infer, over a range of candidate cluster counts explored as a collection, then select by ICL.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">m_unknown</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block model with unknown q </span>
+<code class="sourceCode R"><span><span class="va">m_unknown</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">20</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with unknown q </span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">2</span>           </span>
 <span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">3</span>           </span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">4</span>           </span>
@@ -146,24 +147,35 @@
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">8</span>           </span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">9</span>           </span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">10</span>           </span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>DONE</span></code></pre></div>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">11</span>           </span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">12</span>           </span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">13</span>           </span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">14</span>           </span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">15</span>           </span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">16</span>           </span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">17</span>           </span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">18</span>           </span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">19</span>           </span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">20</span>           </span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a>DONE</span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">m_unknown</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deviance"</span>, <span class="st">"BIC"</span>, <span class="st">"ICL"</span>, <span class="st">"EBIC"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">m_unknown</span><span class="op">$</span><span class="fu">refine</span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">m_unknown</span><span class="op">$</span><span class="fu">plot</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"deviance"</span>, <span class="st">"BIC"</span>, <span class="st">"ICL"</span>, <span class="st">"EBIC"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unknown-1.png"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">m_unknown</span><span class="op">$</span><span class="fu">get_best_model</span><span class="op">(</span><span class="st">"ICL"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>A diagonal normal<span class="sc">-</span>block model with <span class="dv">10</span> unknown blocks .</span>
+<code class="sourceCode R"><span><span class="va">m_unknown</span><span class="op">$</span><span class="fu">get_best_model</span><span class="op">(</span><span class="st">"EBIC"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>A diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with <span class="dv">16</span> unknown blocks .</span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="sc">==</span><span class="er">=========================================================================</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a> nb_param  q n_edges sparsity    loglik deviance      BIC      ICL     EBIC</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>     <span class="dv">1042</span> <span class="dv">10</span>      <span class="dv">45</span>        <span class="dv">0</span> <span class="sc">-</span><span class="fl">68179.63</span> <span class="fl">136359.3</span> <span class="fl">142451.2</span> <span class="fl">139402.8</span> <span class="fl">142658.5</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>     <span class="dv">1129</span> <span class="dv">16</span>     <span class="dv">120</span>        <span class="dv">0</span> <span class="sc">-</span><span class="fl">67374.79</span> <span class="fl">134749.6</span> <span class="fl">141350.2</span> <span class="fl">137746.6</span> <span class="fl">142015.6</span></span>
 <span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a> niter</span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="dv">16</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    <span class="dv">32</span></span>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="sc">==</span><span class="er">=========================================================================</span></span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="er">*</span> Useful fields</span>
 <span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>    <span class="sc">$</span>model_par, <span class="sc">$</span>posterior_par <span class="sc">/</span> <span class="er">$</span>var_par, <span class="sc">$</span>clustering </span>
 <span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>    <span class="sc">$</span>loglik, <span class="sc">$</span>BIC, <span class="sc">$</span>ICL, <span class="sc">$</span>objective, <span class="sc">$</span>nb_param, <span class="sc">$</span>criteria</span>
 <span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="sc">*</span> Useful S3 methods</span>
-<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">summary</span>(), <span class="fu">plot</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="sparse-network">Sparse network<a class="anchor" aria-label="anchor" href="#sparse-network"></a>
@@ -171,7 +183,7 @@
 <p>Treating a clustering as fixed (known, or selected above), explore a path of graphical-lasso penalties on the inter-cluster network and select by BIC. Unlike the dense, unpenalized network, this is the one actually worth visualizing.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m_sparse</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data</span>, blocks <span class="op">=</span> <span class="va">group</span>, sparsity <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>Fitting a Collection of diagonal normal<span class="sc">-</span>block models with fixed blocks, with different sparsity penalties. </span>
+<div class="sourceCode" id="cb14"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>Fitting a Collection of diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var models with fixed blocks, with different sparsity penalties. </span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>     penalty <span class="ot">=</span> <span class="fl">0.2565018</span>           </span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>     penalty <span class="ot">=</span> <span class="fl">0.2188391</span>           </span>
 <span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>     penalty <span class="ot">=</span> <span class="fl">0.1867065</span>           </span>
@@ -218,7 +230,7 @@
 <span><span class="va">Y_zi</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="va">onema</span><span class="op">$</span><span class="va">biomass</span><span class="op">)</span></span>
 <span><span class="va">data_zi</span> <span class="op">&lt;-</span> <span class="va"><a href="reference/NormalBlockData.html">NormalBlockData</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">Y_zi</span>, <span class="va">X_zi</span><span class="op">)</span></span>
 <span><span class="va">m_zi</span>    <span class="op">&lt;-</span> <span class="fu"><a href="reference/normal_block.html">normal_block</a></span><span class="op">(</span><span class="va">data_zi</span>, blocks <span class="op">=</span> <span class="fl">2</span><span class="op">:</span><span class="fl">8</span>, zero_inflation <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block model with unknown q </span>
+<div class="sourceCode" id="cb17"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>Fitting a diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with unknown q </span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">2</span>           </span>
 <span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">3</span>           </span>
 <span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>     number of blocks <span class="ot">=</span> <span class="dv">4</span>           </span>
@@ -229,7 +241,7 @@
 <span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>DONE</span></code></pre></div>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">m_zi</span><span class="op">$</span><span class="fu">get_best_model</span><span class="op">(</span><span class="st">"ICL"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>A zero<span class="sc">-</span>inflated diagonal normal<span class="sc">-</span>block model with <span class="dv">6</span> unknown blocks .</span>
+<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>A zero<span class="sc">-</span>inflated diagonal normal<span class="sc">-</span>block<span class="sc">-</span>var model with <span class="dv">6</span> unknown blocks .</span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="sc">==</span><span class="er">=========================================================================</span></span>
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a> nb_param q n_edges sparsity    loglik deviance      BIC      ICL     EBIC</span>
 <span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>      <span class="dv">210</span> <span class="dv">6</span>      <span class="dv">15</span>        <span class="dv">0</span> <span class="sc">-</span><span class="fl">13519.35</span> <span class="fl">27038.71</span> <span class="fl">28296.39</span> <span class="fl">27090.47</span> <span class="fl">28350.14</span></span>
@@ -240,7 +252,7 @@
 <span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    <span class="sc">$</span>model_par, <span class="sc">$</span>posterior_par <span class="sc">/</span> <span class="er">$</span>var_par, <span class="sc">$</span>clustering </span>
 <span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>    <span class="sc">$</span>loglik, <span class="sc">$</span>BIC, <span class="sc">$</span>ICL, <span class="sc">$</span>objective, <span class="sc">$</span>nb_param, <span class="sc">$</span>criteria</span>
 <span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="sc">*</span> Useful S3 methods</span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>    <span class="fu">print</span>(), <span class="fu">summary</span>(), <span class="fu">plot</span>(), <span class="fu">coef</span>(), <span class="fu">sigma</span>(), <span class="fu">fitted</span>(), <span class="fu">predict</span>() </span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -256,8 +268,13 @@
 <li>
 <a href="https://jchiquet.github.io/normalblockr/articles/mean-block-breast-cancer.html" class="external-link"><code>mean-block-breast-cancer</code></a> (<code><a href="articles/mean-block-breast-cancer.html">vignette("mean-block-breast-cancer")</a></code>): the mean-block family on <code>brca_rppa</code> – clustering proteins by their subtype signature, choosing the shape of the residual covariance, sparsifying it.</li>
 <li>
-<code>inst/normal_block_models.qmd</code> in the package sources: a reference card in two parts, the models (both families, with their criteria and E/M or VE/M updates) and the implementation notes.</li>
+<a href="https://jchiquet.github.io/normalblockr/normal_block_models.pdf" class="external-link"><code>inst/normal_block_models.qmd</code></a> in the package sources: a reference card in two parts, the models (both families, with their criteria and E/M or VE/M updates) and the implementation notes.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="note-on-the-use-of-generative-ai">Note on the use of generative AI<a class="anchor" aria-label="anchor" href="#note-on-the-use-of-generative-ai"></a>
+</h2>
+<p>The models implemented here – their definition and every algebraic derivation – were worked out by Jeanne Tous and Nestor Ngalala Manguitini and their advisor, Julien Chiquet, over a PhD thesis and a Master’s research internship respectively, who also wrote the first working versions of the code, its object-oriented architecture, and the first simulation studies. Generative AI (Claude Sonnet and Claude Opus, Anthropic) was used afterwards to improve the documentation, produce synthesis material, and audit, test and improve the code – in particular to port several algorithmic components to C++, including the graphical lasso solver, whose original R-callback implementation caused intermittent memory crashes. See the <a href="https://jchiquet.github.io/normalblockr/normal_block_models.pdf" class="external-link">technical report</a> for details.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

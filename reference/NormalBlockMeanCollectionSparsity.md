@@ -4,7 +4,7 @@ R6 class for a collection of mean-block models (\[NormalBlockMeanBase\])
 with a fixed clustering (or a fixed number of blocks) and different
 sparsity levels applied to the p x p precision matrix of the variables.
 Mirrors \[NormalBlockVarCollectionSparsity\], minus the StARS/stability
-selection path, which relies on \`fixed_tau\` – not supported by the
+selection path, which relies on \`fixed_tau\`, not supported by the
 mean-block VEM.
 
 ## Super classes
