@@ -136,6 +136,10 @@ m_zi$get_best_model("ICL")
 - [`zero-inflated-normal-block`](https://jchiquet.github.io/normalblockr/articles/zero-inflated-normal-block.html) (`vignette("zero-inflated-normal-block")`): a full worked example on `onema`, with the math behind the zero-inflation extension.
 - [`breast-cancer-proteomics`](https://jchiquet.github.io/normalblockr/articles/breast-cancer-proteomics.html) (`vignette("breast-cancer-proteomics")`): a full worked example on `brca_rppa` -- known vs. inferred clustering, model selection, the post-hoc `refine()` step, sparsifying the selected network.
 - [`mean-block-breast-cancer`](https://jchiquet.github.io/normalblockr/articles/mean-block-breast-cancer.html) (`vignette("mean-block-breast-cancer")`): the mean-block family on `brca_rppa` -- clustering proteins by their subtype signature, choosing the shape of the residual covariance, sparsifying it.
-- `inst/normal_block_models.qmd` in the package sources: a reference card in two parts, the models (both families, with their criteria and E/M or VE/M updates) and the implementation notes.
+- [`inst/normal_block_models.qmd`](https://jchiquet.github.io/normalblockr/normal_block_models.pdf) in the package sources: a reference card in two parts, the models (both families, with their criteria and E/M or VE/M updates) and the implementation notes.
+
+## Note on the use of generative AI
+
+The models implemented here -- their definition and every algebraic derivation -- were worked out by Jeanne Tous and Nestor Ngalala Manguitini and their advisor, Julien Chiquet, over a PhD thesis and a Master's research internship respectively, who also wrote the first working versions of the code, its object-oriented architecture, and the first simulation studies. Generative AI (Claude Sonnet and Claude Opus, Anthropic) was used afterwards to improve the documentation, produce synthesis material, and audit, test and improve the code -- in particular to port several algorithmic components to C++, including the graphical lasso solver, whose original R-callback implementation caused intermittent memory crashes. See the [technical report](https://jchiquet.github.io/normalblockr/normal_block_models.pdf) for details.
 
 ## References

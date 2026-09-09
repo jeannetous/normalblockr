@@ -2,6 +2,15 @@ url: ~
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left:  [intro, reference, articles, report, news]
+    right: [search, github]
+  components:
+    report:
+      text: Technical report
+      href: normal_block_models.pdf
+
 reference:
 - title: 'User-facing functions'
   desc: >
