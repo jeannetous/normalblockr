@@ -44,7 +44,7 @@ public:
     C_(C), Gamma_(arma::eye(C.n_cols, C.n_cols)), Mu_(arma::zeros(data.n, C.n_cols)) {}
 
   // General (non-profiled) marginal log-likelihood of Y, valid at any
-  // (B_, dm1_, Omega_), not just an M-step optimum -- via the matrix
+  // (B_, dm1_, Omega_), not just an M-step optimum, via the matrix
   // determinant lemma and Woodbury identity on the q x q posterior
   // precision Gamma^{-1}. See inst/normal_block_models.qmd ("Criterion",
   // §1/§2) for the derivation and the sign-bug fix this replaced.

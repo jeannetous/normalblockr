@@ -22,8 +22,7 @@ class ZINormalBlockMeanUnknownClusters : public ZINormalBlockMeanBase {
 
   // With a diagonal Sigma the ELBO is linear in each row of tau (up to the
   // entropy) and the rows are independent, so this softmax is the exact
-  // maximizer in one shot -- no Gauss-Seidel sweep, unlike the non-ZI family
-  // whose full Sigma couples the rows through its off-diagonal terms.
+  // maximizer in one shot.
   void E_step() override {
     if (fixed_tau_) return;
     arma::vec w = Omega_.diag();

@@ -4,10 +4,10 @@
 #include <RcppArmadillo.h>
 
 // The B- and M-update subproblems of the zero-inflated normal-block models
-// have no closed form *in general nonlinear optimization*. However, both
+// have no closed form in general nonlinear optimization. However, both
 // objectives are exactly quadratic in the parameter being optimized (the
 // zero-inflation mask only reweights residuals, it does not introduce any
-// nonlinearity), so each one reduces to a (weighted) linear system -- no
+// nonlinearity), so each one reduces to a (weighted) linear system: no
 // iterative optimizer is needed at all.
 namespace nb_optim {
 
@@ -55,7 +55,7 @@ inline arma::mat solve_M_ridge(const arma::mat& DM1, const arma::mat& R,
   // diagonal added to it. There is no factorization to share across rows, but
   // no reason to pay for a fresh allocation and a general solver either: the
   // system is symmetric positive definite (Omega is, and DM1C is
-  // non-negative). Measured 1.6x on a whole q = 1:8 zero-inflated fit.
+  // non-negative).
   const arma::vec omega_diag = Omega.diag();
   arma::mat A(q, q); arma::vec b(q), x(q);
   for (arma::uword i = 0; i < n; ++i) {

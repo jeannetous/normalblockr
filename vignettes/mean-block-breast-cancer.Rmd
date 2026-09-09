@@ -22,16 +22,9 @@ knitr::opts_chunk$set(
 
 # Preliminaries
 
-This vignette introduces the **Mean-Block** model (`model = "mean"`), the second
-model family shipped with `normalblockr`. Where the Normal-Block model of the
-`normal-block` vignette puts the clustering in the *latent covariance*, this one
-puts it in the *mean*: variables are grouped by how their expected value responds
-to the covariates.
+This vignette introduces the **Mean-Block** model (`model = "mean"`), the second model family shipped with `normalblockr`. Where the Normal-Block model of the `normal-block` vignette puts the clustering in the *latent covariance*, this one puts it in the *mean*: variables are grouped by how their expected value responds to the covariates.
 
-We use the same dataset as the `breast-cancer-proteomics` vignette (`?brca_rppa`)
-on purpose, so that the two families can be read side by side on the same data:
-163 proteins measured on 346 breast-cancer tumor samples, with each
-sample's PAM50 molecular subtype as the covariate.
+We use the same dataset as the `breast-cancer-proteomics` vignette (`?brca_rppa`) on purpose, so that the two families can be read side by side on the same data: 163 proteins measured on 346 breast-cancer tumor samples, with each sample's PAM50 molecular subtype as the covariate.
 
 ```{r, set-up}
 library(normalblockr)
@@ -39,37 +32,15 @@ library(normalblockr)
 
 # Mathematical background
 
-The mean-block model is a Gaussian regression model for a table of observations
-$Y \in \mathbb{R}^{n \times p}$ (here, $n$ tumor samples and $p$ proteins) on
-covariates $X \in \mathbb{R}^{n \times d}$ (here, the PAM50 subtype), in which
-the regression coefficients are *shared within clusters of variables*:
+The mean-block model is a Gaussian regression model for a table of observations $Y \in \mathbb{R}^{n \times p}$ (here, $n$ tumor samples and $p$ proteins) on covariates $X \in \mathbb{R}^{n \times d}$ (here, the PAM50 subtype), in which the regression coefficients are *shared within clusters of variables*:
 
 $$Y_i \sim \mathcal{N}(\mu_i, \Sigma), \qquad \mu_i = C B^\top X_i$$
 
-$C \in \{0,1\}^{p \times q}$ assigns every protein to exactly one of the $q$
-clusters; it is either given (known clustering, e.g. from an independent source)
-or itself unknown and inferred jointly with everything else, in which case the
-model carries a variational posterior distribution over $C$ rather than a single
-point estimate. $B \in \mathbb{R}^{d \times q}$ holds one regression profile
-*per cluster*, so $B^\top X_i \in \mathbb{R}^q$ is the linear predictor of each
-cluster for observation $i$, which $C$ maps back onto the $p$ proteins.
-$\Sigma \in \mathbb{R}^{p \times p}$ is the residual covariance between
-proteins; its shape is a modelling choice in its own right, and a section below
-is devoted to it. The key structural assumption is that all proteins in a
-cluster share the *same* regression profile: the regression part costs
-$d \times q$ parameters instead of the $d \times p$ of an unconstrained
-multivariate regression, with $q \ll p$.
+$C \in \{0,1\}^{p \times q}$ assigns every protein to exactly one of the $q$ clusters; it is either given (known clustering, e.g. from an independent source) or itself unknown and inferred jointly with everything else, in which case the model carries a variational posterior distribution over $C$ rather than a single point estimate. $B \in \mathbb{R}^{d \times q}$ holds one regression profile *per cluster*, so $B^\top X_i \in \mathbb{R}^q$ is the linear predictor of each cluster for observation $i$, which $C$ maps back onto the $p$ proteins. $\Sigma \in \mathbb{R}^{p \times p}$ is the residual covariance between proteins; its shape is a modelling choice in its own right, and a section below is devoted to it. The key structural assumption is that all proteins in a cluster share the *same* regression profile: the regression part costs $d \times q$ parameters instead of the $d \times p$ of an unconstrained multivariate regression, with $q \ll p$.
 
-Contrast this with the Normal-Block model of the other vignettes, where $C$
-structures $\mathrm{Var}(Y_i)$ and the covariates only enter through a
-variable-wise $B^\top X_i$: there, two proteins are in the same cluster when
-they *covary* the same way; here, when they *respond* the same way. The two
-answer different questions and generally return different groupings: on this
-dataset they are essentially unrelated, which is a result rather than a defect.
+Contrast this with the Normal-Block model of the other vignettes, where $C$ structures $\mathrm{Var}(Y_i)$ and the covariates only enter through a variable-wise $B^\top X_i$: there, two proteins are in the same cluster when they *covary* the same way; here, when they *respond* the same way. The two answer different questions and generally return different groupings: on this dataset they are essentially unrelated, which is a result rather than a defect.
 
-See @tous2026 for the Normal-Block model itself, and @ngalala2026 (unpublished yet)
-for the mean-block family's estimation details: the closed-form updates when $C$
-is known, and the variational lower bound maximized when it is not.
+See @tous2026 for the Normal-Block model itself, and @ngalala2026 (unpublished yet) for the mean-block family's estimation details: the closed-form updates when $C$ is known, and the variational lower bound maximized when it is not.
 
 # The data
 
@@ -82,17 +53,11 @@ dim(Y)
 table(brca_rppa$covariates$PAM50_SUBTYPE)
 ```
 
-`X` has one indicator column per PAM50 subtype, so each cluster's profile
-$B_{\bullet k} \in \mathbb{R}^5$ is simply its mean expression level in each of
-the five subtypes. Clustering the proteins therefore amounts to grouping them by
-*subtype signature*.
+`X` has one indicator column per PAM50 subtype, so each cluster's profile $B_{\bullet k} \in \mathbb{R}^5$ is simply its mean expression level in each of the five subtypes. Clustering the proteins therefore amounts to grouping them by *subtype signature*.
 
 # A known clustering
 
-The dataset ships a Gene Ontology annotation (one biological-process term per
-protein), which gives a clustering built with no reference to the model at all.
-Handing it to `normal_block()` as a matrix fixes $C$: only $(B, \Sigma)$ are
-estimated.
+The dataset ships a Gene Ontology annotation (one biological-process term per protein), which gives a clustering built with no reference to the model at all. Handing it to `normal_block()` as a matrix fixes $C$: only $(B, \Sigma)$ are estimated.
 
 ```{r, known-clustering}
 go_term  <- factor(brca_rppa$gene_annotation$go_bp_term)
@@ -102,8 +67,7 @@ NB_go    <- normal_block(nb_data, blocks = C_go, model = "mean",
 NB_go
 ```
 
-The fitted `B` is a $5 \times q$ matrix of subtype profiles, one column per GO
-term, and `fitted()` maps them back onto the proteins:
+The fitted `B` is a $5 \times q$ matrix of subtype profiles, one column per GO term, and `fitted()` maps them back onto the proteins:
 
 ```{r, known-clustering-fitted, fig.width=6, fig.height=4}
 dim(coef(NB_go))
@@ -115,21 +79,14 @@ abline(0, 1, col = "red")
 
 ## A collection over the number of clusters
 
-With `blocks` a range of values, `normal_block()` returns one fitted model per
-$q$. The initial clustering of each is derived from every protein's own fitted
-profile -- the ordinary least-squares fit of that protein on $X$ alone,
-unconstrained by any clustering (see `NB_control(clustering_init = )`; `kmeans`
-is this family's default).
+With `blocks` a range of values, `normal_block()` returns one fitted model per $q$. The initial clustering of each is derived from every protein's own fitted profile -- the ordinary least-squares fit of that protein on $X$ alone, unconstrained by any clustering (see `NB_control(clustering_init = )`; `kmeans` is this family's default).
 
 ```{r, collection}
 NB_means <- normal_block(nb_data, blocks = seq(5, 120, by = 5), model = "mean",
                          control = NB_control(verbose = FALSE))
 ```
 
-The grid is deliberately wide and coarse. With the default diagonal $\Sigma$
-an extra cluster costs only $d = 5$ parameters, so the criteria stay hungry
-for a long time: on a narrow range such as `1:15` they would still be
-decreasing at the upper end, and "selecting" its boundary would mean nothing.
+The grid is deliberately wide and coarse. With the default diagonal $\Sigma$ an extra cluster costs only $d = 5$ parameters, so the criteria stay hungry for a long time: on a narrow range such as `1:15` they would still be decreasing at the upper end, and "selecting" its boundary would mean nothing.
 
 ```{r, collection-criteria, fig.width=7, fig.height=4}
 NB_means$plot(c("deviance", "ICL"))
@@ -140,18 +97,9 @@ selected <- NB_means$get_best_model("ICL")
 paste0("ICL selects ", selected$q, " clusters.")
 ```
 
-The model groups 163 proteins into a few dozen clusters, i.e. only a handful of
-proteins per cluster. It is saying that
-subtype signatures are largely protein-specific here, with limited sharing,
-a substantive finding about this dataset, not a failure of the fit. The
-criteria do turn: they reach an interior minimum and rise again afterwards,
-which is what makes the selection meaningful.
+The model groups 163 proteins into a few dozen clusters, i.e. only a handful of proteins per cluster. It is saying that subtype signatures are largely protein-specific here, with limited sharing, a substantive finding about this dataset, not a failure of the fit. The criteria do turn: they reach an interior minimum and rise again afterwards, which is what makes the selection meaningful.
 
-`refine()` is available to polish a collection, trying for each $q$ a short
-split-and-reoptimize seeded from its $q-1$ neighbour and a merge from its
-$q+1$ one, keeping a candidate only if it strictly lowers the deviance. It is
-most useful on a contiguous range; on the coarse grid above there are no
-adjacent $q$ to seed from, so it is skipped here.
+`refine()` is available to polish a collection, trying for each $q$ a short split-and-reoptimize seeded from its $q-1$ neighbour and a merge from its $q+1$ one, keeping a candidate only if it strictly lowers the deviance. It is most useful on a contiguous range; on the coarse grid above there are no adjacent $q$ to seed from, so it is skipped here.
 
 ## Reading the clusters
 
@@ -159,8 +107,7 @@ adjacent $q$ to seed from, so it is skipped here.
 table(selected$clustering)
 ```
 
-Each cluster's profile across the five subtypes is a column of `coef()`; a
-heatmap of that matrix is the most direct summary of what the model found.
+Each cluster's profile across the five subtypes is a column of `coef()`; a heatmap of that matrix is the most direct summary of what the model found.
 
 ```{r, cluster-profiles, fig.width=7, fig.height=4}
 profiles <- coef(selected)
@@ -174,19 +121,11 @@ axis(2, seq_len(ncol(profiles)), colnames(profiles), las = 2, cex.axis = .7)
 
 # Choosing the shape of the residual covariance
 
-Everything above used the default residual covariance, `"diagonal"` (one
-variance per variable). Two other shapes are available through
-`NB_control(noise_covariance = )`: `"spherical"` (a single variance) and
-`"full"` (the unconstrained $p \times p$ matrix). Only the last one has to be
-inverted, so it alone requires $n > p$.
+Everything above used the default residual covariance, `"diagonal"` (one variance per variable). Two other shapes are available through `NB_control(noise_covariance = )`: `"spherical"` (a single variance) and `"full"` (the unconstrained $p \times p$ matrix). Only the last one has to be inverted, so it alone requires $n > p$.
 
-The default is deliberate. A full $\Sigma$ costs $p(p+1)/2 \approx 13{,}000$
-parameters here, which drown the handful of mean parameters that BIC and ICL
-are trying to weigh^[In a simulation study over 12 replicates, selecting $q$
-by BIC was correct 10/12 times with a diagonal $\Sigma$ against 6/12 with a
-full one at $n/p \approx 1.3$, *even when the data were generated with a full
-$\Sigma$*. The quality of the clustering at a fixed $q$ was the same either
-way, it is the choice of $q$ that suffers.]
+The default is deliberate. A full $\Sigma$ costs $p(p+1)/2 \approx 13{,}000$ parameters here, which drown the handful of mean parameters that BIC and ICL are trying to weigh[^1]
+
+[^1]: In a simulation study over 12 replicates, selecting $q$ by BIC was correct 10/12 times with a diagonal $\Sigma$ against 6/12 with a full one at $n/p \approx 1.3$, *even when the data were generated with a full* $\Sigma$. The quality of the clustering at a fixed $q$ was the same either way, it is the choice of $q$ that suffers.
 
 ```{r, covariance-shapes}
 shapes <- c("diagonal", "spherical", "full")
@@ -201,22 +140,11 @@ data.frame(
 )
 ```
 
-BIC agrees with the default here. That is not a reason to forget the full
-$\Sigma$ though: the three shapes answer different questions, and a diagonal
-one says nothing about how proteins co-vary once the subtype and the cluster
-structure are accounted for, which is what the next section looks
-at.
+BIC agrees with the default here. That is not a reason to forget the full $\Sigma$ though: the three shapes answer different questions, and a diagonal one says nothing about how proteins co-vary once the subtype and the cluster structure are accounted for, which is what the next section looks at.
 
 # Sparsifying the residual covariance
 
-If the residual associations *are* the object of interest, the full $\Sigma$ is
-required. Asking for `sparsity > 0` selects it automatically, since a
-penalty on a diagonal precision matrix would have nothing to act on. A dense
-$163 \times 163$ precision matrix is unreadable though, and poorly determined
-from 346 observations. Keeping the selected clustering fixed,
-a graphical-lasso penalty on $\Sigma^{-1}$ addresses both at once, turning it
-into a network of *conditional* associations between proteins, given the subtype
-and the cluster structure.
+If the residual associations *are* the object of interest, the full $\Sigma$ is required. Asking for `sparsity > 0` selects it automatically, since a penalty on a diagonal precision matrix would have nothing to act on. A dense $163 \times 163$ precision matrix is unreadable though, and poorly determined from 346 observations. Keeping the selected clustering fixed, a graphical-lasso penalty on $\Sigma^{-1}$ addresses both at once, turning it into a network of *conditional* associations between proteins, given the subtype and the cluster structure.
 
 ```{r, sparse-fit}
 C_selected <- model.matrix(~ 0 + factor(selected$clustering))
@@ -230,10 +158,6 @@ paste0(NB_sparse$n_edges, " edges out of ", choose(ncol(Y), 2), " possible ones.
 NB_sparse$plot_network(output = "corrplot")
 ```
 
-Passing `sparsity = TRUE` instead of a single value explores a whole path of
-penalties and returns a collection, selected by BIC or EBIC as usual. Be aware
-that each penalty triggers a graphical lasso on a $p \times p$ matrix at *every*
-EM iteration: on this dataset a full path costs a couple of orders of magnitude
-more than the single fit above, which is why a fixed penalty is used here.
+Passing `sparsity = TRUE` instead of a single value explores a whole path of penalties and returns a collection, selected by BIC or EBIC as usual. Be aware that each penalty triggers a graphical lasso on a $p \times p$ matrix at *every* EM iteration: on this dataset a full path costs a couple of orders of magnitude more than the single fit above, which is why a fixed penalty is used here.
 
 # References
