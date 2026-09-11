@@ -85,7 +85,7 @@ NormalBlockBase <- R6::R6Class(
     #' models, variable-level for Normal Mean Block models) [all]
     #' @param gamma  variance of posterior distribution of W [NBVar - known]
     #' @param mu mean for posterior distribution of W [NBVar - known]
-    #' @param kappa vector of zero-inflation probabilities [ZINBVar]
+    #' @param kappa vector of zero-inflation probabilities [ZINBVar, ZINBMean]
     #' @param alpha vector of groups probabilities [NBVar]
     #' @param M variational mean for posterior distribution of W [NBVar - unknown]
     #' @param S variational diagonal of variances for posterior distribution of W [NBVar - unknown]
@@ -140,7 +140,7 @@ NormalBlockBase <- R6::R6Class(
     },
 
     #' @description calls optimization (EM or heuristic) and updates relevant fields
-    #' @param control a list for controlling the optimization proces
+    #' @param control a list for controlling the optimization process
     #' @param warn whether to warn when the (V)EM stops at the `niter` cap
     #' without reaching `threshold` (see `private$warn_if_not_converged()`).
     #' Set to `FALSE` for deliberately-truncated trial fits (cheap candidate

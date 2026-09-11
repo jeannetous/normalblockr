@@ -18,7 +18,7 @@ structures the mean (mu_i = C B' X_i).
 \section{Active bindings}{
   \if{html}{\out{<div class="r6-active-bindings">}}
   \describe{
-    \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalMeanBlockData(scale = TRUE)`): use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.}
+    \item{\code{model_par}}{a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalBlockData(scale = TRUE)`): use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.}
 
     \item{\code{nb_param}}{number of parameters in the model}
 
@@ -70,7 +70,7 @@ structures the mean (mu_i = C B' X_i).
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{data}}{object of NormalMeanBlockData class, with responses and design matrix}
+      \item{\code{data}}{object of NormalBlockData class, with responses and design matrix}
       \item{\code{q}}{number of block/cluster}
       \item{\code{sparsity}}{sparsity penalty on the network density}
       \item{\code{control}}{structured list of more specific parameters, to generate with NB_Mean_control}

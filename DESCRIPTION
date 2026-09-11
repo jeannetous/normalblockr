@@ -4,7 +4,7 @@ Title: Gaussian Graphical Models with Latent Clustering Structure
 Version: 0.3.0
 Authors@R: c(
   person("Jeanne", "Tous", role = "aut", email = "jeanne.tous@inrae.fr"),
-  person("Nestor",  "Nglala Manguitini", role = "ctr"),
+  person("Nestor",  "Ngalala Manguitini", role = "ctb"),
   person("Julien", "Chiquet", role = c("aut", "cre"), email = "julien.chiquet@inrae.fr",
       comment = c(ORCID = "0000-0002-3629-3429"))
       )
@@ -21,7 +21,8 @@ Description: Implements the Normal-Block model, a Gaussian graphical model
              <doi:10.1016/j.csda.2026.108347> for the model itself and its
              variational expectation-maximization estimation procedure.
 License: GPL (>= 3)
-URL: https://github.com/jchiquet/normalblockr
+URL: https://github.com/jchiquet/normalblockr,
+    https://jchiquet.github.io/normalblockr/
 BugReports: https://github.com/jchiquet/normalblockr/issues
 Encoding: UTF-8
 LazyData: true

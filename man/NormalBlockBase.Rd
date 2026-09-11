@@ -150,7 +150,7 @@ All possible parameters of the child classes
 models, variable-level for Normal Mean Block models) [all]}
       \item{\code{gamma}}{variance of posterior distribution of W [NBVar - known]}
       \item{\code{mu}}{mean for posterior distribution of W [NBVar - known]}
-      \item{\code{kappa}}{vector of zero-inflation probabilities [ZINBVar]}
+      \item{\code{kappa}}{vector of zero-inflation probabilities [ZINBVar, ZINBMean]}
       \item{\code{alpha}}{vector of groups probabilities [NBVar]}
       \item{\code{M}}{variational mean for posterior distribution of W [NBVar - unknown]}
       \item{\code{S}}{variational diagonal of variances for posterior distribution of W [NBVar - unknown]}
@@ -187,7 +187,7 @@ rather than recomputing a fresh heuristic initialization. Set by
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{control}}{a list for controlling the optimization proces}
+      \item{\code{control}}{a list for controlling the optimization process}
       \item{\code{warn}}{whether to warn when the (V)EM stops at the `niter` cap
 without reaching `threshold` (see `private$warn_if_not_converged()`).
 Set to `FALSE` for deliberately-truncated trial fits (cheap candidate

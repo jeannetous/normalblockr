@@ -3,8 +3,16 @@ This release hopefully fixes the ERROR currently shown on
 `r-devel-linux-x86_64-fedora-gcc`, where re-building
 `breast-cancer-proteomics.Rmd` aborts with
 
+    malloc(): unsorted double linked list corrupted
+
+The abort signature has varied from run to run -- an earlier one on the same
+check was
+
     *** caught segfault ***
     address 0x580, cause 'memory not mapped'
+
+which is itself consistent with the diagnosis below: heap corruption, whose
+symptom depends on what the allocator happens to touch next.
 
 It is submitted sooner than the usual interval for that reason; please let
 us know if you would rather we wait.
@@ -39,7 +47,17 @@ NEWS.md.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes attributable to the package.
 
-* "Days since last update" -- see above; this submission answers the check
-  ERROR on r-devel-linux-x86_64-fedora-gcc.
+The local `--as-cran` run reports notes that are artifacts of this machine
+rather than of the package: the non-portable `-mno-omit-leaf-frame-pointer`
+that Debian/Ubuntu's own `r-base` puts in `Makeconf` (the package's
+`src/Makevars` sets only `CXX_STD`, `-DARMA_WARN_LEVEL=1` and the BLAS/LAPACK
+libs), HTML Tidy not being installed here, and -- intermittently, when GitHub
+rate-limits us -- a 429 on the README's last-commit badge URL, which resolves
+normally otherwise.
+
+Should the incoming checks flag "Days since last update" (0.2.1 was published
+on 2026-09-03): this submission is early on purpose, to answer the check
+ERROR on r-devel-linux-x86_64-fedora-gcc described above. We are happy to
+wait if you would rather we did.

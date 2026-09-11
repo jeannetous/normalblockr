@@ -1,6 +1,6 @@
 ---
 title: "Mean-Block models: clustering variables by their response to covariates"
-author: "Julien Chiquet, Nestor Nglala Manguitini and Jeanne Tous"
+author: "Julien Chiquet, Nestor Ngalala Manguitini and Jeanne Tous"
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:

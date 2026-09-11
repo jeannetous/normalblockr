@@ -62,7 +62,7 @@ model$plot()
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{data}}{object of NormalMeanBlockData class, with responses and design matrix}
+      \item{\code{data}}{object of NormalBlockData class, with responses and design matrix}
       \item{\code{C}}{clustering matrix C_jk = 1 if species j belongs to cluster k}
       \item{\code{sparsity}}{to apply on variance matrix when calling GLASSO}
       \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}

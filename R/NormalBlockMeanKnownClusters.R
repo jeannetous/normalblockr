@@ -19,7 +19,7 @@ NormalBlockMeanKnownClusters <- R6::R6Class(
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   public = list(
     #' @description Create a new [`NormalBlockMeanKnownClusters`] object.
-    #' @param data object of NormalMeanBlockData class, with responses and design matrix
+    #' @param data object of NormalBlockData class, with responses and design matrix
     #' @param C clustering matrix C_jk = 1 if species j belongs to cluster k
     #' @param sparsity to apply on variance matrix when calling GLASSO
     #' @param control structured list of more specific parameters, to generate with NB_control

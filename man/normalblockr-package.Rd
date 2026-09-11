@@ -12,6 +12,7 @@ Implements the Normal-Block model, a Gaussian graphical model with a latent clus
 Useful links:
 \itemize{
   \item \url{https://github.com/jchiquet/normalblockr}
+  \item \url{https://jchiquet.github.io/normalblockr/}
   \item Report bugs at \url{https://github.com/jchiquet/normalblockr/issues}
 }
 
@@ -27,7 +28,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Nestor Nglala Manguitini [contractor]
+  \item Nestor Ngalala Manguitini [contributor]
 }
 
 }

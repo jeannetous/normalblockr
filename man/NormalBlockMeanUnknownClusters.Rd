@@ -76,7 +76,7 @@ variational distribution reduces to -sum(tau * log(tau)).}
   \subsection{Arguments}{
     \if{html}{\out{<div class="arguments">}}
     \describe{
-      \item{\code{data}}{object of NormalMeanBlockData class, with responses and design matrix}
+      \item{\code{data}}{object of NormalBlockData class, with responses and design matrix}
       \item{\code{q}}{number of clusters}
       \item{\code{sparsity}}{to apply on variance matrix when calling GLASSO}
       \item{\code{control}}{structured list of more specific parameters, to generate with NB_control}

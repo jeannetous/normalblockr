@@ -1,5 +1,5 @@
 ## ---------------------------------------------------------------------------
-## Nestor Nglala Manguitini's M2 simulation protocol, run on the package's
+## Nestor Ngalala Manguitini's M2 simulation protocol, run on the package's
 ## mean-block implementation.
 ##
 ## The point is NOT to reproduce his numbers. His prototype

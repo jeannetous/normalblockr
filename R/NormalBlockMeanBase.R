@@ -19,7 +19,7 @@ NormalBlockMeanBase <- R6::R6Class(
   public = list(
 
     #' @description Create a new [`NormalBlockMeanBase`] object.
-    #' @param data object of NormalMeanBlockData class, with responses and design matrix
+    #' @param data object of NormalBlockData class, with responses and design matrix
     #' @param q number of block/cluster
     #' @param sparsity sparsity penalty on the network density
     #' @param control structured list of more specific parameters, to generate with NB_Mean_control
@@ -218,7 +218,7 @@ NormalBlockMeanBase <- R6::R6Class(
   ##  ACTIVE BINDINGS ----
   ## %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   active = list(
-    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalMeanBlockData(scale = TRUE)`): use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.
+    #' @field model_par a list with the matrices of the model parameters: B (covariates), dm1 (species variance), Omega (groups precision matrix)). On the internal fitting scale (`self$data$Y`, possibly column-rescaled by `NormalBlockData(scale = TRUE)`): use `$B_original`/`$dm1_original` for the same quantities converted back to Y's original units.
     model_par = function() list(B = private$B, Omega = private$Omega),
     #' @field nb_param number of parameters in the model
     nb_param = function() {
