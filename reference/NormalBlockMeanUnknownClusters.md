@@ -78,7 +78,7 @@ Create a new \[\`NormalBlockMeanUnknownClusters\`\] object.
 
 - `data`:
 
-  object of NormalMeanBlockData class, with responses and design matrix
+  object of NormalBlockData class, with responses and design matrix
 
 - `q`:
 

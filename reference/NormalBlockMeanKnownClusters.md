@@ -57,7 +57,7 @@ Create a new \[\`NormalBlockMeanKnownClusters\`\] object.
 
 - `data`:
 
-  object of NormalMeanBlockData class, with responses and design matrix
+  object of NormalBlockData class, with responses and design matrix
 
 - `C`:
 

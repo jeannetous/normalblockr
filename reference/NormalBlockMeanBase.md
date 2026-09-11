@@ -14,7 +14,7 @@ structures the mean (mu_i = C B' X_i).
   a list with the matrices of the model parameters: B (covariates), dm1
   (species variance), Omega (groups precision matrix)). On the internal
   fitting scale (\`self\$data\$Y\`, possibly column-rescaled by
-  \`NormalMeanBlockData(scale = TRUE)\`): use
+  \`NormalBlockData(scale = TRUE)\`): use
   \`\$B_original\`/\`\$dm1_original\` for the same quantities converted
   back to Y's original units.
 
@@ -75,7 +75,7 @@ Create a new \[\`NormalBlockMeanBase\`\] object.
 
 - `data`:
 
-  object of NormalMeanBlockData class, with responses and design matrix
+  object of NormalBlockData class, with responses and design matrix
 
 - `q`:
 

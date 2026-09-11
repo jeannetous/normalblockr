@@ -56,7 +56,7 @@ different groupings: on this dataset they are essentially unrelated,
 which is a result rather than a defect.
 
 See Tous and Chiquet (2026) for the Normal-Block model itself, and
-Nglala Manguitini et al. (2026) (unpublished yet) for the mean-block
+Ngalala Manguitini et al. (2026) (unpublished yet) for the mean-block
 family’s estimation details: the closed-form updates when $`C`$ is
 known, and the variational lower bound maximized when it is not.
 
@@ -281,7 +281,7 @@ above, which is why a fixed penalty is used here.
 
 ## References
 
-Nglala Manguitini, Nestor, Jeanne Tous, and Julien Chiquet. 2026.
+Ngalala Manguitini, Nestor, Jeanne Tous, and Julien Chiquet. 2026.
 *Modèle de Régression Log-Normale Multivarié Avec Clustering de
 Variables Intégré Dans La Moyenne*. MsC manuscript, available upon
 request.

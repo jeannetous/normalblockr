@@ -19,6 +19,8 @@ Useful links:
 
 - <https://github.com/jchiquet/normalblockr>
 
+- <https://jchiquet.github.io/normalblockr/>
+
 - Report bugs at <https://github.com/jchiquet/normalblockr/issues>
 
 ## Author
@@ -35,4 +37,4 @@ Authors:
 
 Other contributors:
 
-- Nestor Nglala Manguitini \[contractor\]
+- Nestor Ngalala Manguitini \[contributor\]

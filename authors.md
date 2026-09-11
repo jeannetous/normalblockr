@@ -4,7 +4,7 @@
 
 - **Jeanne Tous**. Author.
 
-- **Nestor Nglala Manguitini**. Contractor.
+- **Nestor Ngalala Manguitini**. Contributor.
 
 - **Julien Chiquet**. Author, maintainer.
   [](https://orcid.org/0000-0002-3629-3429)

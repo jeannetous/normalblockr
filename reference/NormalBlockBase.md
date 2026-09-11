@@ -221,7 +221,7 @@ All possible parameters of the child classes
 
 - `kappa`:
 
-  vector of zero-inflation probabilities \[ZINBVar\]
+  vector of zero-inflation probabilities \[ZINBVar, ZINBMean\]
 
 - `alpha`:
 
@@ -287,7 +287,7 @@ calls optimization (EM or heuristic) and updates relevant fields
 
 - `control`:
 
-  a list for controlling the optimization proces
+  a list for controlling the optimization process
 
 - `warn`:
 
