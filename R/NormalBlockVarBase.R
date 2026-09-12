@@ -262,44 +262,6 @@ NormalBlockVarBase <- R6::R6Class(
         Sigma_q[is.na(Sigma_q)] <- 0
       }
       Sigma_q
-    },
-
-    ## Registry of clustering heuristics used to turn the OLS/ZI residuals R
-    ## (n x p) into an initial clustering of the p variables into self$q
-    ## groups (a vector of length p with values in 1:q), selectable via
-    ## NB_control(clustering_init = ...). See
-    ## inst/methods_initialization_and_refine.md and
-    ## inst/clustering_initialization_benchmark for the rationale and the
-    ## empirical comparison behind the "ward2" default.
-    clustering_methods = list(
-      kmeans   = function(R, q) kmeans(t(R), q, nstart = 30, iter.max = 50)$cluster,
-      ## ward2_tree() (R/utils.R) also backs sbm_clustering_path()'s own
-      ## fallback. Same computation, shared rather than duplicated.
-      ward2    = function(R, q) cutree(ward2_tree(R), q),
-      sbm      = function(R, q) {
-        options <- list(verbosity = 0, exploreMin = q, exploreMax = q, plot = FALSE, nbCores = 1)
-        mySBM <- sbm::estimateSimpleSBM(cov(R), "gaussian", estimOptions = options)
-        mySBM$setModel(q)
-        mySBM$memberships
-      },
-      spectral = function(R, q) {
-        U <- eigen(cov(R), symmetric = TRUE)$vectors[, seq_len(q), drop = FALSE]
-        U <- U / pmax(sqrt(rowSums(U^2)), 1e-10)
-        kmeans(U, q, nstart = 30, iter.max = 50)$cluster
-      }
-    ),
-
-    heuristic_clustering = function(R) {
-      clustering <- private$clustering_methods[[private$clustering_approx]](R, self$q)
-      if (length(unique(clustering)) < self$q) {
-        ## ward2's hclust()/cutree() always yields exactly q groups (modulo
-        ## exact tied merge heights), making it a robust fallback whenever
-        ## the chosen heuristic collapses to fewer than q clusters.
-        clustering <- private$clustering_methods$ward2(R, self$q)
-      }
-      C <- as_indicator(clustering)
-      if (min(colSums(C)) < 1) warning("Initialization failed to place elements in each cluster")
-      C
     }
 
   ),
