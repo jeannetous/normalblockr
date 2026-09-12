@@ -41,15 +41,28 @@ test_that("a sparsity path is refused: it would need a full Sigma", {
 })
 
 test_that("a collection over a range of q runs, selects and refines", {
-  coll <- normal_block(datazi, 2:5, model = "mean", zero_inflation = TRUE, control = ctrl)
+  ## threshold well below NB_control()'s 1e-4 default, for the monotonicity
+  ## check below; everything else here is insensitive to it. Costs nothing:
+  ## the fit roughly doubles its iteration count (4/3/7/13 -> 7/6/17/27) and
+  ## still runs in hundredths of a second.
+  coll <- normal_block(datazi, 2:5, model = "mean", zero_inflation = TRUE,
+                       control = NB_control(verbose = FALSE, threshold = 1e-8, niter = 1000))
   expect_s3_class(coll, "NormalBlockMeanCollectionClusters")
   expect_true(all(map_lgl(coll$models, inherits, "ZINormalBlockMeanUnknownClusters")))
   expect_equal(nrow(coll$criteria), 4L)
   expect_true(all(is.finite(coll$criteria$BIC)))
   expect_equal(coll$get_best_model("ICL")$q, 3L)
 
-  ## deviance is non-increasing in q for nested models: a violation would
-  ## measure an optimization failure, not a modelling one
+  ## Deviance is non-increasing in q for nested models, but only as far as the
+  ## models are actually converged: each q is optimized independently and stops
+  ## once its own objective moves by less than `threshold`, so the *difference*
+  ## between two neighbours inherits that much slack. At the 1e-4 default the
+  ## violations this produces are pure stopping rule -- measured at 1.2e-4,
+  ## 1.3e-4 and 4.0e-4 on 3 of 10 seeds, and they track the threshold exactly
+  ## (they fall to ~1e-8 when it does). refine() does not repair them, which is
+  ## the tell: they are not a local optimum, just an early stop. Converging
+  ## tightly above makes this a statement about the models rather than about
+  ## where the optimizer happened to halt.
   expect_true(all(diff(coll$criteria$deviance) <= 1e-6))
 
   coll$refine(verbose = FALSE)
