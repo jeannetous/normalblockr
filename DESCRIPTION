@@ -34,7 +34,7 @@ Imports:
     tibble,
     purrr,
     R6,
-    ggplot2,
+    ggplot2 (>= 4.0.0),
     igraph,
     sbm,
     corrplot,

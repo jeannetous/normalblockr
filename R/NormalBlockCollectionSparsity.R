@@ -65,7 +65,7 @@ NormalBlockCollectionSparsity <- R6::R6Class(
     plot = function(criteria = c("deviance", "BIC", "EBIC", "ICL"), log.x = TRUE) {
       stopifnot(!is.null(self$criteria[criteria]))
       p <- private$plot_criteria_path("sparsity", criteria)
-      if (log.x) p <- p + ggplot2::coord_trans(x = "log10")
+      if (log.x) p <- p + ggplot2::coord_transform(x = "log10")
       p
     }
   ),
